@@ -3,13 +3,13 @@ package de.julianweinelt.caesar.core.util.ui;
 import lombok.Getter;
 
 @Getter
-public class FloatDisplayComponent {
-    private final float value;
+public class BooleanDisplayComponent extends DisplayComponent {
+    private final boolean value;
     private final String key;
     private final boolean disabled;
     private final DisplayComponentType type;
 
-    public FloatDisplayComponent(float value, String key, boolean disabled) {
+    public BooleanDisplayComponent(boolean value, String key, boolean disabled) {
         this.value = value;
         this.key = key;
         this.disabled = disabled;

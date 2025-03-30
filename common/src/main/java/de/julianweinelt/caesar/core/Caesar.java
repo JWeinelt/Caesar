@@ -1,35 +1,42 @@
 package de.julianweinelt.caesar.core;
 
+import de.julianweinelt.caesar.core.authentication.UserManager;
 import de.julianweinelt.caesar.core.configuration.Configuration;
 import de.julianweinelt.caesar.core.configuration.ConfigurationManager;
 import de.julianweinelt.caesar.core.util.FileChecker;
+import de.julianweinelt.caesar.core.util.PasswordGenerator;
+import de.julianweinelt.caesar.core.util.logging.Log;
 import de.julianweinelt.caesar.core.util.ui.DisplayComponent;
 import de.julianweinelt.caesar.core.util.ui.DisplayComponentSection;
 import de.julianweinelt.caesar.core.util.ui.DisplayComponentType;
 import lombok.Getter;
-import lombok.Setter;
 
 import java.io.File;
-import java.util.logging.Logger;
 
+
+@Getter
 public class Caesar {
     private File configFile;
-    private Logger log;
 
     private ConfigurationManager configurationManager;
+    private UserManager userManager;
 
-    public void instantiate(File configFile, Logger log) {
+    @Getter
+    private static Caesar instance;
+
+    public void instantiate(File configFile) {
         this.configFile = configFile;
-        this.log = log;
+        instance = this;
     }
 
     public void start() {
         configurationManager = new ConfigurationManager(configFile);
+        userManager = new UserManager();
         if (FileChecker.isFirstStart()) {
-            log.info("Welcome to the Caesar!");
-            log.info("Let's start with some configuration!");
+            Log.info("Welcome to the Caesar!");
+            Log.info("Let's start with some configuration!");
             Configuration configuration = new Configuration();
-            log.info("We just create a default configuration file.");
+            Log.info("We just create a default configuration file.");
             configuration.addComponent(
                     new DisplayComponentSection("config.database", "Database")
                             .addComponent(DisplayComponent.Builder.create(DisplayComponentType.STRING, "database.type", "MySQL", false))
@@ -46,11 +53,16 @@ public class Caesar {
                             .addComponent(DisplayComponent.Builder.create(DisplayComponentType.BOOLEAN, "users.enable-register", true, false))
                             .addComponent(DisplayComponent.Builder.create(DisplayComponentType.BOOLEAN, "users.pw-policy", true, false))
             );
-            log.info("Saving default configuration file...");
+            Log.info("Saving default configuration file...");
             configurationManager.setConfig(configuration);
             configurationManager.save();
-            log.info("Configuration file saved!");
-            log.info("Now let's continue to create an admin user for setup.");
+            Log.info("Configuration file saved!");
+            Log.info("Now let's continue to create an admin user for setup.");
+            String password = PasswordGenerator.generatePassword(12);
+            userManager.createUser("admin", password);
+            Log.info("Created new user:");
+            Log.info("Username: admin");
+            Log.info("Password: {}", password);
         }
     }
 }

@@ -14,7 +14,8 @@ public class Configuration {
     private String versionID;
     private String configVersion;
 
-    public void addComponent(DisplayComponent component) {
+    public Configuration addComponent(DisplayComponent component) {
         components.add(component);
+        return this;
     }
 }

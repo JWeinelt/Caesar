@@ -2,6 +2,7 @@ package de.julianweinelt.caesar.core.configuration;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import de.julianweinelt.caesar.core.Caesar;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,10 @@ public class ConfigurationManager {
 
     public ConfigurationManager(File configFile) {
         this.configFile = configFile;
+    }
+
+    public static ConfigurationManager getInstance() {
+        return Caesar.getInstance().getConfigurationManager();
     }
 
     public void load() {

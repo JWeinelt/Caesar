@@ -63,7 +63,7 @@ If you find a problem with Caesar, please open an issue. But report any security
 
 ## 🤝 License
 
-This project is licensed under  [GNU GPL v3 License](https://chatgpt.com/c/LICENSE).
+This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt/Caesar?tab=GPL-3.0-1-ov-file).
 
 ----------
 

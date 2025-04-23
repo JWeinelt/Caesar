@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.core.authentication.JWTUtil;
 import de.julianweinelt.caesar.core.authentication.UserManager;
-import de.julianweinelt.caesar.core.configuration.Configuration;
 import de.julianweinelt.caesar.core.configuration.ConfigurationManager;
 import de.julianweinelt.caesar.core.util.logging.Log;
 import de.julianweinelt.caesar.core.util.ui.DisplayComponent;
@@ -185,6 +184,7 @@ public class WebServer {
                 .post("/files/upload", context -> {
 
                 })
+
                 .get("/permissions", context -> {
                     String username = context.header("username");
                     if (username == null || username.isEmpty()) {

@@ -69,7 +69,7 @@ This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt
 
 ## ☕ Support & donations
 
-If you want to help me maintaining this amazing project, please consider buying one of the [Service Plans]() or donating via PayPal:
+If you want to help me maintaining this amazing project, please consider buying one of the [Service Plans](https://caesarnet.cloud/#pricing) or donating via one of these sites:
 
 **[Ko-fi](https://ko-fi.com/julianweinelt)**
 

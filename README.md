@@ -73,7 +73,7 @@ If you want to help me maintaining this amazing project, please consider buying 
 
 **[Ko-fi](https://ko-fi.com/julianweinelt)**
 
-Please use a reason like "Caesar help" so the money is going to 100% into this project.
+Please write me your GitHub username, so I'm able to add you as a sponsor to this page.
 
 ## 🧭 Road map
 

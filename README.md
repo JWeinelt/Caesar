@@ -53,7 +53,7 @@ Caesar provides a full HTTP-based REST-API. Please head to the [Developer Docs](
 Contributions are welcome! Just clone this repository (for backend modifications):
 
 ```bash
-git clone https://github.com/JWeinelt/Caesar-Backend
+git clone https://github.com/JWeinelt/Caesar.git
 ```
 Please create a pull request for any cotributions and use the [Code Conventions]() and [Style conventions]().
 

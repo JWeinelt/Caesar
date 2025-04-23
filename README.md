@@ -1,4 +1,5 @@
 # 🏛️ CAESAR BACKEND
+![Version](https://img.shields.io/badge/Version-v1.0.1-green)![Update](https://img.shields.io/badge/Update-23.4.2025-blue)
 
 **Caesar** is the central backend-component for managing Minecraft server networks - especially for [CloudNet v4](https://cloudnetservice.eu/). Caesar is a fast, secure and flexible application for modern Minecraft infrastuctures.
 
@@ -86,3 +87,6 @@ Please write me your GitHub username, so I'm able to add you as a sponsor to thi
 ---
 
 > **Caesar** – bring organization into your servers.
+
+## ❤️ These people make Caesar big!
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-lightgrey?logo=githubsponsors)](https://github.com/sponsors/DEIN_USERNAME)

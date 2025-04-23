@@ -13,6 +13,14 @@
         <module>bukkit-plugin</module>
     </modules>
 
+
+    <repositories>
+        <repository>
+            <id>papermc-repo</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+    </repositories>
+         
     <dependencyManagement>
         <dependencies>
             <dependency>

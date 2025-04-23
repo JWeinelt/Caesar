@@ -1,36 +1,92 @@
-# ⚔️ Cäsar - The Ultimate Minecraft Server Management Solution
+# 🏛️ CAESAR BACKEND
+![Version](https://img.shields.io/badge/Version-v1.0.1-green)![Update](https://img.shields.io/badge/Update-23.4.2025-blue)
 
-Cäsar is a powerful and flexible server endpoint designed for Minecraft server networks. It can either be installed as a plugin on a single Minecraft server or run as a standalone server with CloudNET integration. With an intuitive graphical interface, advanced moderation tools, and a user management system with role-based access control, Cäsar simplifies server administration and enhances the player experience.
+**Caesar** is the central backend-component for managing Minecraft server networks - especially for [CloudNet v4](https://cloudnetservice.eu/). Caesar is a fast, secure and flexible application for modern Minecraft infrastuctures.
+
+> **DISCLAIMER**: Caesar is not web-based. You have to download the [Caesar Client](#) to work with the backend system.
+
+---
 
 ## ✨ Features
 
-- 🔌 **Modular Deployment**: Use it as a plugin on a single server or as a standalone server integrated with CloudNET.
-- 🖥️ **Graphical Interface**: A user-friendly UI for managing moderation and server functions.
-- 🔨 **Moderation Tools**: Supports bans, kicks, warnings, mutes, and logging.
-- 👥 **User Management**: Role-based access control to define permissions within Cäsar.
-- 🗄️ **Database Flexibility**: Compatible with multiple database types for storage and logging.
-- 🤖 **Discord Integration**: Manage bans and reports directly from Discord.
+- 🗺️Management of servers integrated via CloudNET v4 or individually configured.
+- 📈Performance metrics and analytics
+- 🔒Secure user authentication with configurable permissions
+- 📂Access to file systems, consoles and logs
+- 🎮Player management with support system (Discord)
+- 🔔Notifications about critical stops and more
+- 💬Integrated secure chat for authenticated users
+- 🔊Voice chat for authenticated users
+- 🎨Configurable coporate designs for clients
 
-## 📥 Installation
+---
 
-### As a Plugin (Single Server)
-1. 📥 Download the latest Cäsar plugin release from the [Releases](https://github.com/yourrepo/releases) page.
-2. 📂 Place the JAR file into the `plugins` folder of your Minecraft server.
-3. 🔄 Restart the server.
+## ⚙️ Installation
 
-### As a Standalone Server (CloudNET Integration)
-1. 📥 Download the latest standalone Cäsar release.
-2. 🏃 Run the JAR file with `java -jar caesar.jar`.
-3. ⚙️ Follow the setup instructions to configure CloudNET integration.
+### Requirements
 
-## 🛠️ Contributing
-We welcome contributions! Feel free to submit issues or pull requests.
+- Java 21 or newer
+- At least 1GB storage (may be more if your data gets larger)
+- A database (MySQL or MSSQL) [See a list of required database permissions.]()
+- When using Linux: ``wget``, ``unzip``, ``screen``
 
-## 📜 License
-Cäsar is licensed under the **GNU General Public License v3.0 (GPLv3)**.
+### Getting started
+1. 📥 Download the lastest .zip file from [Releases](https://github.com/JWeinelt/Caesar/releases)
+2. 📂Extract it into the folder you want to use
+3. 🔓On Unix-like systems, you may have to give ``start.sh`` the `execute` privilege:
+	- e.g.: `chmod +x start.sh`
+4. 🚗Run the file `start.sh` (Linux) or `start.bat` (Windows)
+5. 💬Follow the instructions on the screen.
 
-See [LICENSE](LICENSE) for full details.
+Visit the [Full Caesar Guide]() to get full instructions on how to install the backend and frontend.
+    
 
-## 📞 Contact
-For support or questions, join our [Discord](https://discord.gg/yourserver) or open an issue on GitHub.
 
+## 🔌 API
+
+Caesar provides a full HTTP-based REST-API. Please head to the [Developer Docs]() for more details.
+    
+
+----------
+
+## 🧪 Contributing
+
+Contributions are welcome! Just clone this repository (for backend modifications):
+
+```bash
+git clone https://github.com/JWeinelt/Caesar.git
+```
+Please create a pull request for any cotributions and use the [Code Conventions]() and [Style conventions]().
+
+If you find a problem with Caesar, please open an issue. But report any security issues using the ticket system on [Discord](https://dc.caesarnet.cloud).
+
+----------
+
+## 🤝 License
+
+This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt/Caesar?tab=GPL-3.0-1-ov-file).
+
+----------
+
+## ☕ Support & donations
+
+If you want to help me maintaining this amazing project, please consider buying one of the [Service Plans](https://caesarnet.cloud/#pricing) or donating:
+
+<a href='https://ko-fi.com/R5R41DYA9C' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+Please write me your GitHub username, so I'm able to add you as a sponsor to this page.
+
+## 🧭 Road map
+
+- [ ] Installing plugins via panel
+- [ ] Update system
+- [ ] Plugin market integration   
+- [ ] Advanced permission system (including roles)
+- [ ] Publish Caesar Android App on Google Play
+- [ ] Docker Support
+---
+
+> **Caesar** – bring organization into your servers.
+
+## ❤️ These people make Caesar big!
+[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-lightgrey?logo=githubsponsors)](https://github.com/sponsors/DEIN_USERNAME)

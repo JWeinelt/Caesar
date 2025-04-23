@@ -64,7 +64,9 @@ public class MySQLStorageProvider extends StorageProvider{
         try {
             checkConnection();
 
-            PreparedStatement pS = conn.prepareStatement("SELECT ")
+            PreparedStatement pS = conn.prepareStatement("SELECT ");
+        } catch (SQLException e) {
+            Log.warn(e.getMessage());
         }
     }
 }

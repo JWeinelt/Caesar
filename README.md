@@ -69,9 +69,9 @@ This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt
 
 ## ☕ Support & donations
 
-If you want to help me maintaining this amazing project, please consider buying one of the [Service Plans](https://caesarnet.cloud/#pricing) or donating via one of these sites:
+If you want to help me maintaining this amazing project, please consider buying one of the [Service Plans](https://caesarnet.cloud/#pricing) or donating:
 
-**[Ko-fi](https://ko-fi.com/julianweinelt)**
+<a href='https://ko-fi.com/R5R41DYA9C' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
 Please write me your GitHub username, so I'm able to add you as a sponsor to this page.
 

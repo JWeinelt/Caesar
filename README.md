@@ -30,7 +30,7 @@
 - When using Linux: ``wget``, ``unzip``, ``screen``
 
 ### Getting started
-1. 📥 Download the lastest .zip file from [Releases]()
+1. 📥 Download the lastest .zip file from [Releases](https://github.com/JWeinelt/Caesar/releases)
 2. 📂Extract it into the folder you want to use
 3. 🔓On Unix-like systems, you may have to give ``start.sh`` the `excute` privilege:
 	- e.g.: `chmod +x start.sh`

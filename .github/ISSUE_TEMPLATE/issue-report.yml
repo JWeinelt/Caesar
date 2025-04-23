@@ -1,0 +1,87 @@
+name: 💬 General issue
+description: Report a problem, ask questions or request new features for Caesar.
+title: "[ISSUE] "
+labels: ["triage"]
+assignees: []
+
+body:
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue type
+      description: Select, which type of issue your report is
+      options:
+        - 🐞 Bug
+        - ✨ Feature request
+        - ❓ Question
+        - 📄 Documentation
+        - 🔧 Technical problem (e.g. Setup, Build, etc.)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Descripe your problem in detail.
+      placeholder: |
+        What happened?
+        What did expect?
+        What are possible work-arounds?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: What did you do to get the problem?
+      placeholder: |
+        1. Start the server
+        2. Connect via remote CLI
+        3. Type the command `info`
+        4. See the error
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Used version
+      description: Which version of Caesar do you use?
+    validations:
+      required: false
+
+  - type: input
+    id: java-version
+    attributes:
+      label: Java-Version
+      description: (OPTIONAL) Which version of Java are you using?
+      placeholder: |
+        type `java -version` into the console and paste the output here.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: os-type
+    attributes:
+      label: Which operating system (OS) are you using?
+      description: Select, which system you are running.
+      options:
+        - Windows 10
+        - Windows 11
+        - Debian 10/11/12/13
+        - Ubuntu
+        - MacOS
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional information/screenshots
+      description: Add screenshots or logs here.
+      placeholder: e.g. Stack traces, screenshots, output of `data dump`
+    validations:
+      required: false

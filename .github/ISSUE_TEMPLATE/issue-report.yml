@@ -26,7 +26,7 @@ body:
       description: Descripe your problem in detail.
       placeholder: |
         What happened?
-        What did expect?
+        What did you expect?
         What are possible work-arounds?
     validations:
       required: true

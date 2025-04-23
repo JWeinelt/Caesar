@@ -71,7 +71,7 @@ This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt
 
 If you want to help me maintaining this amazing project, please consider buying one of the [Service Plans]() or donating via PayPal:
 
-**[PayPal link]()**
+**[Ko-fi](https://ko-fi.com/julianweinelt)**
 
 Please use a reason like "Caesar help" so the money is going to 100% into this project.
 

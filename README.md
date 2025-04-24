@@ -44,7 +44,10 @@ Visit the [Full Caesar Guide]() to get full instructions on how to install the b
 
 ## 🔌 API
 
-Caesar provides a full HTTP-based REST-API. Please head to the [Developer Docs]() for more details.
+Caesar provides a full HTTP-based REST API.
+
+- 📚 Visit the [Developer Docs](https://github.com/JWeinelt/Caesar/wiki/API) for authentication, endpoints, examples and SDKs.
+
     
 
 ----------

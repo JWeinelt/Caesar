@@ -1,0 +1,64 @@
+package de.julianweinelt.caesar.plugin;
+
+import de.julianweinelt.caesar.plugin.event.Event;
+import de.julianweinelt.caesar.plugin.event.EventListener;
+import de.julianweinelt.caesar.plugin.event.Priority;
+import de.julianweinelt.caesar.plugin.event.Subscribe;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+@Slf4j
+public class Registry {
+    @Getter
+    private final ConcurrentLinkedQueue<CPlugin> plugins = new ConcurrentLinkedQueue<>();
+
+    private final Map<String, List<EventListener>> listeners = new HashMap<>();
+
+    public void registerEvent(String eventName) {
+        listeners.putIfAbsent(eventName, new ArrayList<>());
+    }
+
+    public void registerListener(Object listener) {
+        for (Method method : listener.getClass().getDeclaredMethods()) {
+            if (method.isAnnotationPresent(Subscribe.class)) {
+                Subscribe annotation = method.getAnnotation(Subscribe.class);
+                String eventName = annotation.value();
+                Priority priority = annotation.priority();
+
+                listeners.putIfAbsent(eventName, new ArrayList<>());
+                listeners.get(eventName).add(new EventListener(listener, method, priority));
+                listeners.get(eventName).sort(Comparator.comparing(EventListener::getPriority)); // Sortiere nach Priorität
+            }
+        }
+    }
+
+    public void callEvent(Event event) {
+        List<EventListener> eventListeners = listeners.get(event.getName());
+        if (eventListeners != null) {
+            for (EventListener listener : eventListeners) {
+                try {
+                    listener.invoke(event);
+                    if (event.isCancelled()) break; //TODO
+                } catch (Exception e) {
+                    log.error(e.getMessage());
+                }
+            }
+        }
+    }
+
+    public void addPlugin(CPlugin name) {
+        plugins.add(name);
+    }
+
+    public CPlugin getPlugin(String name) {
+        for (CPlugin m : plugins) if (m.getName().equals(name)) return m;
+        return null;
+    }
+    public void removePlugin(String name) {
+        plugins.removeIf(m -> m.getName().equals(name)); //TODO: Remove listeners
+    }
+}

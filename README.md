@@ -9,15 +9,19 @@
 
 ## ✨ Features
 
-- 🗺️Management of servers integrated via CloudNET v4 or individually configured.
-- 📈Performance metrics and analytics
-- 🔒Secure user authentication with configurable permissions
-- 📂Access to file systems, consoles and logs
-- 🎮Player management with support system (Discord)
-- 🔔Notifications about critical stops and more
-- 💬Integrated secure chat for authenticated users
-- 🔊Voice chat for authenticated users
-- 🎨Configurable corporate designs for clients
+- 🗺️ Management of servers integrated via CloudNET v4 or individually configured.
+- 📈 Performance metrics and analytics
+- 🔒 Secure user authentication with configurable permissions
+- 📂 Access to file systems, consoles and logs
+- 🎮 Player management with support system (Discord)
+- 🔔 Notifications about critical stops and more
+- 💬 Integrated secure chat for authenticated users
+- 🔊 Voice chat for authenticated users
+- 🎨 Configurable corporate designs for clients
+- 🖇️ Integration for various Minecraft plugins
+
+## 💻Are you looking for plugins?
+Head to the [Caesar Marketplace!](https://market.caesarnet.cloud)
 
 ---
 

@@ -1,4 +1,4 @@
-# 🏛️ CAESAR BACKEND
+# 🏛️ Caesar Backend
 ![Version](https://img.shields.io/badge/Version-v1.0.1-green)![Update](https://img.shields.io/badge/Update-23.4.2025-blue)
 
 **Caesar** is the central backend-component for managing Minecraft server networks - especially for [CloudNet v4](https://cloudnetservice.eu/). Caesar is a fast, secure and flexible application for modern Minecraft infrastuctures.

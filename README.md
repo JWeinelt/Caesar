@@ -88,5 +88,7 @@ Please write me your GitHub username, so I'm able to add you as a sponsor to thi
 
 > **Caesar** – bring organization into your servers.
 
-## ❤️ These people make Caesar big!
-[![Sponsor](https://img.shields.io/badge/Sponsor-%E2%9D%A4-lightgrey?logo=githubsponsors)](https://github.com/sponsors/DEIN_USERNAME)
+## ❤️ These amazing people make Caesar big!
+
+<a href="https://github.com/PhastixTV"><img src="https://github.com/PhastixTV.png" width="50" height="50" alt="@PhastixTV"/></a>
+<a href="https://github.com/FirecraftGHG"><img src="https://github.com/FirecraftGHG.png" width="50" height="50" alt="@FirecraftGHG"/></a>

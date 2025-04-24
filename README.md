@@ -27,7 +27,7 @@
 
 - Java 21 or newer
 - At least 1GB storage (may be more if your data gets larger)
-- A database (MySQL or MSSQL) [See a list of required database permissions.]()
+- A database (MySQL or MSSQL) [See a list of required database permissions.](https://github.com/JWeinelt/Caesar/wiki/Database)
 - When using Linux: ``wget``, ``unzip``, ``screen``
 
 ### Getting started
@@ -56,7 +56,7 @@ Contributions are welcome! Just clone this repository (for backend modifications
 ```bash
 git clone https://github.com/JWeinelt/Caesar.git
 ```
-Please create a pull request for any cotributions and use the [Code Conventions]() and [Style conventions]().
+Please create a pull request for any cotributions and use the [Code Conventions](https://github.com/JWeinelt/Caesar/wiki/Developer-Conventions).
 
 If you find a problem with Caesar, please open an issue. But report any security issues using the ticket system on [Discord](https://dc.caesarnet.cloud).
 

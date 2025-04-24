@@ -38,7 +38,7 @@
 4. 🚗Run the file `start.sh` (Linux) or `start.bat` (Windows)
 5. 💬Follow the instructions on the screen.
 
-Visit the [Full Caesar Guide]() to get full instructions on how to install the backend and frontend.
+Visit the [Full Caesar Guide](https://github.com/JWeinelt/Caesar/wiki) to get full instructions on how to install the backend and frontend.
     
 
 

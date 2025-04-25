@@ -70,18 +70,18 @@ public class PluginLoader {
         sharedLoader = new URLClassLoader(moduleURLs.values().toArray(URL[]::new), getClass().getClassLoader());
     }
 
-    public void loadModules() {
+    public void loadPlugins() {
         File folder = new File("plugins");
         File[] modules = folder.listFiles();
         if (modules == null) return;
         for (File f : modules) {
             if (f.getName().endsWith(".jar")) {
-                loadModule(f.getName().replace(".jar", ""));
+                loadPlugin(f.getName().replace(".jar", ""));
             }
         }
     }
 
-    public void loadModule(String name) {
+    public void loadPlugin(String name) {
         log.info("Loading {}", name);
         name = name.replace(".jar", "");
         try {

@@ -23,21 +23,25 @@
     </repositories>
 
     <dependencies>
+         <!-- For logging -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.5.16</version>
         </dependency>
+         <!-- JSON parsing -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
+         <!-- Advanced terminal -->
         <dependency>
             <groupId>com.googlecode.lanterna</groupId>
             <artifactId>lanterna</artifactId>
             <version>3.1.3</version>
         </dependency>
+         <!-- Utilities like @Getter and @Setter -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -45,79 +49,94 @@
             <scope>provided</scope>
         </dependency>
 
+         <!-- Processing of file uploads via HTTP -->
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.5</version>
         </dependency>
+         <!-- IO functionality -->
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.18.0</version>
         </dependency>
+         <!-- PRocessing (de-)compress operations for .zip, etc. -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.26.2</version>
         </dependency>
 
+         <!-- Auth0 JWT Token -->
         <dependency>
             <groupId>com.auth0</groupId>
             <artifactId>java-jwt</artifactId>
             <version>4.5.0</version>
         </dependency>
+         <!-- USeful annotations like @Nullable, mainly for documentation -->
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>26.0.2</version>
             <scope>compile</scope>
         </dependency>
+         <!-- Web server creation -->
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
             <version>6.6.0</version>
         </dependency>
+         <!-- Load .env files -->
         <dependency>
             <groupId>io.github.cdimascio</groupId>
             <artifactId>dotenv-java</artifactId>
             <version>3.1.0</version>
         </dependency>
 
+         <!-- Library for creating Discord bots -->
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
             <version>5.0.1</version>
         </dependency>
+         <!-- Extension for JDA providing voice channel capabilities -->
         <dependency>
             <groupId>com.sedmelluq</groupId>
             <artifactId>lavaplayer</artifactId>
             <version>1.3.77</version>
         </dependency>
+         <!-- Library for creating web socket servers -->
         <dependency>
             <groupId>org.java-websocket</groupId>
             <artifactId>Java-WebSocket</artifactId>
             <version>1.5.6</version>
         </dependency>
+         <!-- Connector for MySQL -->
         <dependency>
             <groupId>com.mysql</groupId>
             <artifactId>mysql-connector-j</artifactId>
             <version>9.2.0</version>
         </dependency>
+         <!-- Google core library for Java -->
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>33.4.0-jre</version>
         </dependency>
+         <!-- Console processing; auto-complete, etc. -->
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
-            <version>3.29.0</version> <!-- Aktuelle Version -->
+            <version>3.29.0</version>
         </dependency>
+         <!-- Maven XML model parsing -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
             <version>3.9.9</version>
         </dependency>
+         <!-- Maven artifact parsing -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>

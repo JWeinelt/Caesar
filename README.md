@@ -17,7 +17,7 @@
 - 🔔 Notifications about critical stops and more
 - 💬 Integrated secure chat for authenticated users
 - 🔊 Voice chat for authenticated users
-- 🎨 Configurable corporate designs for clients
+- 🎨 Configurable corporate design for clients
 - 🖇️ Integration for various Minecraft plugins
 - ⌨️ Easy-to-use developer API
 

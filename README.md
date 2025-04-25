@@ -103,9 +103,19 @@ Please write me your GitHub username, so I'm able to add you as a sponsor to thi
 <a href="https://github.com/ProJakob"><img src="https://github.com/ProJakob.png" width="50" height="50" alt="@ProJakob"/></a>
 
 ## 🖇️ Software used to develop Caesar
-IntelliJ IDEA
-Phoenix Code
-Lombok
-Gson
-Log4J/Logback
-Apache Commons
+- Lombok
+- Gson
+- Log4J/Logback
+- Apache Commons (fileupload, io, compress)
+- Jetbrains Annotations
+- Lanterna
+- JWT
+- dotenv-java
+- javalin
+- JDA, Lavaplayer
+- java-websocket
+- JDBC mysql-connector
+- guava
+- JLine
+- maven-model
+- maven-artifact

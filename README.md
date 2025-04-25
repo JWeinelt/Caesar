@@ -92,6 +92,8 @@ Please write me your GitHub username, so I'm able to add you as a sponsor to thi
 - [ ] Advanced permission system (including roles)
 - [ ] Publish Caesar Android App on Google Play
 - [ ] Docker Support
+- [ ] SimpleCloud v3 Support
+- [ ] CloudNET v3 Support
 ---
 
 > **Caesar** – bring organization into your servers.

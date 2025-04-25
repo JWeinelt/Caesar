@@ -100,6 +100,7 @@ Please write me your GitHub username, so I'm able to add you as a sponsor to thi
 <a href="https://github.com/FirecraftGHG"><img src="https://github.com/FirecraftGHG.png" width="50" height="50" alt="@FirecraftGHG"/></a>
 <a href="https://github.com/PhastixTV"><img src="https://github.com/PhastixTV.png" width="50" height="50" alt="@PhastixTV"/></a>
 <a href="https://github.com/LeMichiii"><img src="https://github.com/LeMichiii.png" width="50" height="50" alt="@LeMichiii"/></a>
+<a href="https://github.com/ProJakob"><img src="https://github.com/ProJakob.png" width="50" height="50" alt="@ProJakob"/></a>
 
 ## 🖇️ Software used to develop Caesar
 IntelliJ IDEA

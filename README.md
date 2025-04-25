@@ -19,6 +19,7 @@
 - 🔊 Voice chat for authenticated users
 - 🎨 Configurable corporate designs for clients
 - 🖇️ Integration for various Minecraft plugins
+- ⌨️ Easy-to-use developer API
 
 ## 💻Are you looking for plugins?
 Head to the [Caesar Marketplace!](https://market.caesarnet.cloud)

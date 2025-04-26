@@ -61,7 +61,7 @@
             <artifactId>commons-io</artifactId>
             <version>2.18.0</version>
         </dependency>
-        <!-- PRocessing (de-)compress operations for .zip, etc. -->
+        <!-- Processing (de-)compress operations for .zip, etc. -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
@@ -74,7 +74,7 @@
             <artifactId>java-jwt</artifactId>
             <version>4.5.0</version>
         </dependency>
-        <!-- USeful annotations like @Nullable, mainly for documentation -->
+        <!-- Useful annotations like @Nullable, mainly for documentation -->
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>

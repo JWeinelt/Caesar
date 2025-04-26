@@ -14,4 +14,7 @@ public class Configuration {
     private String databaseUser;
     private String databasePassword;
     private int databasePort;
+
+    private String webServerHost;
+    private int webServerPort;
 }

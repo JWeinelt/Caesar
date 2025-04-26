@@ -9,6 +9,7 @@ public class Configuration {
     private String jwtSecret;
     private String jwtIssuer;
 
+    private StorageFactory.StorageType databaseType;
     private String databaseHost;
     private String databaseName;
     private String databaseUser;

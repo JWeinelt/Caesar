@@ -8,16 +8,15 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 @Slf4j
-public class MySQLStorageProvider extends Storage {
-    public MySQLStorageProvider(String host, int port, String database, String user, String password) {
-        super(StorageFactory.StorageType.MYSQL, host, port, database, user, password);
+public class SQLiteStorageProvider extends Storage {
+    public SQLiteStorageProvider(String database) {
+        super(StorageFactory.StorageType.SQLite, "", 0, database, "", "");
     }
 
     @Override
     public void connect() {
-        final String DRIVER = "com.mysql.cj.jdbc.Driver";
-        final String PARAMETERS = "?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
-        final String URL = "jdbc:mysql://" + getHost() + ":" + getPort() + "/" + getDatabase() + PARAMETERS;
+        final String DRIVER = "org.sqlite.JDBC";
+        final String URL = "jdbc:sqlite:" + getDatabase() + ".db";
         final String USER = getUser();
         final String PASSWORD = getPassword();
 
@@ -26,7 +25,7 @@ public class MySQLStorageProvider extends Storage {
 
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (Exception e) {
-            log.error("Failed to connect to MySQL database: {}", e.getMessage());
+            log.error("Failed to connect to SQLite database: {}", e.getMessage());
         }
     }
 
@@ -35,7 +34,7 @@ public class MySQLStorageProvider extends Storage {
         try {
             conn.close();
         } catch (SQLException e) {
-            log.error("Failed to disconnect from MySQL database: {}", e.getMessage());
+            log.error("Failed to disconnect from SQLite database: {}", e.getMessage());
         }
     }
 

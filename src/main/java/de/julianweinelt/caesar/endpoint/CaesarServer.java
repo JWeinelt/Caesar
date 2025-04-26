@@ -20,7 +20,7 @@ public class CaesarServer {
 
                     JsonObject o = new JsonObject();
                     o.addProperty("success", true);
-                    o.addProperty("token", JWTUtil.mailToken(mailUser, m.getMailID().toString()));
+                    //o.addProperty("token", JWTUtil.mailToken(mailUser, m.getMailID().toString()));
                     ctx.result(o.toString());
                 })
                 .start(6565);

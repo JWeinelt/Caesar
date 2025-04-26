@@ -8,16 +8,16 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 @Slf4j
-public class MySQLStorageProvider extends Storage {
-    public MySQLStorageProvider(String host, int port, String database, String user, String password) {
-        super(StorageFactory.StorageType.MYSQL, host, port, database, user, password);
+public class MariaDBStorageProvider extends Storage {
+    public MariaDBStorageProvider(String host, int port, String database, String user, String password) {
+        super(StorageFactory.StorageType.Mariadb, host, port, database, user, password);
     }
 
     @Override
     public void connect() {
-        final String DRIVER = "com.mysql.cj.jdbc.Driver";
+        final String DRIVER = "org.mariadb.jdbc.Driver";
         final String PARAMETERS = "?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
-        final String URL = "jdbc:mysql://" + getHost() + ":" + getPort() + "/" + getDatabase() + PARAMETERS;
+        final String URL = "jdbc:mariadb://" + getHost() + ":" + getPort() + "/" + getDatabase() + PARAMETERS;
         final String USER = getUser();
         final String PASSWORD = getPassword();
 
@@ -26,7 +26,7 @@ public class MySQLStorageProvider extends Storage {
 
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (Exception e) {
-            log.error("Failed to connect to MySQL database: {}", e.getMessage());
+            log.error("Failed to connect to MariaDB database: {}", e.getMessage());
         }
     }
 
@@ -35,7 +35,7 @@ public class MySQLStorageProvider extends Storage {
         try {
             conn.close();
         } catch (SQLException e) {
-            log.error("Failed to disconnect from MySQL database: {}", e.getMessage());
+            log.error("Failed to disconnect from MariaDB database: {}", e.getMessage());
         }
     }
 

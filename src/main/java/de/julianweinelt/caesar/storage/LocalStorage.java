@@ -15,7 +15,7 @@ public class LocalStorage extends LoadableManager<Configuration> {
      * Constructs a new instance of {@code LoadableManager}.
      *
      */
-    protected LocalStorage() {
+    public LocalStorage() {
         super(log, false, "");
     }
 

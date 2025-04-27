@@ -24,6 +24,9 @@
 ## 💻Are you looking for plugins?
 Head to the [Caesar Marketplace!](https://market.caesarnet.cloud)
 
+## 💬 Help us translate!
+View Caesar's [Crowdin](http://crowdin.com/project/caesar-panel) and help translating the project!
+
 ---
 
 ## ⚙️ Installation

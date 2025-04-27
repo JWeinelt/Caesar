@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,7 @@ public class MariaDBStorageProvider extends Storage {
     }
 
     @Override
-    public void connect() {
+    public boolean connect() {
         final String DRIVER = "org.mariadb.jdbc.Driver";
         final String PARAMETERS = "?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
         final String URL = "jdbc:mariadb://" + getHost() + ":" + getPort() + "/" + getDatabase() + PARAMETERS;
@@ -25,9 +26,11 @@ public class MariaDBStorageProvider extends Storage {
             Class.forName(DRIVER);
 
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            return true;
         } catch (Exception e) {
             log.error("Failed to connect to MariaDB database: {}", e.getMessage());
         }
+        return false;
     }
 
     @Override
@@ -46,5 +49,50 @@ public class MariaDBStorageProvider extends Storage {
         } catch (SQLException e) {
             log.error("Failed to check connection: {}", e.getMessage());
         }
+    }
+
+    @Override
+    public void createTables() {
+
+    }
+
+    @Override
+    public void insertDefaultData() {
+
+    }
+
+    @Override
+    public boolean hasTables() {
+        return false;
+    }
+
+    @Override
+    public User getUser(String username) {
+        return null;
+    }
+
+    @Override
+    public void saveUser(User user) {
+
+    }
+
+    @Override
+    public void deleteUser(String username) {
+
+    }
+
+    @Override
+    public void updateUser(User user) {
+
+    }
+
+    @Override
+    public void createUser(User user) {
+
+    }
+
+    @Override
+    public void createAdminUser() {
+
     }
 }

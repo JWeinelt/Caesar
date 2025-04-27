@@ -1,11 +1,16 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.auth.User;
+import de.julianweinelt.caesar.endpoint.wrapper.TicketStatus;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
+import de.julianweinelt.caesar.storage.StorageHelperInitializer;
+import de.julianweinelt.caesar.util.DatabaseColorParser;
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.awt.*;
+import java.sql.*;
+import java.util.UUID;
 
 @Slf4j
 public class MySQLStorageProvider extends Storage {
@@ -14,7 +19,7 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
-    public void connect() {
+    public boolean connect() {
         final String DRIVER = "com.mysql.cj.jdbc.Driver";
         final String PARAMETERS = "?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
         final String URL = "jdbc:mysql://" + getHost() + ":" + getPort() + "/" + getDatabase() + PARAMETERS;
@@ -25,9 +30,11 @@ public class MySQLStorageProvider extends Storage {
             Class.forName(DRIVER);
 
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            return true;
         } catch (Exception e) {
             log.error("Failed to connect to MySQL database: {}", e.getMessage());
         }
+        return false;
     }
 
     @Override
@@ -45,6 +52,264 @@ public class MySQLStorageProvider extends Storage {
             if (conn == null || conn.isClosed()) connect();
         } catch (SQLException e) {
             log.error("Failed to check connection: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void createTables() {
+        try {
+            conn.setAutoCommit(false);
+
+            String users = "create table users" +
+                    "(" +
+                    "    UUID                varchar(36)       not null" +
+                    "        primary key," +
+                    "    Username            varchar(20)       not null," +
+                    "    PasswordHashed      int               not null," +
+                    "    CreationDate        datetime          null," +
+                    "    Active              tinyint default 1 not null," +
+                    "    NewlyCreated        tinyint default 1 not null," +
+                    "    ApplyPasswordPolicy tinyint default 0 not null," +
+                    "    constraint users_pk_2" +
+                    "        unique (Username)" +
+                    ");";
+            Statement statement = conn.createStatement();
+            statement.addBatch(users);
+            String permissions = "create table permissions" +
+                    "(" +
+                    "    UUID           varchar(36) null" +
+                    "        primary key," +
+                    "    NameKey        varchar(60) not null," +
+                    "    PermissionKey  varchar(60) not null," +
+                    "    DefaultGranted tinyint     null," +
+                    "    constraint permissions_pk_2" +
+                    "        unique (NameKey)," +
+                    "    constraint permissions_pk_3" +
+                    "        unique (PermissionKey)" +
+                    ");";
+            statement.addBatch(permissions);
+            String userPermissions = "create table user_permissions" +
+                    "(" +
+                    "    UserID       varchar(36) null," +
+                    "    PermissionID varchar(36) null," +
+                    "    constraint user_permissions__perm_fk" +
+                    "        foreign key (PermissionID) references permissions (UUID)," +
+                    "    constraint user_permissions_users_UUID_fk" +
+                    "        foreign key (UserID) references users (UUID)" +
+                    ");";
+            statement.addBatch(userPermissions);
+            String roles = "create table roles" +
+                    "(" +
+                    "    UUID         varchar(36)                           null" +
+                    "        primary key," +
+                    "    NameKey      varchar(60)                           null," +
+                    "    DisplayColor varchar(16) default '0;0;0;100'       not null," +
+                    "    CreationDate datetime    default CURRENT_TIMESTAMP not null" +
+                    ");";
+            statement.addBatch(roles);
+            String userRoles = "create table user_roles" +
+                    "(" +
+                    "    UserID varchar(36) null," +
+                    "    RoleID varchar(36) null," +
+                    "    constraint user_roles_roles_role_fk" +
+                    "        foreign key (RoleID) references roles (UUID)," +
+                    "    constraint user_roles_users_user_fk" +
+                    "        foreign key (UserID) references users (UUID)" +
+                    ");";
+            statement.addBatch(userRoles);
+            String rolePermissions = "create table role_permissions" +
+                    "(" +
+                    "    RoleID       varchar(36) null," +
+                    "    PermissionID varchar(36) null," +
+                    "    constraint role_permissions_permissions_id_fk" +
+                    "        foreign key (PermissionID) references permissions (UUID)," +
+                    "    constraint role_permissions_roles_id_fk" +
+                    "        foreign key (RoleID) references roles (UUID)" +
+                    ");";
+            statement.addBatch(rolePermissions);
+            
+            String processStatusNames = "create table process_status_names" +
+                    "(" +
+                    "    UUID        varchar(36)                     not null" +
+                    "        primary key," +
+                    "    StatusName  varchar(36)                     not null," +
+                    "    Color       varchar(16) default '0;0;0;100' not null," +
+                    "    Description varchar(150)                    null," +
+                    "    constraint process_status_names_pk_2" +
+                    "        unique (StatusName)" +
+                    ");";
+            statement.addBatch(processStatusNames);
+            String ticketStatusNames = "create table ticket_status_names" +
+                    "(" +
+                    "    UUID        varchar(36)                     not null" +
+                    "        primary key," +
+                    "    StatusName  varchar(36)                     not null," +
+                    "    Color       varchar(16) default '0;0;0;100' not null," +
+                    "    Description varchar(150)                    null," +
+                    "    constraint ticket_status_names_pk_2" +
+                    "        unique (StatusName)" +
+                    ");";
+            String processTypes = "create table process_types" +
+                    "(" +
+                    "    TypeID      varchar(36)       not null" +
+                    "        primary key," +
+                    "    TypeName    varchar(30)       not null," +
+                    "    Active      tinyint default 1 not null," +
+                    "    UsePattern  tinyint default 0 not null," +
+                    "    PatternUsed varchar(36)       null" +
+                    ");";
+            statement.addBatch(processTypes);
+            statement.addBatch(ticketStatusNames);
+            String processes = "create table processes" +
+                    "(" +
+                    "    ProcessID    varchar(36)                                not null " +
+                    "        primary key," +
+                    "    CreatedBy    varchar(36)                                null," +
+                    "    Status       varchar(36)                                null," +
+                    "    ProcessType  varchar(36)                                null," +
+                    "    CreationDate datetime     default current_timestamp()   not null," +
+                    "    Comment      varchar(150) default 'Nothing to see here' not null," +
+                    "    constraint processes_process_status_names_UUID_fk" +
+                    "        foreign key (Status) references process_status_names (UUID)," +
+                    "    constraint processes_process_types_TypeID_fk" +
+                    "        foreign key (ProcessType) references process_types (TypeID)," +
+                    "    constraint processes_users_UUID_fk" +
+                    "        foreign key (CreatedBy) references users (UUID)" +
+                    ");";
+            statement.addBatch(processes);
+            String tickets = "create table tickets" +
+                    "(" +
+                    "    UUID         varchar(36)  null" +
+                    "        primary key," +
+                    "    CreatedBy    varchar(140) null," +
+                    "    HandledBy    varchar(140) null," +
+                    "    CreationDate datetime     null," +
+                    "    TicketStatus varchar(36)  null," +
+                    "    constraint tickets_ticket_status_names_UUID_fk" +
+                    "        foreign key (TicketStatus) references ticket_status_names (UUID)" +
+                    ");";
+            statement.addBatch(tickets);
+            String ticketTranscripts = "create table ticket_transcripts" +
+                    "(" +
+                    "    TicketID       varchar(36)                        null," +
+                    "    SenderName     varchar(50)                        not null," +
+                    "    MessageContent varchar(5000)                      null," +
+                    "    SentDate       datetime default CURRENT_TIMESTAMP not null," +
+                    "    constraint ticket_transcripts_tickets_UUID_fk" +
+                    "        foreign key (TicketID) references tickets (UUID)" +
+                    ");";
+            statement.addBatch(ticketTranscripts);
+
+            statement.executeBatch();
+        } catch (SQLException e) {
+            log.error("Failed to create tables: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void insertDefaultData() {
+        try {
+            log.info("Creating default permission data...");
+            PreparedStatement permissionPS = conn.prepareStatement("INSERT INTO permissions " +
+                    "(UUID, NameKey, PermissionKey, DefaultGranted) VALUES (?, ?, ?, ?)");
+            for (String p : StorageHelperInitializer.PERMISSIONS) {
+                permissionPS.setString(1, UUID.randomUUID().toString());
+                permissionPS.setString(2, "permissions." + p);
+                permissionPS.setString(3, p);
+                permissionPS.setBoolean(4, false);
+                permissionPS.addBatch();
+            }
+            permissionPS.executeBatch();
+
+            log.info("Creating default ticket status names...");
+            PreparedStatement ticketStatusPS = conn.prepareStatement("INSERT INTO ticket_status_names " +
+                    "(UUID, StatusName, Color, Description) VALUES (?, ?, ?, ?)");
+            for (TicketStatus s : StorageHelperInitializer.getDefaultTicketStatusList()) {
+                ticketStatusPS.setString(1, s.uniqueID().toString());
+                ticketStatusPS.setString(2, s.statusName());
+                ticketStatusPS.setString(3, DatabaseColorParser.parseColor(s.statusColor()));
+                ticketStatusPS.setString(4, s.statusDescription());
+                ticketStatusPS.addBatch();
+            }
+            ticketStatusPS.executeBatch();
+
+
+            log.info("Creating default user roles...");
+            PreparedStatement pSRoles = conn.prepareStatement("INSERT INTO roles (UUID, NameKey, DisplayColor)" +
+                    " VALUES (?, ?, ?)");
+            pSRoles.setString(1, UUID.randomUUID().toString());
+            pSRoles.setString(2, "admin");
+            pSRoles.setString(3, DatabaseColorParser.parseColor(new Color(71, 130, 195,100)));
+            pSRoles.addBatch();
+            pSRoles.setString(1, UUID.randomUUID().toString());
+            pSRoles.setString(2, "user");
+            pSRoles.setString(3, DatabaseColorParser.parseColor(new Color(255, 255, 255,100)));
+            pSRoles.executeBatch();
+        } catch (SQLException e) {
+            log.error("Failed to insert default data: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean hasTables() {
+        try {
+            Statement statement = conn.createStatement();
+            ResultSet set = statement.executeQuery("SHOW TABLES;");
+            int tables = 0;
+            while (set.next()) tables++;
+            return tables != 0;
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public User getUser(String username) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM users WHERE Username = ?");
+            pS.setString(1, username);
+            ResultSet set = pS.executeQuery();
+            if (set.next()) {
+                User user = new User(UUID.fromString(set.getString(1)));
+                return user;
+            }
+        } catch (SQLException e) {
+            log.error("Failed to get user: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public void saveUser(User user) {
+
+    }
+
+    @Override
+    public void deleteUser(String username) {
+
+    }
+
+    @Override
+    public void updateUser(User user) {
+
+    }
+
+    @Override
+    public void createUser(User user) {
+
+    }
+
+    @Override
+    public void createAdminUser() {
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO users" +
+                    " (UUID, Username, PasswordHashed, CreationDate) VALUES " +
+                    "(?, 'admin', ?, CURRENT_TIMESTAMP)");
+            pS.setString(1, UUID.randomUUID().toString());
+            pS.setInt(2, "admin".hashCode());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Could not create admin user: {}", e.getMessage());
         }
     }
 }

@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +15,7 @@ public class SQLiteStorageProvider extends Storage {
     }
 
     @Override
-    public void connect() {
+    public boolean connect() {
         final String DRIVER = "org.sqlite.JDBC";
         final String URL = "jdbc:sqlite:" + getDatabase() + ".db";
         final String USER = getUser();
@@ -24,9 +25,11 @@ public class SQLiteStorageProvider extends Storage {
             Class.forName(DRIVER);
 
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            return true;
         } catch (Exception e) {
-            log.error("Failed to connect to SQLite database: {}", e.getMessage());
+            log.error("Failed to connect to H2 database: {}", e.getMessage());
         }
+        return false;
     }
 
     @Override
@@ -45,5 +48,50 @@ public class SQLiteStorageProvider extends Storage {
         } catch (SQLException e) {
             log.error("Failed to check connection: {}", e.getMessage());
         }
+    }
+
+    @Override
+    public void createTables() {
+
+    }
+
+    @Override
+    public void insertDefaultData() {
+
+    }
+
+    @Override
+    public boolean hasTables() {
+        return false;
+    }
+
+    @Override
+    public User getUser(String username) {
+        return null;
+    }
+
+    @Override
+    public void saveUser(User user) {
+
+    }
+
+    @Override
+    public void deleteUser(String username) {
+
+    }
+
+    @Override
+    public void updateUser(User user) {
+
+    }
+
+    @Override
+    public void createUser(User user) {
+
+    }
+
+    @Override
+    public void createAdminUser() {
+
     }
 }

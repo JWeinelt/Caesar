@@ -18,4 +18,13 @@ public class Configuration {
 
     private String webServerHost;
     private int webServerPort;
+
+    private String discordBotToken;
+
+    private String cloudnetHost;
+    private String cloudnetUser;
+    private String cloudnetPassword;
+
+    private String languageVersion;
+    private String clientVersion;
 }

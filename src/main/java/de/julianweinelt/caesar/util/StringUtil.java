@@ -28,4 +28,11 @@ public class StringUtil {
         }
         return string.regionMatches(true, 0, prefix, 0, prefix.length());
     }
+
+    public static boolean contains(String string, String searchDigits) {
+        for (char d : searchDigits.toCharArray()) {
+            if (string.contains(d + "")) return true;
+        }
+        return false;
+    }
 }

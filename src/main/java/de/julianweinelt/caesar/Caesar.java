@@ -4,32 +4,33 @@ import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.endpoint.ChatServer;
 import de.julianweinelt.caesar.endpoint.ConnectionServer;
+import de.julianweinelt.caesar.exceptions.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
 import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.storage.StorageFactory;
+import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.List;
 
-@Slf4j
 public class Caesar {
+    private static final Logger log = LoggerFactory.getLogger(Caesar.class);
+
     @Getter
     private static Caesar instance;
     public static String systemVersion = "1.0";
@@ -51,10 +52,18 @@ public class Caesar {
     private ConnectionServer connectionServer;
 
     @Getter
+    private JWTUtil jwt;
+    @Getter
+    private APIKeySaver apiKeySaver;
+
+    @Getter
     private StorageFactory storageFactory;
 
     @Getter
     private LanguageManager languageManager;
+
+    @Getter
+    private ProblemLogger problemLogger;
 
     public static void main(String[] args) {
         instance = new Caesar();
@@ -67,8 +76,13 @@ public class Caesar {
     }
 
     public void start() {
-        localStorage = new LocalStorage();
-        localStorage.loadData();
+        if (localStorage == null) {
+            localStorage = new LocalStorage();
+            localStorage.loadData();
+            localStorage.loadConnections();
+        }
+        problemLogger = new ProblemLogger();
+        apiKeySaver = new APIKeySaver();
         log.info("Welcome!");
         log.info("Starting Caesar v{}", systemVersion);
         languageManager = new LanguageManager();
@@ -87,6 +101,15 @@ public class Caesar {
         log.info("Enabling plugins...");
         pluginLoader.enablePlugins();
         log.info("Plugin loading complete.");
+        log.info("Starting endpoints...");
+        caesarServer = new CaesarServer();
+        chatServer = new ChatServer();
+        connectionServer = new ConnectionServer();
+        caesarServer.start();
+        chatServer.start();
+        connectionServer.start();
+        log.info("Starting endpoints complete.");
+        log.info("Caesar has been started.");
     }
 
     public void startFirstStartup() {
@@ -112,6 +135,8 @@ public class Caesar {
 
             String port = prompt(terminal, "setup.port", "6565", List.of());
             clearScreen();
+            localStorage.getData().setWebServerHost(hostName);
+            localStorage.getData().setWebServerPort(Integer.parseInt(port));
 
             databaseProcedure(terminal);
         } catch (IOException e) {
@@ -152,14 +177,14 @@ public class Caesar {
         String databasePassword = prompt(terminal, "setup.database.password", "", List.of());
         clearScreen();
         log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.try-to-connect"));
-        localStorage.getSaveData().setDatabaseType(storageType);
-        localStorage.getSaveData().setDatabaseHost(databaseHost);
-        localStorage.getSaveData().setDatabasePort(Integer.parseInt(databasePort));
-        localStorage.getSaveData().setDatabaseName(databaseName);
-        localStorage.getSaveData().setDatabaseUser(databaseUser);
-        localStorage.getSaveData().setDatabasePassword(databasePassword);
+        localStorage.getData().setDatabaseType(storageType);
+        localStorage.getData().setDatabaseHost(databaseHost);
+        localStorage.getData().setDatabasePort(Integer.parseInt(databasePort));
+        localStorage.getData().setDatabaseName(databaseName);
+        localStorage.getData().setDatabaseUser(databaseUser);
+        localStorage.getData().setDatabasePassword(databasePassword);
         storageFactory = new StorageFactory();
-        storageFactory.provide(storageType, localStorage.getSaveData());
+        storageFactory.provide(storageType, localStorage.getData());
         storageFactory.getUsedStorage().connect();
         boolean success = storageFactory.getUsedStorage().connect();
         boolean hasTables = storageFactory.getUsedStorage().hasTables();
@@ -196,9 +221,9 @@ public class Caesar {
         log.info(languageManager.getTranslation(systemLanguage, "setup.cloudnet.info.try-to-connect"));
         boolean cloudConnect = connectionChecker.checkConnection();
         if (cloudConnect) {
-            localStorage.getSaveData().setCloudnetHost(cloudnetHost);
-            localStorage.getSaveData().setCloudnetUser(cloudnetUsername);
-            localStorage.getSaveData().setCloudnetPassword(cloudnetPassword);
+            localStorage.getData().setCloudnetHost(cloudnetHost);
+            localStorage.getData().setCloudnetUser(cloudnetUsername);
+            localStorage.getData().setCloudnetPassword(cloudnetPassword);
             log.info(languageManager.getTranslation(systemLanguage, "setup.cloudnet.info.connected"));
             finishSetup();
         } else cloudNETProcedure(terminal);
@@ -212,6 +237,10 @@ public class Caesar {
         storageFactory.getUsedStorage().createAdminUser();
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.user-created"));
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.setup-finished"));
+        jwt = new JWTUtil();
+        localStorage.getData().setJwtSecret(jwt.generateSecret(20));
+        localStorage.getData().setConnectionAPISecret(jwt.generateSecret(20));
+        clearScreen();
     }
 
     private String prompt(Terminal terminal, String promptMessage, String defaultValue, List<String> completions) {
@@ -264,8 +293,8 @@ public class Caesar {
     public List<String> getAvailableHostNames() {
         List<String> availableHostNames = new java.util.ArrayList<>();
         try {
-            InetAddress[] iaddress = InetAddress.getAllByName(InetAddress.getLocalHost().getHostName());
-            for (InetAddress address : iaddress) {
+            InetAddress[] addresses = InetAddress.getAllByName(InetAddress.getLocalHost().getHostName());
+            for (InetAddress address : addresses) {
                 availableHostNames.add(address.getHostAddress());
             }
         } catch (Exception e) {

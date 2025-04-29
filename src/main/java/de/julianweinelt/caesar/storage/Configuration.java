@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
+import de.julianweinelt.caesar.auth.PasswordConditions;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,4 +28,10 @@ public class Configuration {
 
     private String languageVersion;
     private String clientVersion;
+
+    private int tokenExpirationTime = 360*4; // Default: 24 hours
+
+    private String connectionAPISecret;
+
+    private PasswordConditions passwordConditions;
 }

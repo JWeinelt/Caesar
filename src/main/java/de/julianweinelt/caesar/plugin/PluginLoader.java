@@ -8,6 +8,8 @@ import de.julianweinelt.caesar.exceptions.PluginInvalidException;
 import de.julianweinelt.caesar.plugin.event.Event;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.InputStream;
@@ -21,8 +23,9 @@ import java.util.List;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
-@Slf4j
 public class PluginLoader {
+    private static final Logger log = LoggerFactory.getLogger(PluginLoader.class);
+
     private final Registry registry;
     private final HashMap<String, URL> moduleURLs = new HashMap<>();
     private final List<String> alreadyLoaded = new ArrayList<>();

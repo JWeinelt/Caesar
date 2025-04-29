@@ -4,12 +4,15 @@ import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-@Slf4j
 public class H2StorageProvider extends Storage {
+    private static final Logger log = LoggerFactory.getLogger(H2StorageProvider.class);
+
     public H2StorageProvider(String database) {
         super(StorageFactory.StorageType.H2, "", 0, database, "", "");
     }

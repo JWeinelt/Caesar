@@ -7,13 +7,16 @@ import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.storage.StorageHelperInitializer;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.sql.*;
 import java.util.UUID;
 
-@Slf4j
 public class MySQLStorageProvider extends Storage {
+    private static final Logger log = LoggerFactory.getLogger(MySQLStorageProvider.class);
+
     public MySQLStorageProvider(String host, int port, String database, String user, String password) {
         super(StorageFactory.StorageType.MYSQL, host, port, database, user, password);
     }

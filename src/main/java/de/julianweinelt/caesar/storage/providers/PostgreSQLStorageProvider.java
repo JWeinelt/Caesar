@@ -5,12 +5,16 @@ import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 @Slf4j
 public class PostgreSQLStorageProvider extends Storage {
+    private static final Logger log = LoggerFactory.getLogger(PostgreSQLStorageProvider.class);
+
     public PostgreSQLStorageProvider(String host, int port, String database, String user, String password) {
         super(StorageFactory.StorageType.POSTGRESQL, host, port, database, user, password);
     }

@@ -40,4 +40,8 @@ public class Configuration {
     private boolean useDiscord;
     private CorporateDesign corporateDesign;
     private boolean useCorporateDesign;
+
+    private boolean useChat;
+    private boolean allowVoiceChat;
+    private boolean allowPublicChats;
 }

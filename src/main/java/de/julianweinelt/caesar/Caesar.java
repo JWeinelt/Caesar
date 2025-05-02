@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar;
 
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
+import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.endpoint.ChatServer;
 import de.julianweinelt.caesar.endpoint.ConnectionServer;
@@ -13,7 +15,6 @@ import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.impl.completer.StringsCompleter;
@@ -63,7 +64,14 @@ public class Caesar {
     private LanguageManager languageManager;
 
     @Getter
+    private UserManager userManager;
+
+    @Getter
     private ProblemLogger problemLogger;
+
+
+    @Getter
+    private DiscordBot discordBot;
 
     public static void main(String[] args) {
         instance = new Caesar();
@@ -108,7 +116,17 @@ public class Caesar {
         caesarServer.start();
         chatServer.start();
         connectionServer.start();
+        log.info("Loading users from database...");
+        userManager = new UserManager();
+        userManager.overrideUsers(storageFactory.getUsedStorage().getAllUsers());
+        log.info("Registered all available users ({}).", userManager.getUsers().size());
         log.info("Starting endpoints complete.");
+
+        if (localStorage.getData().isUseDiscord()) {
+            discordBot = new DiscordBot();
+            discordBot.start();
+        }
+
         log.info("Caesar has been started.");
     }
 
@@ -234,7 +252,7 @@ public class Caesar {
         log.info("Finishing database setup...");
         storageFactory.getUsedStorage().createTables();
         storageFactory.getUsedStorage().insertDefaultData();
-        storageFactory.getUsedStorage().createAdminUser();
+        userManager.createUser("admin", "admin");
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.user-created"));
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.setup-finished"));
         jwt = new JWTUtil();

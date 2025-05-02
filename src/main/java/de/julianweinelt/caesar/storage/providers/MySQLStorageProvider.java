@@ -6,7 +6,6 @@ import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.storage.StorageHelperInitializer;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -276,8 +275,7 @@ public class MySQLStorageProvider extends Storage {
             pS.setString(1, username);
             ResultSet set = pS.executeQuery();
             if (set.next()) {
-                User user = new User(UUID.fromString(set.getString(1)));
-                return user;
+                return new User(UUID.fromString(set.getString(1)));
             }
         } catch (SQLException e) {
             log.error("Failed to get user: {}", e.getMessage());

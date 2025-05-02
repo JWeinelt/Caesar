@@ -1,8 +1,10 @@
 package de.julianweinelt.caesar.storage;
 
 import de.julianweinelt.caesar.auth.PasswordConditions;
+import de.julianweinelt.caesar.endpoint.CorporateDesign;
 import lombok.Getter;
 import lombok.Setter;
+import net.dv8tion.jda.api.OnlineStatus;
 
 @Getter
 @Setter
@@ -21,6 +23,7 @@ public class Configuration {
     private int webServerPort;
 
     private String discordBotToken;
+    private OnlineStatus defaultOnlineStatus;
 
     private String cloudnetHost;
     private String cloudnetUser;
@@ -34,4 +37,7 @@ public class Configuration {
     private String connectionAPISecret;
 
     private PasswordConditions passwordConditions;
+    private boolean useDiscord;
+    private CorporateDesign corporateDesign;
+    private boolean useCorporateDesign;
 }

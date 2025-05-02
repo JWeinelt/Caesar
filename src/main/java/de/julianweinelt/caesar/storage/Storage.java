@@ -4,6 +4,7 @@ import de.julianweinelt.caesar.auth.User;
 import lombok.Getter;
 
 import java.sql.Connection;
+import java.util.List;
 
 @Getter
 public abstract class Storage {
@@ -38,10 +39,8 @@ public abstract class Storage {
     public abstract boolean hasTables();
 
     public abstract User getUser(String username);
-    public abstract void saveUser(User user);
     public abstract void deleteUser(String username);
     public abstract void updateUser(User user);
     public abstract void createUser(User user);
-
-    public abstract void createAdminUser();
+    public abstract List<User> getAllUsers();
 }

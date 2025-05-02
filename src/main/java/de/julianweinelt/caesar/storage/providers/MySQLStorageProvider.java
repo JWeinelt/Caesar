@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class MySQLStorageProvider extends Storage {
@@ -283,36 +286,104 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
-    public void saveUser(User user) {
-
-    }
-
-    @Override
     public void deleteUser(String username) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM users WHERE Username = ?");
 
+            pS.setString(1, username);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete user: {}", e.getMessage());
+        }
     }
 
     @Override
     public void updateUser(User user) {
+        User existing = getUser(user.getUsername());
 
+        StringBuilder sql = new StringBuilder("UPDATE users SET ");
+
+        List<String> fields = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+
+        if (!Objects.equals(user.getUsername(), existing.getUsername())) {
+            fields.add("Username = ?");
+            values.add(user.getUsername());
+        }
+
+        if (!Objects.equals(user.getPassword(), existing.getPassword())) {
+            fields.add("PasswordHashed = ?");
+            values.add(user.getPassword());
+        }
+
+        if (!Objects.equals(user.isActive(), existing.isActive())) {
+            fields.add("Active = ?");
+            values.add(user.isActive());
+        }
+
+        if (!Objects.equals(user.isNewlyCreated(), existing.isNewlyCreated())) {
+            fields.add("NewlyCreated = ?");
+            values.add(user.isNewlyCreated());
+        }
+
+        if (!Objects.equals(user.isApplyPasswordPolicy(), existing.isApplyPasswordPolicy())) {
+            fields.add("ApplyPasswordPolicy = ?");
+            values.add(user.isApplyPasswordPolicy());
+        }
+
+        if (fields.isEmpty()) {
+            return; // Nichts zu ändern
+        }
+
+        sql.append(String.join(", ", fields));
+        sql.append(" WHERE UUID = ?");
+        values.add(user.getUuid().toString());
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            for (int i = 0; i < values.size(); i++) {
+                stmt.setObject(i + 1, values.get(i));
+            }
+
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            log.error("Failed to update user: {}", e.getMessage());
+        }
     }
 
     @Override
     public void createUser(User user) {
-
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO users (UUID, Username, PasswordHashed, " +
+                    "CreationDate) VALUES (?, ?, ?, CURRENT_TIMESTAMP)");
+            pS.setString(1, user.getUuid().toString());
+            pS.setString(2, user.getUsername());
+            pS.setInt(3, user.getPassword());
+            int result = pS.executeUpdate();
+            if (result == 0) {
+                log.error("Failed to create user: {}", user.getUsername());
+            }
+        } catch (SQLException e) {
+            log.error("Failed to create user: {}", e.getMessage());
+        }
     }
 
     @Override
-    public void createAdminUser() {
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
         try {
-            PreparedStatement pS = conn.prepareStatement("INSERT INTO users" +
-                    " (UUID, Username, PasswordHashed, CreationDate) VALUES " +
-                    "(?, 'admin', ?, CURRENT_TIMESTAMP)");
-            pS.setString(1, UUID.randomUUID().toString());
-            pS.setInt(2, "admin".hashCode());
-            pS.execute();
+            ResultSet set = conn.createStatement().executeQuery("SELECT * FROM users");
+            while (set.next()) {
+                User user = new User(
+                        UUID.fromString(set.getString(1)),
+                        set.getString(2), set.getInt(3), ""
+                );
+                users.add(user);
+            }
         } catch (SQLException e) {
-            log.error("Could not create admin user: {}", e.getMessage());
+            log.error("Failed to get all users: {}", e.getMessage());
         }
+
+        return users;
     }
 }

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.List;
 
 public class MSSQLStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(MSSQLStorageProvider.class);
@@ -75,11 +76,6 @@ public class MSSQLStorageProvider extends Storage {
     }
 
     @Override
-    public void saveUser(User user) {
-
-    }
-
-    @Override
     public void deleteUser(String username) {
 
     }
@@ -95,7 +91,7 @@ public class MSSQLStorageProvider extends Storage {
     }
 
     @Override
-    public void createAdminUser() {
-
+    public List<User> getAllUsers() {
+        return List.of();
     }
 }

@@ -4,7 +4,8 @@ import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
-import de.julianweinelt.caesar.endpoint.ChatServer;
+import de.julianweinelt.caesar.endpoint.chat.ChatManager;
+import de.julianweinelt.caesar.endpoint.chat.ChatServer;
 import de.julianweinelt.caesar.endpoint.ConnectionServer;
 import de.julianweinelt.caesar.exceptions.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
@@ -39,39 +40,42 @@ public class Caesar {
     private String systemLanguage = "en";
 
     @Getter
-    private Registry registry;
+    private Registry registry = null;
     @Getter
-    private PluginLoader pluginLoader;
+    private PluginLoader pluginLoader = null;
     @Getter
-    private LocalStorage localStorage;
+    private LocalStorage localStorage = null;
 
     @Getter
-    private CaesarServer caesarServer;
+    private CaesarServer caesarServer = null;
     @Getter
-    private ChatServer chatServer;
+    private ChatServer chatServer = null;
     @Getter
-    private ConnectionServer connectionServer;
+    private ConnectionServer connectionServer = null;
 
     @Getter
-    private JWTUtil jwt;
-    @Getter
-    private APIKeySaver apiKeySaver;
+    private ChatManager chatManager;
 
     @Getter
-    private StorageFactory storageFactory;
+    private JWTUtil jwt = null;
+    @Getter
+    private APIKeySaver apiKeySaver = null;
 
     @Getter
-    private LanguageManager languageManager;
+    private StorageFactory storageFactory = null;
 
     @Getter
-    private UserManager userManager;
+    private LanguageManager languageManager = null;
 
     @Getter
-    private ProblemLogger problemLogger;
+    private UserManager userManager = null;
+
+    @Getter
+    private ProblemLogger problemLogger = null;
 
 
     @Getter
-    private DiscordBot discordBot;
+    private DiscordBot discordBot = null;
 
     public static void main(String[] args) {
         instance = new Caesar();
@@ -110,9 +114,11 @@ public class Caesar {
         pluginLoader.enablePlugins();
         log.info("Plugin loading complete.");
         log.info("Starting endpoints...");
-        caesarServer = new CaesarServer();
-        chatServer = new ChatServer();
-        connectionServer = new ConnectionServer();
+        if (chatManager == null) chatManager = new ChatManager();
+        if (caesarServer == null) caesarServer = new CaesarServer();
+        if (chatServer == null) chatServer = new ChatServer(chatManager);
+        if (connectionServer == null) connectionServer = new ConnectionServer();
+        chatManager.setServer(chatServer);
         caesarServer.start();
         chatServer.start();
         connectionServer.start();
@@ -258,6 +264,7 @@ public class Caesar {
         jwt = new JWTUtil();
         localStorage.getData().setJwtSecret(jwt.generateSecret(20));
         localStorage.getData().setConnectionAPISecret(jwt.generateSecret(20));
+        caesarServer = new CaesarServer(true);
         clearScreen();
     }
 

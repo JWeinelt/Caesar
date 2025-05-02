@@ -1,16 +1,21 @@
 package de.julianweinelt.caesar.auth;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Getter
+@Setter
 public class User {
     private final UUID uuid;
     private String username;
     private int password;
+    private boolean active;
+    private boolean newlyCreated;
+    private boolean applyPasswordPolicy;
     private final List<String> permissions = new ArrayList<>();
 
     private String discordID;

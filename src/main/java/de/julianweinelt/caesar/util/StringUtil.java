@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.UUID;
 
 public class StringUtil {
     @NotNull
@@ -34,5 +35,14 @@ public class StringUtil {
             if (string.contains(d + "")) return true;
         }
         return false;
+    }
+
+    public static boolean isUUID(String input) {
+        try {
+            UUID.fromString(input);
+            return true;
+        } catch (IllegalArgumentException ignored) {
+            return false;
+        }
     }
 }

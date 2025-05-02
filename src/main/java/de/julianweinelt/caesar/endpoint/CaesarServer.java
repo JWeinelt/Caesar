@@ -30,8 +30,15 @@ public class CaesarServer {
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final JWTUtil jwt;
 
+    private boolean isSetupMode;
+
     public CaesarServer() {
         jwt = Caesar.getInstance().getJwt();
+        isSetupMode = false;
+    }
+    public CaesarServer(boolean setupMode) {
+        jwt = Caesar.getInstance().getJwt();
+        isSetupMode = setupMode;
     }
 
     public void start() {
@@ -246,6 +253,9 @@ public class CaesarServer {
                     DiscordBot.getInstance().restart();
                     ctx.result(createSuccessResponse());
                 })
+
+                // Important for final setup
+
                 .start(6565);
     }
 

@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.plugin;
 
+import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.EventListener;
 import de.julianweinelt.caesar.plugin.event.Priority;
@@ -20,6 +21,9 @@ public class Registry {
     private final ConcurrentLinkedQueue<CPlugin> plugins = new ConcurrentLinkedQueue<>();
 
     private final Map<String, List<EventListener>> listeners = new HashMap<>();
+
+    @Getter
+    private final List<CLICommand> commands = new ArrayList<>();
 
     public void registerEvent(String eventName) {
         listeners.putIfAbsent(eventName, new ArrayList<>());
@@ -63,5 +67,9 @@ public class Registry {
     }
     public void removePlugin(String name) {
         plugins.removeIf(m -> m.getName().equals(name)); //TODO: Remove listeners
+    }
+
+    public void registerCommand(CLICommand command) {
+
     }
 }

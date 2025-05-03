@@ -1,10 +1,17 @@
 package de.julianweinelt.caesar.endpoint;
 
+import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
+import java.net.InetSocketAddress;
+
 public class ConnectionServer extends WebSocketServer {
+
+    public ConnectionServer() {
+        super(new InetSocketAddress(LocalStorage.getInstance().getData().getConnectionServerPort()));
+    }
 
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {

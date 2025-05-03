@@ -117,3 +117,4 @@ build/
 /run/libtest/websocket-jetty-common-11.0.25.jar
 /run/libtest/websocket-jetty-server-11.0.25.jar
 /run/libtest/websocket-servlet-11.0.25.jar
+/run/config.json

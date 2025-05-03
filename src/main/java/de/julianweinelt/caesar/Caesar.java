@@ -332,7 +332,7 @@ public class Caesar {
 
         if (!completionMessage.toString().isEmpty()) {
             prompt += "\nAvailable answers: ";
-            prompt += "{" + completionMessage + "}";
+            prompt += completionMessage;
         }
         prompt += ": ";
 

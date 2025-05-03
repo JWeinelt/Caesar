@@ -80,6 +80,12 @@ public class StorageFactory {
         return null;
     }
 
+    public void connect() {
+        if (usedStorage != null) {
+            usedStorage.connect();
+        }
+    }
+
     public enum StorageType {
         MYSQL(3306),
         MSSQL(1434),

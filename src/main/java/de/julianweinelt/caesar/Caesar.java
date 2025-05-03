@@ -2,11 +2,12 @@ package de.julianweinelt.caesar;
 
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
+import de.julianweinelt.caesar.endpoint.ConnectionServer;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
-import de.julianweinelt.caesar.endpoint.ConnectionServer;
 import de.julianweinelt.caesar.exceptions.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
 import de.julianweinelt.caesar.plugin.Registry;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -88,11 +90,14 @@ public class Caesar {
     }
 
     public void start() {
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+
         if (localStorage == null) {
             localStorage = new LocalStorage();
             localStorage.loadData();
             localStorage.loadConnections();
         }
+        jwt = new JWTUtil();
         problemLogger = new ProblemLogger();
         apiKeySaver = new APIKeySaver();
         log.info("Welcome!");
@@ -118,6 +123,10 @@ public class Caesar {
         if (caesarServer == null) caesarServer = new CaesarServer();
         if (chatServer == null) chatServer = new ChatServer(chatManager);
         if (connectionServer == null) connectionServer = new ConnectionServer();
+        if (storageFactory == null) storageFactory = new StorageFactory();
+        log.info("Connecting to database...");
+        storageFactory.provide(localStorage.getData().getDatabaseType(), localStorage.getData());
+        storageFactory.connect();
         chatManager.setServer(chatServer);
         caesarServer.start();
         chatServer.start();
@@ -133,7 +142,42 @@ public class Caesar {
             discordBot.start();
         }
 
+        log.info("Registering system commands...");
+        registerSystemCommands();
+
         log.info("Caesar has been started.");
+        startCLI();
+    }
+
+    public void startCLI() {
+        try {
+            Terminal terminal = TerminalBuilder.builder().system(true).build();
+
+            LineReaderBuilder readerBuilder = LineReaderBuilder.builder()
+                    .terminal(terminal);
+
+            LineReader reader = readerBuilder.build();
+            reader.setOpt(LineReader.Option.AUTO_LIST);
+            reader.setOpt(LineReader.Option.MOUSE);
+
+            String input = reader.readLine();
+
+            String[] args = input.split(" ");
+
+            for (CLICommand cmd : getRegistry().getCommands())
+                if (cmd.getName().equalsIgnoreCase(args[0]) || cmd.getAliases().contains(args[0]))
+                    cmd.execute(args);
+        } catch (IOException e) {
+            log.error("Failed to start terminal: {}", e.getMessage());
+        }
+    }
+
+    public void registerSystemCommands() {
+        getRegistry().registerCommand(
+                new CLICommand("stop")
+                        .aliases("exit", "quit", "shutdown")
+                        .executor((label, args) -> Caesar.this.shutdown())
+        );
     }
 
     public void startFirstStartup() {
@@ -157,7 +201,7 @@ public class Caesar {
             String hostName = prompt(terminal, "setup.hostname", InetAddress.getLocalHost().getHostAddress(), getAvailableHostNames());
             clearScreen();
 
-            String port = prompt(terminal, "setup.port", "6565", List.of());
+            String port = prompt(terminal, "setup.port", "49850", List.of());
             clearScreen();
             localStorage.getData().setWebServerHost(hostName);
             localStorage.getData().setWebServerPort(Integer.parseInt(port));
@@ -254,6 +298,7 @@ public class Caesar {
     }
 
     private void finishSetup() {
+        userManager = new UserManager();
         localStorage.saveData();
         log.info("Finishing database setup...");
         storageFactory.getUsedStorage().createTables();
@@ -261,11 +306,13 @@ public class Caesar {
         userManager.createUser("admin", "admin");
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.user-created"));
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.setup-finished"));
+        localStorage.getData().setJwtSecret(generateSecret(20));
+        localStorage.getData().setConnectionAPISecret(generateSecret(20));
         jwt = new JWTUtil();
-        localStorage.getData().setJwtSecret(jwt.generateSecret(20));
-        localStorage.getData().setConnectionAPISecret(jwt.generateSecret(20));
+        localStorage.saveData();
         caesarServer = new CaesarServer(true);
         clearScreen();
+        start();
     }
 
     private String prompt(Terminal terminal, String promptMessage, String defaultValue, List<String> completions) {
@@ -315,6 +362,26 @@ public class Caesar {
         return List.of("true", "yes", "on", "1").contains(input.toLowerCase());
     }
 
+    public String generateSecret(int length) {
+        SecureRandom random = new SecureRandom();
+
+        StringBuilder characterPool = new StringBuilder();
+        String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        characterPool.append(LETTERS);
+        String DIGITS = "0123456789";
+        characterPool.append(DIGITS);
+        String SYMBOLS = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+        characterPool.append(SYMBOLS);
+
+        StringBuilder result = new StringBuilder(length);
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(characterPool.length());
+            result.append(characterPool.charAt(index));
+        }
+
+        return result.toString();
+    }
+
     public List<String> getAvailableHostNames() {
         List<String> availableHostNames = new java.util.ArrayList<>();
         try {
@@ -328,6 +395,25 @@ public class Caesar {
         availableHostNames.add("0.0.0.0");
         availableHostNames.add("localhost");
         return availableHostNames;
+    }
+
+    public void shutdown() {
+        log.info("Caesar is shutting down...");
+        localStorage.saveData();
+        localStorage.saveConnections();
+        log.info("Stopping endpoints...");
+        try {
+            chatServer.stop();
+            caesarServer.stop();
+            connectionServer.stop();
+            storageFactory.getUsedStorage().disconnect();
+            if (discordBot != null) discordBot.stop();
+        } catch (InterruptedException e) {
+            log.error("Failed to stop endpoints: {}", e.getMessage());
+        }
+        log.info("Caesar has been stopped.");
+        Runtime.getRuntime().halt(0);
+        System.exit(0);
     }
 
     public List<String> getBooleans() {

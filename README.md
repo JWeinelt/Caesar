@@ -33,7 +33,7 @@ View Caesar's [Crowdin](http://crowdin.com/project/caesar-panel) and help transl
 
 ### Requirements
 
-- Java 21 or newer
+- Java 17 or newer
 - At least 1GB storage (may be more if your data gets larger)
 - A database (MySQL or MSSQL) [See a list of required database permissions.](https://github.com/JWeinelt/Caesar/wiki/Database)
 - When using Linux: ``wget``, ``unzip``, ``screen``

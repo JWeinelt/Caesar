@@ -4,10 +4,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -21,6 +23,7 @@ public class ChatServer extends WebSocketServer {
 
 
     public ChatServer(ChatManager chatManager) {
+        super(new InetSocketAddress(LocalStorage.getInstance().getData().getChatServerPort()));
         this.chatManager = chatManager;
     }
 

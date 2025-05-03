@@ -19,18 +19,26 @@ import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.StringUtil;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
 public class CaesarServer {
+    private static final Logger log = LoggerFactory.getLogger(CaesarServer.class);
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final JWTUtil jwt;
 
+    private Javalin app;
+
     private boolean isSetupMode;
+    private int setupCode;
 
     public CaesarServer() {
         jwt = Caesar.getInstance().getJwt();
@@ -42,8 +50,58 @@ public class CaesarServer {
     }
 
     public void start() {
-        Javalin app = Javalin.create()
+        app = Javalin.create(javalinConfig -> {
+            javalinConfig.showJavalinBanner = false;
+                })
                 .before(ctx -> ctx.contentType("application/json"))
+
+                // For connection checking
+                .get("/csetup/checkconnection", ctx -> {
+                    if (isSetupMode) {
+                        JsonObject o = new JsonObject();
+                        o.addProperty("success", true);
+                        o.addProperty("setup", true);
+                        o.addProperty("useCloudNET", LocalStorage.getInstance().getData().isCloudnetEnabled());
+                        ctx.result(o.toString());
+                        setupCode = new SecureRandom().nextInt(1000, 9999);
+                        log.info("""
+                                      _____       _____                            _              _  \s
+                                     / / \\ \\     |_   _|                          | |            | | \s
+                                    / /| |\\ \\      | |  _ __ ___  _ __   ___  _ __| |_ __ _ _ __ | |_\s
+                                   / / | | \\ \\     | | | '_ ` _ \\| '_ \\ / _ \\| '__| __/ _` | '_ \\| __|
+                                  / /  |_|  \\ \\   _| |_| | | | | | |_) | (_) | |  | || (_| | | | | |_\s
+                                 /_/___(_)___\\_\\ |_____|_| |_| |_| .__/ \\___/|_|   \\__\\__,_|_| |_|\\__|
+                                                                 | |                                 \s
+                                                                 |_|                                  \
+                                """);
+                        log.info("Setup code: {}", setupCode);
+                        log.info("Please enter the code in the Caesar client to continue setup.");
+                        log.info("##################################################################");
+                    } else {
+                        JsonObject o = new JsonObject();
+                        o.addProperty("success", true);
+                        o.addProperty("setup", false);
+                        o.addProperty("useCloudNET", LocalStorage.getInstance().getData().isCloudnetEnabled());
+                        ctx.result(o.toString());
+                    }
+                })
+                .post("/csetup/checkcode", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+
+                    if (isSetupMode) {
+                        if (rootObj.get("code").getAsInt() == setupCode) {
+                            JsonObject o = new JsonObject();
+                            o.addProperty("success", true);
+                            ctx.result(o.toString());
+                        } else {
+                            ctx.result(createErrorResponse(ErrorType.INVALID_SETUP_CODE));
+                        }
+                    }
+                    isSetupMode = false;
+                    setupCode = 0;
+                })
+
+                // Authentication
                 .post("/auth", ctx -> {
                     String authBasic = ctx.header("Authorization");
                     if (authBasic == null || !authBasic.startsWith("Basic ")) {
@@ -60,17 +118,17 @@ public class CaesarServer {
                     User user = UserManager.getInstance().getUser(decodedString.split(":")[0]);
                     if (user == null) {
                         ctx.result(createErrorResponse(ErrorType.USER_NOT_FOUND));
-                        ctx.status(HttpStatus.UNAUTHORIZED);
+                        ctx.status(HttpStatus.UNAUTHORIZED); // 401
                         return;
                     }
                     if (!user.isActive()) {
                         ctx.result(createErrorResponse(ErrorType.USER_DISABLED));
-                        ctx.status(HttpStatus.UNAUTHORIZED);
+                        ctx.status(HttpStatus.UNAUTHORIZED); // 401
                         return;
                     }
                     if (user.getPassword() != decodedString.split(":")[1].hashCode()) {
                         ctx.result(createErrorResponse(ErrorType.PASSWORD_INVALID));
-                        ctx.status(HttpStatus.UNAUTHORIZED);
+                        ctx.status(HttpStatus.UNAUTHORIZED); // 401
                         return;
                     }
 
@@ -78,9 +136,21 @@ public class CaesarServer {
                     o.addProperty("success", true);
                     o.addProperty("token", jwt.token(user.getUsername()));
                     o.addProperty("enforcePasswordChange", user.isNewlyCreated());
+                    o.addProperty("useCloudNET", LocalStorage.getInstance().getData().isCloudnetEnabled());
+                    if (LocalStorage.getInstance().getData().isCloudnetEnabled()) {
+                        JsonObject c = new JsonObject();
+                        String credentials = Base64.getEncoder().encodeToString((LocalStorage.getInstance().getData().getCloudnetUser() + ":" +
+                                LocalStorage.getInstance().getData().getCloudnetPassword()).getBytes(StandardCharsets.UTF_8));
+                        c.addProperty("credentials", credentials);
+                        c.addProperty("host", LocalStorage.getInstance().getData().getCloudnetHost());
+                        o.add("cloudnet", c);
+                    }
                     ctx.result(o.toString());
                 })
+
+                // Check authentication for further requests
                 .before(ctx -> {
+                    if (ctx.path().contains("csetup") || ctx.path().contains("auth")) return;
                     String token = ctx.header("Authorization");
                     if (token == null || token.isEmpty()) {
                         ctx.status(HttpStatus.FORBIDDEN); // 403
@@ -226,8 +296,8 @@ public class CaesarServer {
                     Color buttonColor = DatabaseColorParser.parseColor(rootObj.get("buttons").getAsString());
                     String logoURL = rootObj.get("logo").getAsString();
                     boolean allowBackgrounds = rootObj.get("allowBackgrounds").getAsBoolean();
-                    CorporateDesign design = new CorporateDesign(backgroundColor,
-                            frontColor, buttonColor, allowBackgrounds, logoURL);
+                    CorporateDesign design = new CorporateDesign(DatabaseColorParser.parseColor(backgroundColor),
+                            DatabaseColorParser.parseColor(frontColor), DatabaseColorParser.parseColor(buttonColor), allowBackgrounds, logoURL);
                     LocalStorage.getInstance().getData().setCorporateDesign(design);
                     LocalStorage.getInstance().saveData();
                     ctx.result(createSuccessResponse());
@@ -256,7 +326,12 @@ public class CaesarServer {
 
                 // Important for final setup
 
-                .start(6565);
+
+                .start(LocalStorage.getInstance().getData().getWebServerPort());
+    }
+
+    public void stop() {
+        app.stop();
     }
 
     public String createErrorResponse(ErrorType type ) {
@@ -287,6 +362,7 @@ public class CaesarServer {
         PASSWORD_INVALID,
         USER_NOT_FOUND,
         USER_DISABLED,
-        INVALID_HEADER
+        INVALID_HEADER,
+        INVALID_SETUP_CODE
     }
 }

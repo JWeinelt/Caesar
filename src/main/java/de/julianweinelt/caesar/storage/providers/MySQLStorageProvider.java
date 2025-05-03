@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar.storage.providers;
 
 import de.julianweinelt.caesar.auth.User;
+import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.endpoint.wrapper.TicketStatus;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
@@ -35,6 +36,8 @@ public class MySQLStorageProvider extends Storage {
             Class.forName(DRIVER);
 
             conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            log.info("Connected to MySQL database: {}", URL);
+            conn.createStatement().execute("USE " + getDatabase());
             return true;
         } catch (Exception e) {
             log.error("Failed to connect to MySQL database: {}", e.getMessage());
@@ -359,8 +362,8 @@ public class MySQLStorageProvider extends Storage {
             pS.setInt(3, user.getPassword());
             int result = pS.executeUpdate();
             if (result == 0) {
-                log.error("Failed to create user: {}", user.getUsername());
-            }
+                log.error("Failed to create user (db): {}", user.getUsername());
+            } else log.info("Created user: {}", user.getUsername());
         } catch (SQLException e) {
             log.error("Failed to create user: {}", e.getMessage());
         }
@@ -376,10 +379,19 @@ public class MySQLStorageProvider extends Storage {
                         UUID.fromString(set.getString(1)),
                         set.getString(2), set.getInt(3), ""
                 );
+                user.setActive(set.getBoolean(5));
+                user.setNewlyCreated(set.getBoolean(6));
+                user.setApplyPasswordPolicy(set.getBoolean(7));
                 users.add(user);
             }
         } catch (SQLException e) {
             log.error("Failed to get all users: {}", e.getMessage());
+        }
+
+        if (users.isEmpty()) {
+            log.warn("No users found in database!");
+            log.warn("That doesn't look correct. We will create a default user for you...");
+            UserManager.getInstance().createUser("admin", "admin");
         }
 
         return users;

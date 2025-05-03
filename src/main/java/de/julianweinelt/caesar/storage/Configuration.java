@@ -21,10 +21,13 @@ public class Configuration {
 
     private String webServerHost;
     private int webServerPort;
+    private int chatServerPort = 49801;
+    private int connectionServerPort = 49802;
 
     private String discordBotToken;
     private OnlineStatus defaultOnlineStatus;
 
+    private boolean cloudnetEnabled;
     private String cloudnetHost;
     private String cloudnetUser;
     private String cloudnetPassword;

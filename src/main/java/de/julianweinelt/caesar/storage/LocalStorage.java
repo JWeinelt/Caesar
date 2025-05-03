@@ -65,7 +65,7 @@ public class LocalStorage {
             while ((line = br.readLine()) != null) {
                 jsonStringBuilder.append(line);
             }
-            connections = GSON.fromJson(jsonStringBuilder.toString(), new TypeToken<Configuration>(){}.getType());
+            connections = GSON.fromJson(jsonStringBuilder.toString(), new TypeToken<List<ServerConnection>>(){}.getType());
         } catch (IOException e) {
             log.error(e.getMessage());
         }

@@ -6,7 +6,6 @@ import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.exceptions.PluginInvalidException;
 import de.julianweinelt.caesar.plugin.event.Event;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +36,7 @@ public class PluginLoader {
 
     public void prepareLoading() {
         File folder = new File("plugins");
+        if (!folder.exists()) folder.mkdirs();
         File[] modules = folder.listFiles();
         if (modules == null) return;
         for (File f : modules) {
@@ -107,7 +107,7 @@ public class PluginLoader {
                     log.info("Detected plugin with name {} created by {}.", json.get("pluginName").getAsString(), autorString);
                     log.info("Version: {}", json.get("version").getAsString());
 
-                    if (Caesar.getInstance().getRegistry().getPlugin(name) != null) {
+                    if (registry.getPlugin(name) != null) {
                         return; // Module with the name is already loaded
                     }
 
@@ -157,9 +157,9 @@ public class PluginLoader {
                                 "correct them.", moduleInstance.getName());
                     }
                     moduleInstance.onLoad();
-                    Caesar.getInstance().getRegistry().addPlugin(moduleInstance);
+                    registry.addPlugin(moduleInstance);
                     StringBuilder s = new StringBuilder();
-                    for (CPlugin p : Caesar.getInstance().getRegistry().getPlugins()) {
+                    for (CPlugin p : registry.getPlugins()) {
                         s.append(p.getName()).append(", ");
                     }
                     s = new StringBuilder(s.substring(0, s.length() - 2));
@@ -167,7 +167,7 @@ public class PluginLoader {
 
                     File dataFolder = new File("data/" + moduleInstance.getName());
                     if (dataFolder.mkdir()) log.info("Created new data folder for {}.", moduleInstance.getName());
-                    Caesar.getInstance().getRegistry().callEvent(
+                    registry.callEvent(
                             new Event("ServerPluginLoadEvent")
                                     .set("plugin", moduleInstance.getName())
                                     .set("description", moduleInstance.getDescription())
@@ -190,7 +190,7 @@ public class PluginLoader {
     }
 
     public void enablePlugins() {
-        for (CPlugin m : Caesar.getInstance().getRegistry().getPlugins()) {
+        for (CPlugin m : registry.getPlugins()) {
             m.onCreateCommands();
             m.onDefineEvents();
             m.onEnable();
@@ -199,8 +199,8 @@ public class PluginLoader {
 
     public void unloadPlugin(String name) {
         log.info("Disabling {}...", name);
-        Caesar.getInstance().getRegistry().getPlugin(name).onDisable();
-        Caesar.getInstance().getRegistry().removePlugin(name);
+        registry.getPlugin(name).onDisable();
+        registry.removePlugin(name);
     }
 
     private void printStacktrace(Exception e) {

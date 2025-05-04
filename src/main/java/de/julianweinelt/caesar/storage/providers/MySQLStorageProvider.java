@@ -207,6 +207,17 @@ public class MySQLStorageProvider extends Storage {
                     "        foreign key (TicketID) references tickets (UUID)" +
                     ");";
             statement.addBatch(ticketTranscripts);
+            String serverData = "create table server_data" +
+                    "(" +
+                    "    UUID      varchar(36)                        not null," +
+                    "    Name      varchar(80)                        not null," +
+                    "    TimeStamp datetime default CURRENT_TIMESTAMP not null," +
+                    "    Players   int      default 0                 not null," +
+                    "    cpu       float                              not null," +
+                    "    memory    int                                not null," +
+                    "    TPS       int      default 20                not null" +
+                    ");";
+            statement.addBatch(serverData);
 
             statement.executeBatch();
         } catch (SQLException e) {

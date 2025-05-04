@@ -1,11 +1,11 @@
 package de.julianweinelt.caesar;
 
+import de.julianweinelt.caesar.auth.CaesarLinkServer;
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
-import de.julianweinelt.caesar.endpoint.ConnectionServer;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
 import de.julianweinelt.caesar.exceptions.ProblemLogger;
@@ -53,7 +53,7 @@ public class Caesar {
     @Getter
     private ChatServer chatServer = null;
     @Getter
-    private ConnectionServer connectionServer = null;
+    private CaesarLinkServer connectionServer = null;
 
     @Getter
     private ChatManager chatManager;
@@ -122,7 +122,7 @@ public class Caesar {
         if (chatManager == null) chatManager = new ChatManager();
         if (caesarServer == null) caesarServer = new CaesarServer();
         if (chatServer == null) chatServer = new ChatServer(chatManager);
-        if (connectionServer == null) connectionServer = new ConnectionServer();
+        if (connectionServer == null) connectionServer = new CaesarLinkServer();
         if (storageFactory == null) storageFactory = new StorageFactory();
         log.info("Connecting to database...");
         storageFactory.provide(localStorage.getData().getDatabaseType(), localStorage.getData());

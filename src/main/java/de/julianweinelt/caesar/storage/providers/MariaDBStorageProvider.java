@@ -59,13 +59,32 @@ public class MariaDBStorageProvider extends Storage {
             log.error("Failed to check connection: {}", e.getMessage());
         }
     }
+    @Override
+    public boolean allTablesExist(String[] tables) {
+        checkConnection();
+        try {
+            DatabaseMetaData meta = conn.getMetaData();
+            for (String table : tables) {
+                try (ResultSet rs = meta.getTables(null, null, table, new String[]{"TABLE"})) {
+                    if (!rs.next()) {
+                        log.warn("Table '{}' does not exist!", table);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } catch (SQLException e) {
+            log.error("Error while checking database: {}", e.getMessage());
+            return false;
+        }
+    }
 
     @Override
     public void createTables() {
         try {
             conn.setAutoCommit(false);
 
-            String users = "create table users" +
+            String users = "create table if not exists users" +
                     "(" +
                     "    UUID                varchar(36)       not null" +
                     "        primary key," +
@@ -79,10 +98,9 @@ public class MariaDBStorageProvider extends Storage {
                     "        unique (Username)" +
                     ");";
             Statement statement = conn.createStatement();
-            statement.addBatch(users);
-            String permissions = "create table permissions" +
+            String permissions = "create table if not exists permissions" +
                     "(" +
-                    "    UUID           varchar(36) null" +
+                    "    UUID           varchar(36) not null" +
                     "        primary key," +
                     "    NameKey        varchar(60) not null," +
                     "    PermissionKey  varchar(60) not null," +
@@ -92,48 +110,43 @@ public class MariaDBStorageProvider extends Storage {
                     "    constraint permissions_pk_3" +
                     "        unique (PermissionKey)" +
                     ");";
-            statement.addBatch(permissions);
-            String userPermissions = "create table user_permissions" +
+            String userPermissions = "create table if not exists user_permissions" +
                     "(" +
-                    "    UserID       varchar(36) null," +
-                    "    PermissionID varchar(36) null," +
+                    "    UserID       varchar(36) not null," +
+                    "    PermissionID varchar(36) not null," +
                     "    constraint user_permissions__perm_fk" +
                     "        foreign key (PermissionID) references permissions (UUID)," +
                     "    constraint user_permissions_users_UUID_fk" +
                     "        foreign key (UserID) references users (UUID)" +
                     ");";
-            statement.addBatch(userPermissions);
-            String roles = "create table roles" +
+            String roles = "create table if not exists roles" +
                     "(" +
-                    "    UUID         varchar(36)                           null" +
+                    "    UUID         varchar(36)                           not null" +
                     "        primary key," +
                     "    NameKey      varchar(60)                           null," +
                     "    DisplayColor varchar(16) default '0;0;0;100'       not null," +
                     "    CreationDate datetime    default CURRENT_TIMESTAMP not null" +
                     ");";
-            statement.addBatch(roles);
-            String userRoles = "create table user_roles" +
+            String userRoles = "create table if not exists user_roles" +
                     "(" +
-                    "    UserID varchar(36) null," +
-                    "    RoleID varchar(36) null," +
+                    "    UserID varchar(36) not null," +
+                    "    RoleID varchar(36) not null," +
                     "    constraint user_roles_roles_role_fk" +
                     "        foreign key (RoleID) references roles (UUID)," +
                     "    constraint user_roles_users_user_fk" +
                     "        foreign key (UserID) references users (UUID)" +
                     ");";
-            statement.addBatch(userRoles);
-            String rolePermissions = "create table role_permissions" +
+            String rolePermissions = "create table if not exists role_permissions" +
                     "(" +
-                    "    RoleID       varchar(36) null," +
-                    "    PermissionID varchar(36) null," +
+                    "    RoleID       varchar(36) not null," +
+                    "    PermissionID varchar(36) not null," +
                     "    constraint role_permissions_permissions_id_fk" +
                     "        foreign key (PermissionID) references permissions (UUID)," +
                     "    constraint role_permissions_roles_id_fk" +
                     "        foreign key (RoleID) references roles (UUID)" +
                     ");";
-            statement.addBatch(rolePermissions);
 
-            String processStatusNames = "create table process_status_names" +
+            String processStatusNames = "create table if not exists process_status_names" +
                     "(" +
                     "    UUID        varchar(36)                     not null" +
                     "        primary key," +
@@ -143,8 +156,7 @@ public class MariaDBStorageProvider extends Storage {
                     "    constraint process_status_names_pk_2" +
                     "        unique (StatusName)" +
                     ");";
-            statement.addBatch(processStatusNames);
-            String ticketStatusNames = "create table ticket_status_names" +
+            String ticketStatusNames = "create table if not exists ticket_status_names" +
                     "(" +
                     "    UUID        varchar(36)                     not null" +
                     "        primary key," +
@@ -154,7 +166,7 @@ public class MariaDBStorageProvider extends Storage {
                     "    constraint ticket_status_names_pk_2" +
                     "        unique (StatusName)" +
                     ");";
-            String processTypes = "create table process_types" +
+            String processTypes = "create table if not exists process_types" +
                     "(" +
                     "    TypeID      varchar(36)       not null" +
                     "        primary key," +
@@ -163,15 +175,13 @@ public class MariaDBStorageProvider extends Storage {
                     "    UsePattern  tinyint default 0 not null," +
                     "    PatternUsed varchar(36)       null" +
                     ");";
-            statement.addBatch(processTypes);
-            statement.addBatch(ticketStatusNames);
-            String processes = "create table processes" +
+            String processes = "create table if not exists processes" +
                     "(" +
                     "    ProcessID    varchar(36)                                not null " +
                     "        primary key," +
-                    "    CreatedBy    varchar(36)                                null," +
-                    "    Status       varchar(36)                                null," +
-                    "    ProcessType  varchar(36)                                null," +
+                    "    CreatedBy    varchar(36)                                not null," +
+                    "    Status       varchar(36)                                not null," +
+                    "    ProcessType  varchar(36)                                not null," +
                     "    CreationDate datetime     default current_timestamp()   not null," +
                     "    Comment      varchar(150) default 'Nothing to see here' not null," +
                     "    constraint processes_process_status_names_UUID_fk" +
@@ -181,36 +191,56 @@ public class MariaDBStorageProvider extends Storage {
                     "    constraint processes_users_UUID_fk" +
                     "        foreign key (CreatedBy) references users (UUID)" +
                     ");";
-            statement.addBatch(processes);
-            String tickets = "create table tickets" +
+            String tickets = "create table if not exists tickets" +
                     "(" +
-                    "    UUID         varchar(36)  null" +
+                    "    UUID         varchar(36) not null" +
                     "        primary key," +
                     "    CreatedBy    varchar(140) null," +
                     "    HandledBy    varchar(140) null," +
                     "    CreationDate datetime     null," +
-                    "    TicketStatus varchar(36)  null," +
+                    "    TicketStatus varchar(36)  not null," +
                     "    constraint tickets_ticket_status_names_UUID_fk" +
                     "        foreign key (TicketStatus) references ticket_status_names (UUID)" +
                     ");";
-            statement.addBatch(tickets);
-            String ticketTranscripts = "create table ticket_transcripts" +
+            String ticketTranscripts = "create table if not exists ticket_transcripts" +
                     "(" +
-                    "    TicketID       varchar(36)                        null," +
+                    "    TicketID       varchar(36)                        not null," +
                     "    SenderName     varchar(50)                        not null," +
                     "    MessageContent varchar(5000)                      null," +
                     "    SentDate       datetime default CURRENT_TIMESTAMP not null," +
                     "    constraint ticket_transcripts_tickets_UUID_fk" +
                     "        foreign key (TicketID) references tickets (UUID)" +
                     ");";
-            statement.addBatch(ticketTranscripts);
+            String serverData = "create table if not exists server_data" +
+                    "(" +
+                    "    UUID      varchar(36)                        not null," +
+                    "    Name      varchar(80)                        not null," +
+                    "    TimeStamp datetime default CURRENT_TIMESTAMP not null," +
+                    "    Players   int      default 0                 not null," +
+                    "    cpu       float                              not null," +
+                    "    memory    int                                not null," +
+                    "    TPS       int      default 20                not null" +
+                    ");";
 
-            statement.executeBatch();
+            statement.executeUpdate(users);
+            statement.executeUpdate(permissions);
+            statement.executeUpdate(roles);
+            statement.executeUpdate(ticketStatusNames);
+            statement.executeUpdate(processStatusNames);
+            statement.executeUpdate(processTypes);
+
+            statement.executeUpdate(userPermissions);
+            statement.executeUpdate(userRoles);
+            statement.executeUpdate(rolePermissions);
+
+            statement.executeUpdate(tickets);
+            statement.executeUpdate(processes);
+            statement.executeUpdate(ticketTranscripts);
+            statement.executeUpdate(serverData);
         } catch (SQLException e) {
             log.error("Failed to create tables: {}", e.getMessage());
         }
     }
-
     @Override
     public void insertDefaultData() {
         try {

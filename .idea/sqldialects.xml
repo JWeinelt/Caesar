@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/H2StorageProvider.java" dialect="H2" />
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/MSSQLStorageProvider.java" dialect="TSQL" />
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/MariaDBStorageProvider.java" dialect="MariaDB" />
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/MySQLStorageProvider.java" dialect="MySQL" />
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/OracleSQLStorageProvider.java" dialect="NetSuite" />
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/PostgreSQLStorageProvider.java" dialect="PostgreSQL" />
+    <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/SQLiteStorageProvider.java" dialect="SQLite" />
+  </component>
+</project>

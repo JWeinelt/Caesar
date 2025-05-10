@@ -12,6 +12,7 @@ import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.integration.ServerConnection;
 import de.julianweinelt.caesar.storage.APIKeySaver;
+import de.julianweinelt.caesar.storage.Configuration;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
@@ -322,6 +323,45 @@ public class CaesarServer {
                     LocalStorage.getInstance().saveData();
                     DiscordBot.getInstance().restart();
                     ctx.result(createSuccessResponse());
+                })
+
+                // Settings
+                .put("/config", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String key = rootObj.get("key").getAsString();
+                    Configuration.ConfigValueType type = Configuration.ConfigValueType.valueOf(rootObj.get("type").getAsString());
+                    switch (type) {
+                        case INT -> {
+                            int val = rootObj.get("value").getAsInt();
+                            LocalStorage.getInstance().getData().set(key, val);
+                            LocalStorage.getInstance().saveData();
+                        }
+                        case STRING, ONLINE_STATUS -> {
+                            String val = rootObj.get("value").getAsString();
+                            LocalStorage.getInstance().getData().set(key, val);
+                            LocalStorage.getInstance().saveData();
+                        }
+                        case BOOLEAN -> {
+                            boolean val = rootObj.get("value").getAsBoolean();
+                            LocalStorage.getInstance().getData().set(key, val);
+                            LocalStorage.getInstance().saveData();
+                        }
+                        case CORPORATE_DESIGN -> {
+                            CorporateDesign design = GSON.fromJson(rootObj.get("value"), CorporateDesign.class);
+                            LocalStorage.getInstance().getData().setCorporateDesign(design);
+                            LocalStorage.getInstance().saveData();
+                        }
+                        case PASSWORD_CONDITIONS -> {
+                            PasswordConditions conditions = GSON.fromJson(rootObj.get("value"), PasswordConditions.class);
+                            LocalStorage.getInstance().getData().setPasswordConditions(conditions);
+                            LocalStorage.getInstance().saveData();
+                        }
+                    }
+                    ctx.result(createSuccessResponse());
+                    ctx.status(HttpStatus.OK);
+                })
+                .get("/config", ctx -> {
+                    ctx.result(GSON.toJson(LocalStorage.getInstance().getData()));
                 })
 
                 // Important for final setup

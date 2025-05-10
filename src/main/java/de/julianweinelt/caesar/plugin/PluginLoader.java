@@ -118,7 +118,7 @@ public class PluginLoader {
 
                     Class<?> mainClass = Class.forName(mainClassName, true, classLoader);
 
-                    if (!Module.class.isAssignableFrom(mainClass)) {
+                    if (!CPlugin.class.isAssignableFrom(mainClass)) {
                         throw new PluginInvalidException("Main class must implement CPlugin interface");
                     }
 
@@ -126,7 +126,7 @@ public class PluginLoader {
                     log.info("Module Classloader: {}", moduleInstance.getClass().getClassLoader());
 
                     try {
-                        moduleInstance.setName(json.get("moduleName").getAsString());
+                        moduleInstance.setName(json.get("pluginName").getAsString());
                         moduleInstance.setDescription(json.get("description").getAsString());
                         moduleInstance.setVersion(json.get("version").getAsString());
                     } catch (NullPointerException ignored) {
@@ -146,7 +146,7 @@ public class PluginLoader {
                             ComparableVersion moduleVersion = new ComparableVersion(minAPI.getAsString());
                             ComparableVersion systemVersion = new ComparableVersion(Caesar.systemVersion);
                             if (systemVersion.compareTo(moduleVersion) > 0) log.warn("Plugin {} is using an older version of" +
-                                    " GoP: {}, but the server is using {}. Expect weird things while using.",
+                                    " Caesar: {}, but the server is using {}. Expect weird things while using.",
                                     name, minAPI.getAsString(), Caesar.systemVersion);
                         }
                         moduleInstance.setStoresSensitiveData(json.get("storesSensitiveData").getAsBoolean());

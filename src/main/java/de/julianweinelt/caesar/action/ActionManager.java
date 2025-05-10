@@ -9,7 +9,7 @@ import java.util.Map;
 public class ActionManager {
     private static final Logger log = LoggerFactory.getLogger(ActionManager.class);
 
-    private Map<String, Action> actionMap = new HashMap<>();
+    private final Map<String, Action> actionMap = new HashMap<>();
 
     public void registerAction(String actionName, Action action) {
         actionMap.put(actionName, action);

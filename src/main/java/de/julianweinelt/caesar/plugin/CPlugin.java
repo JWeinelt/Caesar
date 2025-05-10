@@ -52,4 +52,8 @@ public abstract class CPlugin {
      * Called to define commands in {@link Registry}.
      */
     public abstract void onCreateCommands();
+
+    public void onBukkitEnable() {}
+    public void onBukkitDisable() {}
+    public void onBukkitLoad() {}
 }

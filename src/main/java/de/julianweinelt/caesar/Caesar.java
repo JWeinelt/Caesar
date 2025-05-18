@@ -8,14 +8,17 @@ import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
+import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
 import de.julianweinelt.caesar.exceptions.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
 import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
+import io.javalin.util.JavalinBindException;
 import lombok.Getter;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -54,6 +57,8 @@ public class Caesar {
     private ChatServer chatServer = null;
     @Getter
     private CaesarLinkServer connectionServer = null;
+    @Getter
+    private CaesarClientLinkServer clientLinkServer = null;
 
     @Getter
     private ChatManager chatManager;
@@ -105,6 +110,7 @@ public class Caesar {
         languageManager = new LanguageManager();
         registry = new Registry();
         log.info("Registering basic events...");
+        registry.registerEvent("StorageReadyEvent");
         registry.registerEvent("ServerStartupEvent");
         registry.registerEvent("ServerShutdownEvent");
         registry.registerEvent("PluginLoadEvent");
@@ -123,24 +129,32 @@ public class Caesar {
         if (caesarServer == null) caesarServer = new CaesarServer();
         if (chatServer == null) chatServer = new ChatServer(chatManager);
         if (connectionServer == null) connectionServer = new CaesarLinkServer();
+        if (clientLinkServer == null) clientLinkServer = new CaesarClientLinkServer(localStorage.getData().getClientLinkPort());
         if (storageFactory == null) storageFactory = new StorageFactory();
+        userManager = new UserManager();
         log.info("Connecting to database...");
         storageFactory.provide(localStorage.getData().getDatabaseType(), localStorage.getData());
-        storageFactory.connect();
+        boolean success = storageFactory.connect();
+        if (!success) log.error("Failed to connect to database!");
         chatManager.setServer(chatServer);
-        caesarServer.start();
-        chatServer.start();
-        connectionServer.start();
-        log.info("Loading users from database...");
-        userManager = new UserManager();
-        userManager.overrideUsers(storageFactory.getUsedStorage().getAllUsers());
+        try {
+            caesarServer.start();
+            chatServer.start();
+            connectionServer.start();
+            clientLinkServer.start();
+        } catch (JavalinBindException e) {
+            log.error("Failed to start Caesar web server: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Failed to start endpoints: {}", e.getMessage());
+        }
         log.info("Registered all available users ({}).", userManager.getUsers().size());
         log.info("Starting endpoints complete.");
 
         if (localStorage.getData().isUseDiscord()) {
             discordBot = new DiscordBot();
-            discordBot.start();
         }
+
+        registry.callEvent(new Event("StorageReadyEvent"));
 
         log.info("Registering system commands...");
         registerSystemCommands();
@@ -165,8 +179,10 @@ public class Caesar {
             String[] args = input.split(" ");
 
             for (CLICommand cmd : getRegistry().getCommands())
-                if (cmd.getName().equalsIgnoreCase(args[0]) || cmd.getAliases().contains(args[0]))
+                if (cmd.getName().equalsIgnoreCase(args[0]) || cmd.getAliases().contains(args[0])) {
                     cmd.execute(args);
+                    log.info("Executed command: {}", cmd.getName());
+                }
         } catch (IOException e) {
             log.error("Failed to start terminal: {}", e.getMessage());
         }
@@ -253,7 +269,6 @@ public class Caesar {
         localStorage.getData().setDatabasePassword(databasePassword);
         storageFactory = new StorageFactory();
         storageFactory.provide(storageType, localStorage.getData());
-        storageFactory.getUsedStorage().connect();
         boolean success = storageFactory.getUsedStorage().connect();
         boolean hasTables = storageFactory.getUsedStorage().hasTables();
         if (hasTables) {

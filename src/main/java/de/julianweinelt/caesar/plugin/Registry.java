@@ -70,6 +70,6 @@ public class Registry {
     }
 
     public void registerCommand(CLICommand command) {
-
+        commands.add(command);
     }
 }

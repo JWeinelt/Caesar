@@ -16,6 +16,12 @@ public class UserManager {
     @Getter
     private final List<User> users = new ArrayList<>();
 
+    @Getter
+    private final List<UserRole> userRoles = new ArrayList<>();
+
+    @Getter
+    private final List<CPermission> permissions = new ArrayList<>();
+
     public void overrideUsers(List<User> users) {
         this.users.clear();
         this.users.addAll(users);
@@ -52,16 +58,58 @@ public class UserManager {
     public void deleteUser(String username) {
         User user = getUser(username);
         if (user != null) {
-            users.remove(user);
             StorageFactory.getInstance().getUsedStorage().deleteUser(username);
+            users.remove(user);
         }
     }
     public void deleteUser(UUID uuid) {
         User user = getUser(uuid);
         if (user != null) {
-            users.remove(user);
             StorageFactory.getInstance().getUsedStorage().deleteUser(user.getUsername());
+            users.remove(user);
         }
+    }
+
+    public void addRole(UserRole role) {
+        userRoles.add(role);
+    }
+
+    public UserRole getRole(String name) {
+        for (UserRole role : userRoles) if (role.getName().equals(name)) return role;
+        return null;
+    }
+
+    public UserRole getRole(UUID uniqueID) {
+        for (UserRole role : userRoles) if (role.getUniqueID().equals(uniqueID)) return role;
+        return null;
+    }
+
+    public void getAllRoles() {
+        userRoles.clear();
+        userRoles.addAll(StorageFactory.getInstance().getUsedStorage().getAllRoles());
+    }
+
+    public void getAllPermissions() {
+        permissions.clear();
+        permissions.addAll(StorageFactory.getInstance().getUsedStorage().getAllPermissions());
+    }
+
+    public void addPermission(CPermission permission) {
+        permissions.add(permission);
+    }
+
+    public UUID getPermissionID(String key) {
+        for (CPermission p : permissions) if (p.permissionKey().equals(key)) return p.uniqueID();
+        return null;
+    }
+
+    public CPermission getPermission(String key) {
+        for (CPermission p : permissions) if (p.permissionKey().equals(key)) return p;
+        return null;
+    }
+    public CPermission getPermission(UUID id) {
+        for (CPermission p : permissions) if (p.uniqueID().equals(id)) return p;
+        return null;
     }
 
     public void setUserActive(String username, boolean active) {

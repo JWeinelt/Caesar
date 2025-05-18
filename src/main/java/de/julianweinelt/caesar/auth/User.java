@@ -17,6 +17,7 @@ public class User {
     private boolean newlyCreated;
     private boolean applyPasswordPolicy;
     private final List<String> permissions = new ArrayList<>();
+    private final List<UserRole> roles = new ArrayList<>();
 
     private String discordID;
 
@@ -29,5 +30,13 @@ public class User {
         this.username = username;
         this.password = password;
         this.discordID = discordID;
+    }
+
+    public void addPermission(String permission) {
+        permissions.add(permission);
+    }
+
+    public void addRole(UserRole role) {
+        roles.add(role);
     }
 }

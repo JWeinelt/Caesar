@@ -5,11 +5,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.integration.ServerConnection;
+import de.julianweinelt.caesar.plugin.CPlugin;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -48,12 +51,16 @@ public class LocalStorage {
 
 
     public void saveData() {
+        saveData(false);
+    }
+
+    public void saveData(boolean silent) {
         try (FileWriter writer = new FileWriter(configFile)) {
             writer.write(GSON.toJson(data));
         } catch (IOException e) {
             log.error("Failed to save object: " + e.getMessage());
         }
-        log.info("Local storage saved.");
+        if (!silent) log.info("Local storage saved.");
     }
 
     public void loadConnections() {
@@ -78,5 +85,28 @@ public class LocalStorage {
             log.error("Failed to save object: " + e.getMessage());
         }
         log.info("Connection data saved.");
+    }
+
+    public <T> T load(String fileName, Type type) {
+        try (BufferedReader br = new BufferedReader(new FileReader("data/" + fileName + ".json"))) {
+            StringBuilder jsonStringBuilder = new StringBuilder();
+            String line;
+            while ((line = br.readLine()) != null) {
+                jsonStringBuilder.append(line);
+            }
+            return GSON.fromJson(jsonStringBuilder.toString(), type);
+        } catch (IOException e) {
+            log.error(e.getMessage());
+            return null;
+        }
+    }
+
+    public void save(Object object, String fileName) {
+
+        try (FileWriter writer = new FileWriter(new File("data", fileName + ".json"))) {
+            writer.write(GSON.toJson(object));
+        } catch (IOException e) {
+            log.error("Failed to save object: " + e.getMessage());
+        }
     }
 }

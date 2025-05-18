@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar.storage;
 
+import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
+import de.julianweinelt.caesar.auth.UserRole;
 import lombok.Getter;
 
 import java.sql.Connection;
@@ -33,6 +35,7 @@ public abstract class Storage {
     public abstract void disconnect();
     public abstract void checkConnection();
     public abstract boolean allTablesExist(String[] tables);
+    public abstract boolean systemDataExist();
 
     public abstract void createTables();
     public abstract void insertDefaultData();
@@ -44,4 +47,11 @@ public abstract class Storage {
     public abstract void updateUser(User user);
     public abstract void createUser(User user);
     public abstract List<User> getAllUsers();
+
+
+    public abstract void addRole(UserRole role);
+    public abstract void removeRole(UserRole role);
+    public abstract List<UserRole> getAllRoles();
+    public abstract void updateRolePermissions(UserRole role);
+    public abstract List<CPermission> getAllPermissions();
 }

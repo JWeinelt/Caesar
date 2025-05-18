@@ -80,10 +80,11 @@ public class StorageFactory {
         return null;
     }
 
-    public void connect() {
+    public boolean connect() {
         if (usedStorage != null) {
-            usedStorage.connect();
+            return usedStorage.connect();
         }
+        return false;
     }
 
     public enum StorageType {

@@ -12,6 +12,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.NoSuchFileException;
 
+@Deprecated
 /**
  * A utility class for managing the saving and loading of objects to and from JSON files,
  * with optional encryption support.

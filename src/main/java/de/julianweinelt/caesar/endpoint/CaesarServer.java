@@ -9,17 +9,16 @@ import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.PasswordConditions;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.auth.UserRole;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.integration.ServerConnection;
-import de.julianweinelt.caesar.storage.APIKeySaver;
-import de.julianweinelt.caesar.storage.Configuration;
-import de.julianweinelt.caesar.storage.LocalStorage;
-import de.julianweinelt.caesar.storage.StorageFactory;
+import de.julianweinelt.caesar.storage.*;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.StringUtil;
 import io.javalin.Javalin;
 import io.javalin.http.HttpStatus;
+import io.javalin.util.JavalinBindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +49,7 @@ public class CaesarServer {
         isSetupMode = setupMode;
     }
 
-    public void start() {
+    public void start() throws JavalinBindException {
         app = Javalin.create(javalinConfig -> {
             javalinConfig.showJavalinBanner = false;
                 })
@@ -288,6 +287,40 @@ public class CaesarServer {
                         ctx.status(HttpStatus.FORBIDDEN);
                     }
                 })
+                .post("/user/permission", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+
+                    String username = rootObj.get("username").getAsString();
+                    String permission = rootObj.get("permission").getAsString();
+                    UserManager.getInstance().getUser(username).addPermission(permission);
+                    StorageFactory.getInstance().getUsedStorage()
+                            .updateUser(UserManager.getInstance().getUser(username));
+                })
+
+                .get("/permission", ctx -> {
+                    ctx.result(GSON.toJson(UserManager.getInstance().getPermissions()));
+                })
+
+                .get("/role", ctx -> {
+                    ctx.result(GSON.toJson(UserManager.getInstance().getUserRoles()));
+                })
+                .post("/role", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String name = rootObj.get("name").getAsString();
+                    String color = rootObj.get("color").getAsString();
+                    UserRole role = new UserRole(name, color, UUID.randomUUID());
+                    UserManager.getInstance().addRole(role);
+                    ctx.result(createSuccessResponse());
+                })
+                .post("/role/permission", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String key = rootObj.get("permission").getAsString();
+                    String role = rootObj.get("role").getAsString();
+                    UserManager.getInstance().getRole(role).addPermission(key);
+                    StorageFactory.getInstance().getUsedStorage().updateRolePermissions(
+                            UserManager.getInstance().getRole(role));
+                    ctx.result(createSuccessResponse());
+                })
 
                 // Managing Corporate Design for clients
                 .patch("/design", ctx -> {
@@ -334,29 +367,25 @@ public class CaesarServer {
                         case INT -> {
                             int val = rootObj.get("value").getAsInt();
                             LocalStorage.getInstance().getData().set(key, val);
-                            LocalStorage.getInstance().saveData();
                         }
                         case STRING, ONLINE_STATUS -> {
                             String val = rootObj.get("value").getAsString();
                             LocalStorage.getInstance().getData().set(key, val);
-                            LocalStorage.getInstance().saveData();
                         }
                         case BOOLEAN -> {
                             boolean val = rootObj.get("value").getAsBoolean();
                             LocalStorage.getInstance().getData().set(key, val);
-                            LocalStorage.getInstance().saveData();
                         }
                         case CORPORATE_DESIGN -> {
                             CorporateDesign design = GSON.fromJson(rootObj.get("value"), CorporateDesign.class);
                             LocalStorage.getInstance().getData().setCorporateDesign(design);
-                            LocalStorage.getInstance().saveData();
                         }
                         case PASSWORD_CONDITIONS -> {
                             PasswordConditions conditions = GSON.fromJson(rootObj.get("value"), PasswordConditions.class);
                             LocalStorage.getInstance().getData().setPasswordConditions(conditions);
-                            LocalStorage.getInstance().saveData();
                         }
                     }
+                    LocalStorage.getInstance().saveData(true);
                     ctx.result(createSuccessResponse());
                     ctx.status(HttpStatus.OK);
                 })

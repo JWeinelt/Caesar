@@ -1,12 +1,15 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.auth.UserRole;
 import de.julianweinelt.caesar.endpoint.wrapper.TicketStatus;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.storage.StorageHelperInitializer;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
+import oracle.jdbc.proxy.annotation.Pre;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +20,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+
+//TODO: Add database downtime detection
 public class MySQLStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(MySQLStorageProvider.class);
 
@@ -58,6 +63,11 @@ public class MySQLStorageProvider extends Storage {
             if (!allTablesExist(requiredTables)) {
                 createTables();
             }
+            if (!systemDataExist()) insertDefaultData();
+            log.info("Loading data into memory... This may take a while. Please wait...");
+            UserManager.getInstance().getAllPermissions();
+            UserManager.getInstance().getAllRoles();
+            UserManager.getInstance().overrideUsers(getAllUsers());
             return true;
         } catch (Exception e) {
             log.error("Failed to connect to MySQL database: {}", e.getMessage());
@@ -81,6 +91,20 @@ public class MySQLStorageProvider extends Storage {
             return true;
         } catch (SQLException e) {
             log.error("Error while checking database: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public boolean systemDataExist() {
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM permissions");
+            ResultSet set = pS.executeQuery();
+            int i = 0;
+            while (set.next()) i++;
+            return i != 0;
+        } catch (SQLException e) {
+            log.error("Failed to check system storage data: {}", e.getMessage());
             return false;
         }
     }
@@ -325,29 +349,73 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public User getUser(String username) {
+        User user = null;
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT * FROM users WHERE Username = ?");
             pS.setString(1, username);
             ResultSet set = pS.executeQuery();
             if (set.next()) {
-                return new User(UUID.fromString(set.getString(1)));
+                user =  new User(UUID.fromString(set.getString(1)));
             }
         } catch (SQLException e) {
             log.error("Failed to get user: {}", e.getMessage());
         }
-        return null;
+        if (user == null) return null;
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM user_permissions WHERE UserID = ?");
+            pS.setString(1, user.getUuid().toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                CPermission p = UserManager.getInstance().getPermission(UUID.fromString(set.getString(2)));
+                if (p != null) user.addPermission(p.permissionKey());
+            }
+        } catch (SQLException e) {
+            log.error("Failed to get user permissions: {}", e.getMessage());
+        }
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM user_roles WHERE UserID = ?");
+            pS.setString(1, user.getUuid().toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                UserRole r = UserManager.getInstance().getRole(UUID.fromString(set.getString(2)));
+                if (r != null) user.addRole(r);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to get user roles: {}", e.getMessage());
+        }
+        return user;
     }
 
     @Override
     public void deleteUser(String username) {
+        User user = UserManager.getInstance().getUser(username);
         try {
             PreparedStatement pS = conn.prepareStatement("DELETE FROM users WHERE Username = ?");
 
             pS.setString(1, username);
             pS.execute();
+            log.info("Deleted user: {}. Performing clean-up now...", username);
         } catch (SQLException e) {
             log.error("Failed to delete user: {}", e.getMessage());
+            return;
         }
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM user_roles WHERE UserID = ?");
+            pS.setString(1, user.getUuid().toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete user roles: {}", e.getMessage());
+            return;
+        }
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM user_permissions WHERE UserID = ?");
+            pS.setString(1, user.getUuid().toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete user permissions: {}", e.getMessage());
+            return;
+        }
+        log.info("Clean-up finished. User {} and all references deleted.", username);
     }
 
     @Override
@@ -402,6 +470,35 @@ public class MySQLStorageProvider extends Storage {
         } catch (SQLException e) {
             log.error("Failed to update user: {}", e.getMessage());
         }
+
+        try {
+            conn.setAutoCommit(false);
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO user_permissions " +
+                    "(UserID, PermissionID) VALUES (?, ?) ON DUPLICATE KEY UPDATE PermissionID = PermissionID");
+            for (String perm : user.getPermissions()) {
+                CPermission permission = UserManager.getInstance().getPermission(perm);
+                if (permission == null) continue;
+                pS.setString(1, user.getUuid().toString());
+                pS.setString(2, permission.uniqueID().toString());
+                pS.addBatch();
+            }
+            pS.executeBatch();
+        } catch (SQLException e) {
+            log.error("Failed to update user permissions: {}", e.getMessage());
+        }
+        try {
+            conn.setAutoCommit(false);
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO user_roles (UserID, RoleID) VALUES (?, ?)" +
+                    " ON DUPLICATE KEY UPDATE RoleID = RoleID");
+            for (UserRole role : user.getRoles()) {
+                pS.setString(1, user.getUuid().toString());
+                pS.setString(2, role.getUniqueID().toString());
+                pS.addBatch();
+            }
+            pS.executeBatch();
+        } catch (SQLException e) {
+            log.error("Failed to update user roles: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -447,5 +544,88 @@ public class MySQLStorageProvider extends Storage {
         }
 
         return users;
+    }
+
+    @Override
+    public void addRole(UserRole role) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO roles (UUID, NameKey, DisplayColor, " +
+                    "CreationDate) VALUES (?, ?, ?, CURRENT_TIMESTAMP)");
+            pS.setString(1, UUID.randomUUID().toString());
+            pS.setString(2, role.getName());
+            pS.setString(3, role.getColor());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to add role: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void removeRole(UserRole role) {
+
+    }
+
+    @Override
+    public List<UserRole> getAllRoles() {
+        List<UserRole> roles = new ArrayList<>();
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM roles");
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                UserRole role = new UserRole(set.getString(2), set.getString(3),
+                        UUID.fromString(set.getString(1)));
+                PreparedStatement p = conn.prepareStatement("SELECT PermissionID FROM role_permissions WHERE RoleID = ?");
+                p.setString(1, role.getUniqueID().toString());
+                ResultSet s = p.executeQuery();
+                while (s.next()) {
+                    role.addPermission(
+                            UserManager.getInstance().getPermission(UUID.fromString(s.getString(1)))
+                                    .permissionKey()
+                    );
+                }
+                s.close();
+                p.close();
+                roles.add(role);
+            }
+            set.close();
+            pS.close();
+        } catch (SQLException e) {
+            log.error("Failed to get all roles: {}", e.getMessage());
+        }
+        return roles;
+    }
+
+    @Override
+    public void updateRolePermissions(UserRole role) {
+        try {
+            conn.setAutoCommit(false);
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO role_permissions (RoleID, PermissionID) " +
+                    "VALUES (?, ?) ON DUPLICATE KEY UPDATE PermissionID = PermissionID");
+            for (String p : role.getPermissions()) {
+                UUID u = UserManager.getInstance().getPermissionID(p);
+                pS.setString(1, u.toString());
+                pS.setString(2, role.getUniqueID().toString());
+                pS.addBatch();
+            }
+            pS.executeBatch();
+        } catch (SQLException e) {
+            log.error("Failed to update role permissions: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public List<CPermission> getAllPermissions() {
+        List<CPermission> permissions = new ArrayList<>();
+        try {
+            ResultSet set = conn.createStatement().executeQuery("SELECT * FROM permissions");
+            while (set.next()) {
+                CPermission p = new CPermission(UUID.fromString(set.getString(1)),
+                        set.getString(3));
+                permissions.add(p);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to get all permissions: {}", e.getMessage());
+        }
+        return permissions;
     }
 }

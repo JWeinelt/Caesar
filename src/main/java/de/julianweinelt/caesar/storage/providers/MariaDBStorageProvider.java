@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
+import de.julianweinelt.caesar.auth.UserRole;
 import de.julianweinelt.caesar.endpoint.wrapper.TicketStatus;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
@@ -77,6 +79,11 @@ public class MariaDBStorageProvider extends Storage {
             log.error("Error while checking database: {}", e.getMessage());
             return false;
         }
+    }
+
+    @Override
+    public boolean systemDataExist() {
+        return false;
     }
 
     @Override
@@ -413,5 +420,30 @@ public class MariaDBStorageProvider extends Storage {
         }
 
         return users;
+    }
+
+    @Override
+    public void addRole(UserRole role) {
+
+    }
+
+    @Override
+    public void removeRole(UserRole role) {
+
+    }
+
+    @Override
+    public List<UserRole> getAllRoles() {
+        return List.of();
+    }
+
+    @Override
+    public void updateRolePermissions(UserRole role) {
+
+    }
+
+    @Override
+    public List<CPermission> getAllPermissions() {
+        return List.of();
     }
 }

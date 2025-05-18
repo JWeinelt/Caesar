@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
+import de.julianweinelt.caesar.auth.UserRole;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +58,11 @@ public class OracleSQLStorageProvider extends Storage {
 
     @Override
     public boolean allTablesExist(String[] tables) {
+        return false;
+    }
+
+    @Override
+    public boolean systemDataExist() {
         return false;
     }
 
@@ -207,6 +214,31 @@ public class OracleSQLStorageProvider extends Storage {
 
     @Override
     public List<User> getAllUsers() {
+        return List.of();
+    }
+
+    @Override
+    public void addRole(UserRole role) {
+
+    }
+
+    @Override
+    public void removeRole(UserRole role) {
+
+    }
+
+    @Override
+    public List<UserRole> getAllRoles() {
+        return List.of();
+    }
+
+    @Override
+    public void updateRolePermissions(UserRole role) {
+
+    }
+
+    @Override
+    public List<CPermission> getAllPermissions() {
         return List.of();
     }
 }

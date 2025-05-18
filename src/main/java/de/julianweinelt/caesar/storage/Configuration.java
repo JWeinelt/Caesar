@@ -20,9 +20,10 @@ public class Configuration {
     private int databasePort;
 
     private String webServerHost;
-    private int webServerPort;
-    private int chatServerPort = 49801;
-    private int connectionServerPort = 49802;
+    private int webServerPort = 48000;
+    private int chatServerPort = 48001;
+    private int connectionServerPort = 48002;
+    private int clientLinkPort = 48003;
 
     private String discordBotToken = "SECRET";
     private OnlineStatus defaultOnlineStatus;

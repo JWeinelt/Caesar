@@ -79,7 +79,9 @@ This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt
 
 
 ## 🧭 Road map
-View the [Roadmap here.](https://github.com/JWeinelt/Caesar/master/RoadMap.md)
+
+View the [Roadmap here.](https://github.com/JWeinelt/Caesar/blob/master/RoadMap.md)
+
 ---
 
 > **Caesar** – bring organization into your servers.

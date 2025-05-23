@@ -79,15 +79,7 @@ This project is licensed under  [GNU GPL v3 License](https://github.com/JWeinelt
 
 
 ## 🧭 Road map
-
-- [ ] Installing plugins via panel
-- [ ] Update system
-- [ ] Plugin market integration   
-- [ ] Advanced permission system (including roles)
-- [ ] Publish Caesar Android App on Google Play
-- [ ] Docker Support
-- [ ] SimpleCloud v3 Support
-- [ ] CloudNET v3 Support
+View the [Roadmap here.](https://github.com/JWeinelt/Caesar/master/RoadMap.md)
 ---
 
 > **Caesar** – bring organization into your servers.

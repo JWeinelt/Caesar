@@ -1,5 +1,5 @@
 # 🏛️ Caesar Backend
-![Version](https://img.shields.io/badge/Version-v0.1.73-green)[![Java CI with Maven](https://github.com/JWeinelt/Caesar/actions/workflows/maven.yml/badge.svg)](https://github.com/JWeinelt/Caesar/actions/workflows/maven.yml)
+![Version](https://img.shields.io/badge/Version-v0.1.228+alpha.1-green)[![Java CI with Maven](https://github.com/JWeinelt/Caesar/actions/workflows/maven.yml/badge.svg)](https://github.com/JWeinelt/Caesar/actions/workflows/maven.yml)
 
 **Caesar** is the central backend-component for managing Minecraft server networks - especially for [CloudNet v4](https://cloudnetservice.eu/). Caesar is a fast, secure and flexible application for modern Minecraft infrastructures.
 

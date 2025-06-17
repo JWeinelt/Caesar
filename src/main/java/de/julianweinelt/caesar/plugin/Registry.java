@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar.plugin;
 
 import de.julianweinelt.caesar.commands.CLICommand;
+import de.julianweinelt.caesar.endpoint.minecraft.MCPluginEndpoint;
+import de.julianweinelt.caesar.exceptions.MinecraftEndpointNotFoundException;
 import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.EventListener;
 import de.julianweinelt.caesar.plugin.event.Priority;
@@ -21,6 +23,8 @@ public class Registry {
     private final ConcurrentLinkedQueue<CPlugin> plugins = new ConcurrentLinkedQueue<>();
 
     private final Map<String, List<EventListener>> listeners = new HashMap<>();
+
+    private final List<MCPluginEndpoint> pluginEndpoints = new ArrayList<>();
 
     @Getter
     private final List<CLICommand> commands = new ArrayList<>();
@@ -71,5 +75,16 @@ public class Registry {
 
     public void registerCommand(CLICommand command) {
         commands.add(command);
+    }
+
+    public void addEndpoint(MCPluginEndpoint endpoint) {
+        pluginEndpoints.add(endpoint);
+    }
+
+    public MCPluginEndpoint getEndpoint(String name) {
+        for (MCPluginEndpoint endpoint : pluginEndpoints) {
+            if (endpoint.getName().equals(name)) return endpoint;
+        }
+        throw new MinecraftEndpointNotFoundException(name);
     }
 }

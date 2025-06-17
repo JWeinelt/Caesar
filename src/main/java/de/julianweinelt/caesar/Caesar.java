@@ -5,6 +5,8 @@ import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.discord.DiscordBot;
+import de.julianweinelt.caesar.discord.DiscordConfiguration;
+import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
@@ -13,6 +15,7 @@ import de.julianweinelt.caesar.exceptions.logging.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
+import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.storage.StorageFactory;
@@ -83,6 +86,8 @@ public class Caesar {
 
     @Getter
     private DiscordBot discordBot = null;
+    @Getter
+    private TicketManager ticketManager = null;
 
     public static void main(String[] args) {
         instance = new Caesar();
@@ -433,5 +438,17 @@ public class Caesar {
 
     public List<String> getBooleans() {
         return List.of("true", "false", "yes", "no", "on", "off", "1", "0");
+    }
+
+    @Subscribe("StorageReadyEvent")
+    public void onStorageReady(Event event) {
+        DiscordConfiguration dc = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
+        if (dc == null) return;
+        if (dc.isUseTicketSystem()) {
+            log.info("Initializing ticket manager...");
+            ticketManager = new TicketManager();
+        } else {
+            log.info("Ticket system is not activated.");
+        }
     }
 }

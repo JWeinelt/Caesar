@@ -60,7 +60,7 @@
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.5</version>
+            <version>1.6.0</version>
         </dependency>
         <!-- IO functionality -->
         <dependency>
@@ -141,7 +141,7 @@
         <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
-            <version>3.49.1.0</version>
+            <version>3.50.1.0</version>
         </dependency>
         <!-- JDBC Connector for PostgreSQL -->
         <dependency>
@@ -172,19 +172,19 @@
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
-            <version>3.30.3</version>
+            <version>3.30.4</version>
         </dependency>
         <!-- Maven XML model parsing -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
-            <version>3.9.9</version>
+            <version>3.9.10</version>
         </dependency>
         <!-- Maven artifact parsing -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-artifact</artifactId>
-            <version>3.9.9</version>
+            <version>3.9.10</version>
         </dependency>
     </dependencies>
 </project>

@@ -1,4 +1,4 @@
-package de.julianweinelt.caesar.endpoint.wrapper;
+package de.julianweinelt.caesar.discord.ticket;
 
 import java.awt.*;
 import java.util.UUID;

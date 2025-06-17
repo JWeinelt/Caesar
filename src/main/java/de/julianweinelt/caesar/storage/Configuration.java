@@ -2,16 +2,25 @@ package de.julianweinelt.caesar.storage;
 
 import de.julianweinelt.caesar.auth.PasswordConditions;
 import de.julianweinelt.caesar.endpoint.CorporateDesign;
+import de.julianweinelt.caesar.endpoint.minecraft.MCPluginEndpoint;
+import de.julianweinelt.caesar.exceptions.InvalidConfigKeyException;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.OnlineStatus;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 @Getter
 @Setter
 public class Configuration {
+    private final String _NOTE = "The values in this should NOT be changed manually. Instead use the Caesar Client to change them.";
+    private final String _INFO_JWT = "These parameters are important for token issuing.";
     private String jwtSecret;
     private String jwtIssuer;
 
+    private final String _INFO_DB = "These options are important for saving data.";
     private StorageFactory.StorageType databaseType;
     private String databaseHost;
     private String databaseName;
@@ -28,14 +37,13 @@ public class Configuration {
     private String discordBotToken = "SECRET";
     private OnlineStatus defaultOnlineStatus;
 
+    private final String _INFO_CN = "These fields define options for the usage of CloudNET.";
     private boolean cloudnetEnabled;
     private String cloudnetHost = "localhost";
     private String cloudnetUser = "admin";
     private String cloudnetPassword = "secret";
 
-    private String languageVersion = "1.0.0";
-    private String clientVersion = "1.0.0";
-
+    private final String _INFO2 = "This value is defined in minutes.";
     private int tokenExpirationTime = 360*4; // Default: 24 hours
 
     private String connectionAPISecret;
@@ -48,8 +56,24 @@ public class Configuration {
     private boolean useChat = false;
     private boolean allowVoiceChat = false;
     private boolean allowPublicChats = false;
+
+    private final String _INFO1 = "Here you can set custom API endpoints. Only change if you know what you are doing!";
+    private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
+
+    private final String _INFO3 = "Defined Minecraft plugin endpoints are here.";
+    private final List<MCPluginEndpoint> endpoints = new ArrayList<>();
+
+
+    private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES MAY BREAK YOUR SYSTEM!";
+    private String languageVersion = "1.0.0";
+    private String clientVersion = "1.0.0";
     
     public void set(String key, Object value) {
+        String[] readOnlyKeys = {
+                "languageVersion",
+                "clientVersion",
+        };
+        boolean readOnly = Arrays.stream(readOnlyKeys).toList().contains(key);
         switch (key) {
             case "jwtSecret" -> jwtSecret = (String) value;
             case "jwtIssuer" -> jwtIssuer = (String) value;
@@ -69,8 +93,6 @@ public class Configuration {
             case "cloudnetHost" -> cloudnetHost = (String) value;
             case "cloudnetUser" -> cloudnetUser = (String) value;
             case "cloudnetPassword" -> cloudnetPassword = (String) value;
-            case "languageVersion" -> languageVersion = (String) value;
-            case "clientVersion" -> clientVersion = (String) value;
             case "tokenExpirationTime" -> tokenExpirationTime = (int) value;
             case "connectionAPISecret" -> connectionAPISecret = (String) value;
             case "passwordConditions" -> passwordConditions = (PasswordConditions) value;
@@ -80,6 +102,9 @@ public class Configuration {
             case "useChat" -> useChat = (boolean) value;
             case "allowVoiceChat" -> allowVoiceChat = (boolean) value;
             case "allowPublicChats" -> allowPublicChats = (boolean) value;
+            default -> {
+                throw new InvalidConfigKeyException(key, readOnly);
+            }
         }
     }
 

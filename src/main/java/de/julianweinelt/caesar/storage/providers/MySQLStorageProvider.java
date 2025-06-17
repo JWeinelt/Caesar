@@ -4,12 +4,15 @@ import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.auth.UserRole;
-import de.julianweinelt.caesar.endpoint.wrapper.TicketStatus;
+import de.julianweinelt.caesar.discord.ticket.Ticket;
+import de.julianweinelt.caesar.discord.ticket.TicketManager;
+import de.julianweinelt.caesar.discord.ticket.TicketStatus;
+import de.julianweinelt.caesar.discord.ticket.TicketType;
+import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.storage.StorageHelperInitializer;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
-import oracle.jdbc.proxy.annotation.Pre;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +47,7 @@ public class MySQLStorageProvider extends Storage {
             log.info("Connected to MySQL database: {}", URL);
             conn.createStatement().execute("USE " + getDatabase());
 
-            String[] requiredTables = new String[]{
+            String[] requiredTables = {
                     "users",
                     "permissions",
                     "roles",
@@ -55,6 +58,7 @@ public class MySQLStorageProvider extends Storage {
                     "user_roles",
                     "role_permissions",
                     "tickets",
+                    "ticket_types",
                     "processes",
                     "ticket_transcripts",
                     "server_data"
@@ -68,6 +72,7 @@ public class MySQLStorageProvider extends Storage {
             UserManager.getInstance().getAllPermissions();
             UserManager.getInstance().getAllRoles();
             UserManager.getInstance().overrideUsers(getAllUsers());
+            TicketManager.execute(manager -> manager.startUp(getAllTicketStatuses(), getAllTicketTypes()));
             return true;
         } catch (Exception e) {
             log.error("Failed to connect to MySQL database: {}", e.getMessage());
@@ -214,6 +219,16 @@ public class MySQLStorageProvider extends Storage {
                     "    constraint ticket_status_names_pk_2" +
                     "        unique (StatusName)" +
                     ");";
+            String ticketTypes = """
+                create table if not exists ticket_types (
+                    TypeID varchar(36) not null primary key,
+                    TypeName varchar(16) not null,
+                    Prefix varchar(15) not null default 'ticket',
+                    ShowInSelection tinyint not null default 1,
+                    SelectionEmoji nvarchar(16) null,
+                    SelectionText varchar(30) not null default 'Ticket'
+                );
+""";
             String processTypes = "create table if not exists process_types" +
                     "(" +
                     "    TypeID      varchar(36)       not null" +
@@ -247,8 +262,12 @@ public class MySQLStorageProvider extends Storage {
                     "    HandledBy    varchar(140) null," +
                     "    CreationDate datetime     null," +
                     "    TicketStatus varchar(36)  not null," +
+                    "    TicketType varchar(36)  not null," +
+                    "    ChannelID varchar(45)  not null," +
                     "    constraint tickets_ticket_status_names_UUID_fk" +
-                    "        foreign key (TicketStatus) references ticket_status_names (UUID)" +
+                    "        foreign key (TicketStatus) references ticket_status_names (UUID), " +
+                    "    constraint tickets_ticket_types_UUID_fk" +
+                    "        foreign key (TicketType) references ticket_types (TypeID)" +
                     ");";
             String ticketTranscripts = "create table if not exists ticket_transcripts" +
                     "(" +
@@ -274,6 +293,7 @@ public class MySQLStorageProvider extends Storage {
             statement.executeUpdate(permissions);
             statement.executeUpdate(roles);
             statement.executeUpdate(ticketStatusNames);
+            statement.executeUpdate(ticketTypes);
             statement.executeUpdate(processStatusNames);
             statement.executeUpdate(processTypes);
 
@@ -627,5 +647,212 @@ public class MySQLStorageProvider extends Storage {
             log.error("Failed to get all permissions: {}", e.getMessage());
         }
         return permissions;
+    }
+
+    @Override
+    public Ticket getTicket(UUID id) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT UUID, CreatedBy, HandledBy, CreationDate," +
+                    " TicketStatus, TicketType, ChannelID" +
+                    " FROM tickets WHERE UUID = ?");
+
+            pS.setString(1, id.toString());
+
+            ResultSet set = pS.executeQuery();
+            if (set.next()) {
+                TicketStatus status;
+                TicketType type;
+                status = TicketManager.getInstance().getTicketStatus(UUID.fromString(set.getString("TicketStatus")));
+                type = TicketManager.getInstance().getTicketType(UUID.fromString(set.getString("TicketStatus")));
+
+
+
+                return new Ticket(id, set.getString("CreatedBy"),
+                        set.getString("HandledBy"), set.getString("ChannelID"), status, type);
+            }
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+        } catch (TicketSystemNotUsedException ignored) {}
+        return null;
+    }
+
+    @Override
+    public Ticket getTicket(String channel) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT UUID, CreatedBy, HandledBy, CreationDate," +
+                    " TicketStatus, TicketType, ChannelID" +
+                    " FROM tickets WHERE ChannelID = ?");
+
+            pS.setString(1, channel);
+
+            ResultSet set = pS.executeQuery();
+            if (set.next()) {
+                TicketStatus status;
+                TicketType type;
+                status = TicketManager.getInstance().getTicketStatus(UUID.fromString(set.getString("TicketStatus")));
+                type = TicketManager.getInstance().getTicketType(UUID.fromString(set.getString("TicketStatus")));
+
+
+
+                return new Ticket(UUID.fromString(set.getString("UUID")), set.getString("CreatedBy"),
+                        set.getString("HandledBy"), channel, status, type);
+            }
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+        } catch (TicketSystemNotUsedException ignored) {}
+        return null;
+    }
+
+    @Override
+    public List<TicketType> getAllTicketTypes() {
+        List<TicketType> ticketTypes = new ArrayList<>();
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT TypeID, TypeName, Prefix, ShowInSelection, " +
+                    "SelectionEmoji, SelectionText FROM ticket_types");
+
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                ticketTypes.add(new TicketType(UUID.fromString(set.getString(1)),
+                        set.getString(2), set.getString(3), set.getBoolean(4),
+                        set.getString(5), set.getString(6)));
+            }
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+            return List.of();
+        }
+        return ticketTypes;
+    }
+
+    @Override
+    public List<TicketStatus> getAllTicketStatuses() {
+        List<TicketStatus> statuses = new ArrayList<>();
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT UUID, StatusName, Color, Description" +
+                    " FROM ticket_status_names");
+
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                statuses.add(new TicketStatus(UUID.fromString(set.getString(1)), set.getString(2),
+                        set.getString(4), DatabaseColorParser.parseColor(set.getString(3))));
+            }
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+            return List.of();
+        }
+        return statuses;
+    }
+
+    @Override
+    public void addTicketType(TicketType ticketType) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_types " +
+                    "(TypeID, TypeName, Prefix, ShowInSelection, SelectionEmoji, SelectionText) " +
+                    "VALUES (?, ?, ?, ?, ?, ?)");
+
+            pS.setString(1, ticketType.uniqueID().toString());
+            pS.setString(2, ticketType.name());
+            pS.setString(3, ticketType.prefix());
+            pS.setBoolean(4, ticketType.showInSel());
+            pS.setString(5, ticketType.selEmoji());
+            pS.setString(6, ticketType.selText());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to add ticket type: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteTicketType(TicketType ticketType) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM ticket_types WHERE TypeID = ?");
+            pS.setString(1, ticketType.uniqueID().toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete ticket type: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void addTicketStatus(TicketStatus ticketStatus) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_status_names" +
+                    " (UUID, StatusName, Color, Description) VALUES (?, ?, ?, ?)");
+            pS.setString(1, ticketStatus.uniqueID().toString());
+            pS.setString(2, ticketStatus.statusName());
+            pS.setString(3, DatabaseColorParser.parseColor(ticketStatus.statusColor()));
+            pS.setString(4, ticketStatus.statusDescription());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to add ticket status: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteTicketStatus(TicketStatus ticketStatus) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM ticket_status_names WHERE UUID = ?");
+            pS.setString(1, ticketStatus.uniqueID().toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete ticket status: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void addTicketMessage(Ticket ticket, String message, String sender) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_transcripts " +
+                    "(TicketID, SenderName, MessageContent) VALUES (?, ?, ?)");
+            pS.setString(1, ticket.getUniqueID().toString());
+            pS.setString(2, sender);
+            pS.setString(3, message);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to add ticket message: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void updateTicketStatus(Ticket ticket, TicketStatus ticketStatus) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("UPDATE tickets SET TicketStatus = ? WHERE UUID = ?");
+
+            pS.setString(1, ticketStatus.uniqueID().toString());
+            pS.setString(2, ticket.getUniqueID().toString());
+
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to update ticket status: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void handleTicket(Ticket ticket, String handler) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("UPDATE tickets SET HandledBy = ? WHERE UUID = ?");
+
+            pS.setString(1, handler);
+            pS.setString(2, ticket.getUniqueID().toString());
+
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to update ticket handler: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteTicket(Ticket ticket) {
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM tickets WHERE UUID = ?");
+            pS.setString(1, ticket.getUniqueID().toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete ticket: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void createTicket(Ticket ticket) {
+
     }
 }

@@ -1,4 +1,4 @@
-package de.julianweinelt.caesar.exceptions;
+package de.julianweinelt.caesar.exceptions.logging;
 
 import org.eclipse.jetty.util.log.Logger;
 import org.slf4j.LoggerFactory;

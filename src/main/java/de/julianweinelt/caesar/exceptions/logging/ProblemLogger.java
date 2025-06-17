@@ -1,4 +1,4 @@
-package de.julianweinelt.caesar.exceptions;
+package de.julianweinelt.caesar.exceptions.logging;
 
 import de.julianweinelt.caesar.Caesar;
 

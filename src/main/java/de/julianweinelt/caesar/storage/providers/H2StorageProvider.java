@@ -3,6 +3,9 @@ package de.julianweinelt.caesar.storage.providers;
 import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserRole;
+import de.julianweinelt.caesar.discord.ticket.Ticket;
+import de.julianweinelt.caesar.discord.ticket.TicketStatus;
+import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 
 public class H2StorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(H2StorageProvider.class);
@@ -241,5 +245,70 @@ public class H2StorageProvider extends Storage {
     @Override
     public List<CPermission> getAllPermissions() {
         return List.of();
+    }
+
+    @Override
+    public Ticket getTicket(UUID id) {
+        return null;
+    }
+
+    @Override
+    public Ticket getTicket(String channel) {
+        return null;
+    }
+
+    @Override
+    public List<TicketType> getAllTicketTypes() {
+        return List.of();
+    }
+
+    @Override
+    public List<TicketStatus> getAllTicketStatuses() {
+        return List.of();
+    }
+
+    @Override
+    public void addTicketType(TicketType ticketType) {
+
+    }
+
+    @Override
+    public void deleteTicketType(TicketType ticketType) {
+
+    }
+
+    @Override
+    public void addTicketStatus(TicketStatus ticketStatus) {
+
+    }
+
+    @Override
+    public void deleteTicketStatus(TicketStatus ticketStatus) {
+
+    }
+
+    @Override
+    public void addTicketMessage(Ticket ticket, String message, String sender) {
+
+    }
+
+    @Override
+    public void updateTicketStatus(Ticket ticket, TicketStatus ticketStatus) {
+
+    }
+
+    @Override
+    public void handleTicket(Ticket ticket, String handler) {
+
+    }
+
+    @Override
+    public void deleteTicket(Ticket ticket) {
+
+    }
+
+    @Override
+    public void createTicket(Ticket ticket) {
+
     }
 }

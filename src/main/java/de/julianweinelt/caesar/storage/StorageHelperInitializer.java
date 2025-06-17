@@ -1,6 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
-import de.julianweinelt.caesar.endpoint.wrapper.TicketStatus;
+import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 
 import java.awt.*;
 import java.util.List;

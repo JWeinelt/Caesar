@@ -3,6 +3,9 @@ package de.julianweinelt.caesar.storage;
 import de.julianweinelt.caesar.auth.PasswordConditions;
 import de.julianweinelt.caesar.endpoint.CorporateDesign;
 import de.julianweinelt.caesar.endpoint.minecraft.MCPluginEndpoint;
+import de.julianweinelt.caesar.endpoint.minecraft.MEndpointCurseForge;
+import de.julianweinelt.caesar.endpoint.minecraft.MEndpointModrinth;
+import de.julianweinelt.caesar.endpoint.minecraft.MEndpointSpigot;
 import de.julianweinelt.caesar.exceptions.InvalidConfigKeyException;
 import lombok.Getter;
 import lombok.Setter;
@@ -65,7 +68,8 @@ public class Configuration {
     private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
 
     private final String _INFO3 = "Defined Minecraft plugin endpoints are here.";
-    private final List<MCPluginEndpoint> endpoints = new ArrayList<>();
+    private final List<MCPluginEndpoint> endpoints = new ArrayList<MCPluginEndpoint>
+            (List.of(new MEndpointCurseForge(), new MEndpointSpigot(), new MEndpointModrinth()));
 
 
     private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES MAY BREAK YOUR SYSTEM!";

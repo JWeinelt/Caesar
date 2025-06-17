@@ -15,6 +15,10 @@ import java.util.List;
 @Getter
 @Setter
 public class Configuration {
+    public static Configuration getInstance() {
+        return LocalStorage.getInstance().getData();
+    }
+
     private final String _NOTE = "The values in this should NOT be changed manually. Instead use the Caesar Client to change them.";
     private final String _INFO_JWT = "These parameters are important for token issuing.";
     private String jwtSecret;
@@ -107,6 +111,45 @@ public class Configuration {
             }
         }
     }
+
+    public Object get(String key) {
+        String[] readOnlyKeys = {
+                "languageVersion",
+                "clientVersion",
+        };
+        boolean readOnly = Arrays.stream(readOnlyKeys).toList().contains(key);
+        return switch (key) {
+            case "jwtSecret" -> jwtSecret;
+            case "jwtIssuer" -> jwtIssuer;
+            case "databaseType" -> databaseType;
+            case "databaseHost" -> databaseHost;
+            case "databaseName" -> databaseName;
+            case "databaseUser" -> databaseUser;
+            case "databasePassword" -> databasePassword;
+            case "databasePort" -> databasePort;
+            case "webServerHost" -> webServerHost;
+            case "webServerPort" -> webServerPort;
+            case "chatServerPort" -> chatServerPort;
+            case "connectionServerPort" -> connectionServerPort;
+            case "discordBotToken" -> discordBotToken;
+            case "defaultOnlineStatus" -> defaultOnlineStatus;
+            case "cloudnetEnabled" -> cloudnetEnabled;
+            case "cloudnetHost" -> cloudnetHost;
+            case "cloudnetUser" -> cloudnetUser;
+            case "cloudnetPassword" -> cloudnetPassword;
+            case "tokenExpirationTime" -> tokenExpirationTime;
+            case "connectionAPISecret" -> connectionAPISecret;
+            case "passwordConditions" -> passwordConditions;
+            case "useDiscord" -> useDiscord;
+            case "corporateDesign" -> corporateDesign;
+            case "useCorporateDesign" -> useCorporateDesign;
+            case "useChat" -> useChat;
+            case "allowVoiceChat" -> allowVoiceChat;
+            case "allowPublicChats" -> allowPublicChats;
+            default -> throw new InvalidConfigKeyException(key, readOnly);
+        };
+    }
+
 
     public enum ConfigValueType {
         STRING, INT, BOOLEAN, PASSWORD_CONDITIONS, CORPORATE_DESIGN, ONLINE_STATUS, UNKNOWN

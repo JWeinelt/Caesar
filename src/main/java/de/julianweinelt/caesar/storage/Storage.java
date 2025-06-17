@@ -3,10 +3,14 @@ package de.julianweinelt.caesar.storage;
 import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserRole;
+import de.julianweinelt.caesar.discord.ticket.Ticket;
+import de.julianweinelt.caesar.discord.ticket.TicketStatus;
+import de.julianweinelt.caesar.discord.ticket.TicketType;
 import lombok.Getter;
 
 import java.sql.Connection;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 public abstract class Storage {
@@ -54,4 +58,19 @@ public abstract class Storage {
     public abstract List<UserRole> getAllRoles();
     public abstract void updateRolePermissions(UserRole role);
     public abstract List<CPermission> getAllPermissions();
+
+    // Tickets
+    public abstract Ticket getTicket(UUID id);
+    public abstract Ticket getTicket(String channel);
+    public abstract List<TicketType> getAllTicketTypes();
+    public abstract List<TicketStatus> getAllTicketStatuses();
+    public abstract void addTicketType(TicketType ticketType);
+    public abstract void deleteTicketType(TicketType ticketType);
+    public abstract void addTicketStatus(TicketStatus ticketStatus);
+    public abstract void deleteTicketStatus(TicketStatus ticketStatus);
+    public abstract void addTicketMessage(Ticket ticket, String message, String sender);
+    public abstract void updateTicketStatus(Ticket ticket, TicketStatus ticketStatus);
+    public abstract void handleTicket(Ticket ticket, String handler);
+    public abstract void deleteTicket(Ticket ticket);
+    public abstract void createTicket(Ticket ticket);
 }

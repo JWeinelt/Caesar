@@ -16,4 +16,10 @@ public class ChatManager {
         for (Chat c : chats) if (c.getUniqueID().equals(uuid)) return c;
         return null;
     }
+
+    public List<Chat> getChatsUser(UUID uuid) {
+        List<Chat> result = new ArrayList<>();
+        for (Chat c : chats) if (c.getUsers().contains(uuid)) result.add(c);
+        return result;
+    }
 }

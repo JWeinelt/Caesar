@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.plugin;
 
+import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.endpoint.minecraft.MCPluginEndpoint;
 import de.julianweinelt.caesar.exceptions.MinecraftEndpointNotFoundException;
@@ -29,8 +30,17 @@ public class Registry {
     @Getter
     private final List<CLICommand> commands = new ArrayList<>();
 
+    public static Registry getInstance() {
+        return Caesar.getInstance().getRegistry();
+    }
+
     public void registerEvent(String eventName) {
         listeners.putIfAbsent(eventName, new ArrayList<>());
+    }
+    public void registerEvents(String... eventNames) {
+        for (String eventName : eventNames) {
+            listeners.putIfAbsent(eventName, new ArrayList<>());
+        }
     }
 
     public void registerListener(Object listener) {

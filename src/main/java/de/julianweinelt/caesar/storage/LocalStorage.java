@@ -5,14 +5,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.integration.ServerConnection;
-import de.julianweinelt.caesar.plugin.CPlugin;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 @Slf4j
@@ -46,6 +45,13 @@ public class LocalStorage {
             data = GSON.fromJson(jsonStringBuilder.toString(), new TypeToken<Configuration>(){}.getType());
             if (data.getBackupType().equals(Configuration.BackupType.INCREMENTAL)) {
                 log.warn("INCREMENTAL backups are not supported!");
+            }
+            if (data.getIntervalType().equals(ChronoUnit.HOURS) || data.getIntervalType().equals(ChronoUnit.MINUTES)
+            || data.getIntervalType().equals(ChronoUnit.SECONDS) || data.getIntervalType().equals(ChronoUnit.MILLIS)
+            || data.getIntervalType().equals(ChronoUnit.NANOS) || data.getIntervalType().equals(ChronoUnit.MICROS)) {
+                log.warn("The interval unit {} is too short! Using fallback: DAYS.", data.getIntervalType().name());
+                log.warn("Backup intervals must be per day or longer.");
+                data.setIntervalType(ChronoUnit.DAYS);
             }
         } catch (IOException e) {
             log.error(e.getMessage());

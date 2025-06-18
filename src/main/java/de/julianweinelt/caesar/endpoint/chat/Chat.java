@@ -14,6 +14,10 @@ public class Chat {
     private final UUID uniqueID;
 
     @Getter
+    @Setter
+    private String customName;
+
+    @Getter
     private final List<UUID> users = new ArrayList<>();
     @Getter
     private final List<Message> messages = new ArrayList<>();
@@ -35,6 +39,10 @@ public class Chat {
     public void addUser(UUID uuid) {
         users.add(uuid);
     }
+    public void removeUser(UUID uuid) {
+        users.remove(uuid);
+    }
+
 
     public void registerNewMessage(Message message) {
         messages.add(message);

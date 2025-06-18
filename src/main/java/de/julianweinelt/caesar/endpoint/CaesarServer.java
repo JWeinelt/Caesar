@@ -287,6 +287,8 @@ public class CaesarServer {
                         ctx.status(HttpStatus.FORBIDDEN);
                     }
                 })
+
+                // Permission management
                 .post("/user/permission", ctx -> {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 

@@ -7,13 +7,16 @@ import de.julianweinelt.caesar.endpoint.minecraft.MEndpointCurseForge;
 import de.julianweinelt.caesar.endpoint.minecraft.MEndpointModrinth;
 import de.julianweinelt.caesar.endpoint.minecraft.MEndpointSpigot;
 import de.julianweinelt.caesar.exceptions.InvalidConfigKeyException;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.OnlineStatus;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Getter
 @Setter
@@ -22,20 +25,23 @@ public class Configuration {
         return LocalStorage.getInstance().getData();
     }
 
-    private final String _NOTE = "The values in this should NOT be changed manually. Instead use the Caesar Client to change them.";
-    private final String _INFO_JWT = "These parameters are important for token issuing.";
+    @Getter(AccessLevel.NONE)
+    private final String _NOTE = "The values in this file should NOT be changed manually. Instead use the Caesar Client to manage them.";
+    @Getter(AccessLevel.NONE)
+    private final String _INFO_JWT = "These parameters are important for token issuing. Keep it secret at every time. If you think someone got it, change the secret IMMEDIATELY! It won't break your stored data but reconnect all clients.";
     private String jwtSecret;
     private String jwtIssuer;
 
+    @Getter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";
     private StorageFactory.StorageType databaseType;
-    private String databaseHost;
-    private String databaseName;
-    private String databaseUser;
-    private String databasePassword;
-    private int databasePort;
+    private String databaseHost = "localhost";
+    private String databaseName = "caesar";
+    private String databaseUser = "caesar";
+    private String databasePassword = "secret";
+    private int databasePort = 3306;
 
-    private String webServerHost;
+    private String webServerHost = "127.0.0.1";
     private int webServerPort = 48000;
     private int chatServerPort = 48001;
     private int connectionServerPort = 48002;
@@ -44,16 +50,20 @@ public class Configuration {
     private String discordBotToken = "SECRET";
     private OnlineStatus defaultOnlineStatus;
 
+    @Getter(AccessLevel.NONE)
     private final String _INFO_CN = "These fields define options for the usage of CloudNET.";
-    private boolean cloudnetEnabled;
+    private boolean cloudnetEnabled = false;
     private String cloudnetHost = "localhost";
     private String cloudnetUser = "admin";
     private String cloudnetPassword = "secret";
 
+    @Getter(AccessLevel.NONE)
     private final String _INFO2 = "This value is defined in minutes.";
     private int tokenExpirationTime = 360*4; // Default: 24 hours
 
-    private String connectionAPISecret;
+    @Getter(AccessLevel.NONE)
+    private String _INFO_SECRET = "Changing this value will invalidate ALL connections in your system.";
+    private String connectionAPISecret = "";
 
     private PasswordConditions passwordConditions = new PasswordConditions();
     private boolean useDiscord = false;
@@ -64,22 +74,41 @@ public class Configuration {
     private boolean allowVoiceChat = false;
     private boolean allowPublicChats = false;
 
+    @Getter(AccessLevel.NONE)
     private final String _INFO1 = "Here you can set custom API endpoints. Only change if you know what you are doing!";
     private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
+    private boolean apiEndpointKeyRequired = false;
 
+    @Getter(AccessLevel.NONE)
     private final String _INFO3 = "Defined Minecraft plugin endpoints are here.";
     private final List<MCPluginEndpoint> endpoints = new ArrayList<MCPluginEndpoint>
             (List.of(new MEndpointCurseForge(), new MEndpointSpigot(), new MEndpointModrinth()));
 
+    @Getter(AccessLevel.NONE)
+    private final String _INFO_UPDATES = "Update logic";
+    private boolean autoUpdateServerOnStartup = true;
+    private boolean autoUpdateClients = true;
+    private UpdateChannel updateChannel = UpdateChannel.STABLE;
 
-    private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES MAY BREAK YOUR SYSTEM!";
+    @Getter(AccessLevel.NONE)
+    private final String _INFO_BACKUPS = "These values specify backup logics.";
+    private boolean doAutoBackups = true;
+    private int interval = 1;
+    private ChronoUnit intervalType = ChronoUnit.DAYS;
+    private BackupType backupType = BackupType.FULL;
+    private AfterBackupAction afterBackupAction = AfterBackupAction.NOTHING;
+    private BackupCompressType compressType = BackupCompressType.TAR;
+
+
+    @Getter(AccessLevel.NONE)
+    private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES WILL BREAK YOUR SYSTEM!";
     private String languageVersion = "1.0.0";
-    private String clientVersion = "1.0.0";
+    private String configVersion = "1.0.0";
     
     public void set(String key, Object value) {
         String[] readOnlyKeys = {
                 "languageVersion",
-                "clientVersion",
+                "configVersion",
         };
         boolean readOnly = Arrays.stream(readOnlyKeys).toList().contains(key);
         switch (key) {
@@ -157,5 +186,18 @@ public class Configuration {
 
     public enum ConfigValueType {
         STRING, INT, BOOLEAN, PASSWORD_CONDITIONS, CORPORATE_DESIGN, ONLINE_STATUS, UNKNOWN
+    }
+    public enum UpdateChannel {
+        STABLE, BETA, ALPHA, NIGHTLY
+    }
+
+    public enum BackupType {
+        FULL, INCREMENTAL, LOCAL_ONLY
+    }
+    public enum AfterBackupAction {
+        NOTHING, UPLOAD_FTP
+    }
+    public enum BackupCompressType {
+        ZIP, TAR
     }
 }

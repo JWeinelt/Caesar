@@ -15,6 +15,9 @@ public class DiscordConfiguration {
     private boolean blockCaps = false;
     private int blockCapsPercent = 60;
     private int spamRateMinute = 0;
+    private boolean blockLinks = false;
+    private boolean blockDiscordInvites = false;
+    private final List<String> whitelistedLinks = new ArrayList<>();
     private final List<String> autoThreadChannels = new ArrayList<>();
 
     private final List<StatusMessage> statusMessages = new ArrayList<>();

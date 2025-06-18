@@ -3,11 +3,13 @@ package de.julianweinelt.caesar;
 import de.julianweinelt.caesar.auth.CaesarLinkServer;
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.backup.BackupManager;
 import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
+import de.julianweinelt.caesar.endpoint.CaesarServiceProvider;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
 import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
@@ -64,6 +66,9 @@ public class Caesar {
     private CaesarClientLinkServer clientLinkServer = null;
 
     @Getter
+    private CaesarServiceProvider serviceProvider = null;
+
+    @Getter
     private ChatManager chatManager;
 
     @Getter
@@ -88,6 +93,9 @@ public class Caesar {
     private DiscordBot discordBot = null;
     @Getter
     private TicketManager ticketManager = null;
+
+    @Getter
+    private BackupManager backupManager;
 
     public static void main(String[] args) {
         instance = new Caesar();
@@ -115,13 +123,25 @@ public class Caesar {
         languageManager = new LanguageManager();
         registry = new Registry();
         log.info("Registering basic events...");
-        registry.registerEvent("StorageReadyEvent");
-        registry.registerEvent("ServerStartupEvent");
-        registry.registerEvent("ServerShutdownEvent");
-        registry.registerEvent("PluginLoadEvent");
-        registry.registerEvent("PluginEnableEvent");
-        registry.registerEvent("PluginDisableEvent");
+        registry.registerEvents(
+                "StorageReadyEvent",
+                "ServerStartupEvent",
+                "ServerShutdownEvent",
+                "PluginLoadEvent",
+                "PluginEnableEvent",
+                "PluginDisableEvent",
+                "DiscordReadyEvent",
+                "DiscordShutdownEvent",
+                "ConfigChangeEvent",
+                "DatabaseConnectedEvent",
+                "DatabaseDisconnectedEvent",
+                "DatabaseTablesCreateEvent",
+                "VersionDataGetEvent"
+        );
         pluginLoader = new PluginLoader(registry);
+        log.info("Starting backup service...");
+        backupManager = new  BackupManager();
+        backupManager.configure(localStorage.getData());
         log.info("Preparing plugin loading...");
         pluginLoader.prepareLoading();
         log.info("Loading plugins...");
@@ -137,6 +157,8 @@ public class Caesar {
         if (clientLinkServer == null) clientLinkServer = new CaesarClientLinkServer(localStorage.getData().getClientLinkPort());
         if (storageFactory == null) storageFactory = new StorageFactory();
         userManager = new UserManager();
+        serviceProvider = new CaesarServiceProvider();
+        serviceProvider.start();
         log.info("Connecting to database...");
         storageFactory.provide(localStorage.getData().getDatabaseType(), localStorage.getData());
         boolean success = storageFactory.connect();
@@ -157,6 +179,7 @@ public class Caesar {
 
         if (localStorage.getData().isUseDiscord()) {
             discordBot = new DiscordBot();
+            discordBot.start();
         }
 
         registry.callEvent(new Event("StorageReadyEvent"));

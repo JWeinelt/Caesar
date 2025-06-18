@@ -5,6 +5,7 @@ import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelWrapper;
+import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.LocalStorage;
@@ -91,6 +92,8 @@ public class DiscordBot {
         startStatusScheduler();
 
         log.info("Discord bot instance started.");
+
+        Registry.getInstance().callEvent(new Event("DiscordReadyEvent").set("mainGuild", mainGuild.getId()));
     }
 
     public void stop() {

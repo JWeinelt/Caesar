@@ -7,4 +7,7 @@ public class TabulaPage {
     private final UUID uniqueID;
 
 
+    public TabulaPage(UUID uniqueID) {
+        this.uniqueID = uniqueID;
+    }
 }

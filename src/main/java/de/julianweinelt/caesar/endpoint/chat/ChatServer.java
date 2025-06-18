@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.endpoint.chat;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.auth.User;
@@ -13,11 +15,11 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.UUID;
+import java.util.*;
 
 public class ChatServer extends WebSocketServer {
+    private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     private final HashMap<UUID, WebSocket> connections = new HashMap<>();
     private final ChatManager chatManager;
 
@@ -48,11 +50,20 @@ public class ChatServer extends WebSocketServer {
             String msg = new String(message.array(), StandardCharsets.UTF_8);
             JsonObject rootOBJ = JsonParser.parseString(msg).getAsJsonObject();
             ChatAction action = parseAction(rootOBJ.get("type").getAsString());
+            if (ChatAction.isServerOnly(action)) {
+                sendError("This action is only allowed from server side.", conn);
+                return;
+            }
             if (action.equals(ChatAction.UNKNOWN)) {
                 sendError("Unknown action", conn);
                 return;
             }
             switch (action) {
+                case AUTHENTICATE -> {
+                    UUID userID = UUID.fromString(rootOBJ.get("myID").getAsString());
+                    connections.put(userID, conn);
+                    sendHandshake(conn);
+                }
                 case SEND_MESSAGE -> {
                     sendMessageBy(
                             UUID.fromString(rootOBJ.get("sender")
@@ -63,6 +74,11 @@ public class ChatServer extends WebSocketServer {
                 case LEAVE -> {
                     UUID user = UUID.fromString(rootOBJ.get("user").getAsString());
                     UUID chat = UUID.fromString(rootOBJ.get("chat").getAsString());
+
+                    Chat ch = chatManager.getChat(chat);
+                    if (ch == null) return;
+                    ch.removeUser(user);
+                    sendMessageSystem("{!user:" + user + "} left the chat.", chat);
                 }
             }
         }
@@ -126,6 +142,12 @@ public class ChatServer extends WebSocketServer {
     public WebSocket getConnection(UUID uuid) {
         return connections.getOrDefault(uuid, null);
     }
+    public UUID getByConnection(WebSocket conn) {
+        for (UUID uuid : connections.keySet()) {
+            if (connections.get(uuid).equals(conn)) return uuid;
+        }
+        return null;
+    }
 
     public ChatAction parseAction(String input) {
         try {
@@ -135,10 +157,26 @@ public class ChatServer extends WebSocketServer {
         }
     }
 
+    public void sendHandshake(WebSocket conn) {
+        List<Chat> chats = chatManager.getChatsUser(getByConnection(conn));
+        JsonObject o = new JsonObject();
+        o.addProperty("type", ChatAction.HANDSHAKE.name());
+        o.add("chats", GSON.toJsonTree(reduceChatList(chats)));
+        conn.send(o.toString());
+    }
+
     public void sendError(String message, WebSocket conn) {
         JsonObject o = new JsonObject();
         o.addProperty("message", message);
         o.addProperty("type", ChatAction.SEND_ERROR.name());
         conn.send(o.toString());
     }
+
+    public List<ChatReduced> reduceChatList(List<Chat> chats) {
+        List<ChatReduced> result = new ArrayList<>();
+        for (Chat c : chats) result.add(new ChatReduced(c.getUniqueID(), c.getCustomName()));
+        return result;
+    }
+
+    public record ChatReduced(UUID uuid, String chatName) {}
 }

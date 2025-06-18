@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.security.SecureRandom;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 
 public class JWTUtil {
@@ -56,6 +57,22 @@ public class JWTUtil {
         Date expiration = calendar.getTime();
         return JWT.create()
                 .withSubject(username)
+                .withIssuer("caesar")
+                .withNotBefore(now)
+                .withIssuedAt(now)
+                .withExpiresAt(expiration)
+                .sign(Algorithm.HMAC256(LocalStorage.getInstance().getData().getJwtSecret()));
+    }
+
+    public String supportToken(UUID user) {
+        Calendar calendar = Calendar.getInstance();
+        Date now = calendar.getTime();
+        calendar.add(Calendar.MINUTE, 30);
+        Date expiration = calendar.getTime();
+        return JWT.create()
+                .withSubject("support")
+                .withClaim("user", user.toString())
+                .withClaim("trustedSupportSession", true)
                 .withIssuer("caesar")
                 .withNotBefore(now)
                 .withIssuedAt(now)

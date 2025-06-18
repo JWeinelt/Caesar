@@ -121,4 +121,8 @@ public class UserManager {
         getUser(uuid).setActive(active);
         StorageFactory.getInstance().getUsedStorage().updateUser(getUser(uuid));
     }
+
+    public void createSupportUser(int code) {
+
+    }
 }

@@ -34,8 +34,8 @@
 
 **Goal:** Enable intelligent server care and safe updates.
 
-- [ ] Configuration snapshots (versioned, portable)
-- [ ] Config diff & rollback system
+- [X] Configuration snapshots (versioned, portable)
+- [X] Config diff & rollback system
 - [ ] Auto-update builder (safe with rollback and analysis)
 - [ ] Maintenance scheduler (alerts, scheduling, backups)
 - [ ] Cluster update orchestration (plugin/API-aware)

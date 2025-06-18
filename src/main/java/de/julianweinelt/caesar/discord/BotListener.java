@@ -2,9 +2,12 @@ package de.julianweinelt.caesar.discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
 public class BotListener extends ListenerAdapter {
@@ -49,9 +52,28 @@ public class BotListener extends ListenerAdapter {
         }
     }
 
-
     @Override
-    public void onShutdown(@NotNull ShutdownEvent e) {
-        infoChannel.sendMessage("**Goodbye!**\n\nCaesar is shutting down. See you soon!").queue();
+    public void onGuildJoin(GuildJoinEvent e) {
+        if (e.getGuild().getFeatures().contains("COMMUNITY"))
+            e.getGuild().getCommunityUpdatesChannel().sendMessage("""
+                    # Welcome to Caesar!
+                    
+                    Thanks for using Caesar with Discord integration!
+                    I'll assist you in anything you need here.
+                    The following features are currently supported:
+                    
+                    - ✔ Spam detection
+                    - ✔ Caps lock detection
+                    - ✔ Link prevention
+                    - ✔ Auto-thread channels
+                    - ✔ Custom status messages
+                    - ✔ Tickets
+                    - ✔ Creation of embeds
+                    
+                    To continue with the setup, please go into your panel and open the Discord settings.
+                    """)
+                    .addActionRow(Button.primary("pno-discord-settings", "Open in panel")
+                            .withEmoji(Emoji.fromUnicode("📶")))
+                    .queue();
     }
 }

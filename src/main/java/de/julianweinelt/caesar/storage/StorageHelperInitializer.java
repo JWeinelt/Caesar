@@ -41,7 +41,12 @@ public class StorageHelperInitializer {
             "caesar.process.remove",
             "caesar.process.archive",
             "caesar.tickets.edit",
-            "caesar.tickets.remove"
+            "caesar.tickets.remove",
+            "caesar.connections.create",
+            "caesar.connections.disable",
+            "caesar.connections.enable",
+            "caesar.connections.remove",
+            "caesar.connections.update",
     };
 
     public static List<TicketStatus> getDefaultTicketStatusList() {

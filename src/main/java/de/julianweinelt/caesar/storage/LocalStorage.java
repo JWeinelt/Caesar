@@ -44,6 +44,9 @@ public class LocalStorage {
                 jsonStringBuilder.append(line);
             }
             data = GSON.fromJson(jsonStringBuilder.toString(), new TypeToken<Configuration>(){}.getType());
+            if (data.getBackupType().equals(Configuration.BackupType.INCREMENTAL)) {
+                log.warn("INCREMENTAL backups are not supported!");
+            }
         } catch (IOException e) {
             log.error(e.getMessage());
         }
@@ -88,7 +91,7 @@ public class LocalStorage {
     }
 
     public <T> T load(String fileName, Type type) {
-        try (BufferedReader br = new BufferedReader(new FileReader("data/" + fileName + ".json"))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(new File("data", fileName + ".json")))) {
             StringBuilder jsonStringBuilder = new StringBuilder();
             String line;
             while ((line = br.readLine()) != null) {

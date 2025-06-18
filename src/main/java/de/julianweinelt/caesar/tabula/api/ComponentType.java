@@ -6,5 +6,6 @@ public enum ComponentType {
     COLOR,
     LABEL,
     BUTTON,
-
+    PANEL,
+    SCROLL_CONTAINER,
 }

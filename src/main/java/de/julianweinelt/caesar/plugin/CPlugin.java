@@ -1,10 +1,13 @@
 package de.julianweinelt.caesar.plugin;
 
+import jdk.dynalink.linker.LinkerServices;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -18,6 +21,8 @@ public abstract class CPlugin {
     private String minAPIVersion;
     private boolean storesSensitiveData = false;
     private boolean usesEncryption = false;
+    private final List<String> dependencies = new ArrayList<>();
+    private final List<String> optionalDependencies = new ArrayList<>();
 
     /**
      * Returns the data folder of the module. Typically the path is ~/data/[ModuleName].

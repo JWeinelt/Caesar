@@ -4,6 +4,7 @@ package de.julianweinelt.caesar.util;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.storage.Configuration;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -109,7 +110,7 @@ public class LanguageManager {
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.caesarnet.cloud/public/language/" + lang))
+                    .uri(URI.create(Configuration.getInstance().getCaesarAPIEndpoint() + "public/language/server/" + lang))
                     .header("Accept", "application/json")
                     .build();
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -130,13 +131,15 @@ public class LanguageManager {
             HttpClient client = HttpClient.newHttpClient();
 
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create("https://api.caesarnet.cloud/public/language/available"))
+                    .uri(URI.create(Configuration.getInstance().getCaesarAPIEndpoint() + "public/language/server/available"))
                     .header("Accept", "application/json")
                     .build();
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() == 200) {
                 return GSON.fromJson(response.body(), new TypeToken<List<String>>(){}.getType());
+            } else {
+                log.error("Failed to download language data. Status code: {}", response.statusCode());
             }
         } catch (InterruptedException | IOException e) {
             log.error("Failed to get available languages: {}", e.getMessage());

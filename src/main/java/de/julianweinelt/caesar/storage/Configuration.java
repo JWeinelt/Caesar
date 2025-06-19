@@ -42,7 +42,7 @@ public class Configuration {
     private int databasePort = 3306;
 
     private String webServerHost = "127.0.0.1";
-    private int webServerPort = 48000;
+    private int webServerPort = 37819;
     private int chatServerPort = 48001;
     private int connectionServerPort = 48002;
     private int clientLinkPort = 48003;
@@ -76,7 +76,8 @@ public class Configuration {
 
     @Getter(AccessLevel.NONE)
     private final String _INFO1 = "Here you can set custom API endpoints. Only change if you know what you are doing!";
-    private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
+    //private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
+    private String caesarAPIEndpoint = "http://localhost:48009/";
     private boolean apiEndpointKeyRequired = false;
 
     @Getter(AccessLevel.NONE)

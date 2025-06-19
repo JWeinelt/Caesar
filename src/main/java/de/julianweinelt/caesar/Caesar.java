@@ -20,6 +20,7 @@ import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.LocalStorage;
+import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
@@ -250,6 +251,8 @@ public class Caesar {
             localStorage.getData().setWebServerHost(hostName);
             localStorage.getData().setWebServerPort(Integer.parseInt(port));
 
+            userManager = new UserManager();
+
             databaseProcedure(terminal);
         } catch (IOException e) {
             log.error("Failed to start terminal: {}", e.getMessage());
@@ -298,12 +301,12 @@ public class Caesar {
         storageFactory = new StorageFactory();
         storageFactory.provide(storageType, localStorage.getData());
         boolean success = storageFactory.getUsedStorage().connect();
-        boolean hasTables = storageFactory.getUsedStorage().hasTables();
+        /*boolean hasTables = storageFactory.getUsedStorage().hasTables();
         if (hasTables) {
             log.warn(languageManager.getTranslation(systemLanguage, "setup.database.info.tables-already-exists"));
             databaseProcedure(terminal);
             return;
-        }
+        }*/
         if (success) {
             localStorage.saveData();
             log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.connected"));
@@ -341,10 +344,33 @@ public class Caesar {
     }
 
     private void finishSetup() {
-        userManager = new UserManager();
         localStorage.saveData();
         log.info("Finishing database setup...");
         storageFactory.getUsedStorage().createTables();
+        Storage s = storageFactory.getUsedStorage();
+
+        String[] requiredTables = {
+                "users",
+                "permissions",
+                "roles",
+                "ticket_status_names",
+                "process_status_names",
+                "process_types",
+                "user_permissions",
+                "user_roles",
+                "role_permissions",
+                "tickets",
+                "ticket_types",
+                "processes",
+                "ticket_transcripts",
+                "server_data"
+        };
+
+        if (!s.allTablesExist(requiredTables)) {
+            s.createTables();
+        }
+        if (!s.systemDataExist()) s.insertDefaultData();
+
         storageFactory.getUsedStorage().insertDefaultData();
         userManager.createUser("admin", "admin");
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.user-created"));

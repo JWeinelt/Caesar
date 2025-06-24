@@ -10,6 +10,7 @@
 
 - [x] Modular plugin system (Server, Panel, Client)
 - [x] Central event-based communication system
+- [ ] CloudNET management
 - [ ] Plugin marketplace (UI + backend + deployment)
 - [ ] Modrinth, SpigotMC, Paper, CurseForge integrations
 - [ ] Version compatibility reports (crowd-based feedback)

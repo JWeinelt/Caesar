@@ -3,7 +3,7 @@ package de.julianweinelt.caesar.endpoint.minecraft;
 import lombok.Getter;
 
 @Getter
-public abstract class MCPluginEndpoint {
+public class MCPluginEndpoint {
     private final String name;
     private final String baseURL;
     private final String apiURLPart;

@@ -1,15 +1,14 @@
 ## 📝 Description
 
-<!-- Descripe your changes shortly. -->
+Descripe your changes shortly.
 - [ ] Bug fixes
 - [ ] Feature
 - [ ] Refactoring
 - [ ] Documentation
 - [ ] Others (please descripe in the following)
 
-## 🔍 Releations
+## 🔍 Relations
 
-<!-- Falls zutreffend: Verknüpfe dieses PR mit einem Issue -->
 Closes #ISSUE_ID
 
 ## ✅ TO DO
@@ -21,12 +20,12 @@ Closes #ISSUE_ID
 
 ## 🧪 How did you test the changes?
 
-<!-- Descripe how you tested your changes, e. g. manually, unit tests, etc. -->
+Descripe how you tested your changes, e. g. manually, unit tests, etc.
 
 ## 📷 Screenshots/Examples (optional)
 
-<!-- If relevant: UI changes, logs, etc. -->
+If relevant: UI changes, logs, etc.
 
 ## 🤝 Notice for reviewers
 
-<!-- Are there files that should be reviewed? Are there any questions? -->
+Are there files that should be reviewed? Are there any questions?

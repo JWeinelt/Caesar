@@ -44,7 +44,7 @@ public class CaesarClientLinkServer extends WebSocketServer {
         if (message.hasArray()) {
             String msg = new String(message.array(), StandardCharsets.UTF_8);
             JsonObject rootOBJ = JsonParser.parseString(msg).getAsJsonObject();
-            ClientAction action = parseAction(rootOBJ.get("type").getAsString());
+            ClientAction action = parseAction(rootOBJ.get("type").getAsString().toUpperCase());
             UUID user = UUID.fromString(rootOBJ.get("myID").getAsString());
             switch (action) {
                 case AUTHENTICATE -> {

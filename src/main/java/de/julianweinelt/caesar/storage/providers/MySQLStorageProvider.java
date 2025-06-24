@@ -64,6 +64,8 @@ public class MySQLStorageProvider extends Storage {
                     "server_data"
             };
 
+            createTables();
+
             if (!allTablesExist(requiredTables)) {
                 createTables();
             }
@@ -305,6 +307,8 @@ public class MySQLStorageProvider extends Storage {
             statement.executeUpdate(processes);
             statement.executeUpdate(ticketTranscripts);
             statement.executeUpdate(serverData);
+
+            log.info("Tables created");
         } catch (SQLException e) {
             log.error("Failed to create tables: {}", e.getMessage());
         }

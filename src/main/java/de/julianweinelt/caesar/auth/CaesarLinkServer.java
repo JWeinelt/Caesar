@@ -1,9 +1,10 @@
 package de.julianweinelt.caesar.auth;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.Caesar;
-import de.julianweinelt.caesar.endpoint.CaesarServer;
+import de.julianweinelt.caesar.storage.Configuration;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
 import org.java_websocket.handshake.ClientHandshake;
@@ -12,7 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
+import java.time.Instant;
+import java.util.*;
 
 public class CaesarLinkServer extends WebSocketServer {
     private static final Logger log = LoggerFactory.getLogger(CaesarLinkServer.class);
@@ -26,7 +28,7 @@ public class CaesarLinkServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
-        log.debug("Received new connection from {}",
+        log.info("Received new connection from {}",
                 webSocket.getRemoteSocketAddress().getAddress().getHostAddress() +
                 ":" + webSocket.getRemoteSocketAddress().getPort());
     }
@@ -54,6 +56,7 @@ public class CaesarLinkServer extends WebSocketServer {
     public void handleAction(String json, WebSocket webSocket) {
         JsonObject root = JsonParser.parseString(json).getAsJsonObject();
         Action action = Action.valueOf(root.get("action").getAsString());
+        log.info("Received action {} from {}", action, webSocket.getRemoteSocketAddress().getAddress().getHostAddress());
         switch (action) {
             case HANDSHAKE -> {
                 String name = root.get("serverName").getAsString();
@@ -62,6 +65,26 @@ public class CaesarLinkServer extends WebSocketServer {
                 o.addProperty("action", Action.HANDSHAKE.name());
                 o.addProperty("serverVersion", Caesar.systemVersion);
                 webSocket.send(o.toString());
+
+                log.info("Handshake complete for {}", name);
+                JsonObject config = new JsonObject();
+                config.addProperty("discordEnabled", Configuration.getInstance().isUseDiscord());
+                config.addProperty("action", Action.TRANSFER_CONFIG.name());
+                webSocket.send(config.toString());
+            }
+            case PLAYER_BANNED -> {
+                UUID banned = UUID.fromString(root.get("banned").getAsString());
+                String reason = root.get("reason").getAsString();
+                UUID bannedBy = UUID.fromString(root.get("punisher").getAsString());
+                Date activeUntil = Date.from(Instant.now());
+                List<String> effectiveServers = new ArrayList<>();
+                if (root.has("effectiveServers")) {
+                    effectiveServers.addAll(Arrays.stream(root.get("effectiveOn").getAsString().split(",")).toList());
+                }
+                if (effectiveServers.isEmpty()) effectiveServers.add("*");
+                if (root.get("temp").getAsBoolean()) {
+                    activeUntil = Date.from(Instant.parse(root.get("activeUntil").getAsString()));
+                }
             }
         }
     }
@@ -69,6 +92,14 @@ public class CaesarLinkServer extends WebSocketServer {
     public enum Action {
         HANDSHAKE,
         DISCONNECT,
-        TRANSFER_CONFIG
+        TRANSFER_CONFIG,
+        REPORT_CREATED,
+        REPORT_EDITED,
+        PLAYER_BANNED,
+        PLAYER_UNBANNED,
+        PLAYER_KICKED,
+        PLAYER_MUTED,
+        PLAYER_UNMUTED,
+        PLAYER_WARNED,
     }
 }

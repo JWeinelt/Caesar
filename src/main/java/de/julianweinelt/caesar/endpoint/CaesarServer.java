@@ -136,6 +136,7 @@ public class CaesarServer {
                     o.addProperty("token", jwt.token(user.getUsername()));
                     o.addProperty("enforcePasswordChange", user.isNewlyCreated());
                     o.addProperty("setupMode", isSetupMode);
+                    o.addProperty("userID", user.getUuid().toString());
                     o.addProperty("useCloudNET", LocalStorage.getInstance().getData().isCloudnetEnabled());
                     if (LocalStorage.getInstance().getData().isCloudnetEnabled()) {
                         JsonObject c = new JsonObject();

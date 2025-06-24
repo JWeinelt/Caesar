@@ -92,7 +92,7 @@
         <dependency>
             <groupId>io.javalin</groupId>
             <artifactId>javalin</artifactId>
-            <version>6.6.0</version>
+            <version>6.7.0</version>
         </dependency>
         <!-- Load .env files -->
         <dependency>
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>12.10.0.jre11</version>
+            <version>12.10.1.jre11</version>
         </dependency>
         <!-- JDBC Connector for SQLite -->
         <dependency>

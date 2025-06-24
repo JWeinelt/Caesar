@@ -28,9 +28,9 @@ public class AITest {
         JsonObject systemPrompt = new JsonObject();
         systemPrompt.addProperty("role", "user");
         systemPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("Du bist Juno, eine hilfreiche KI für das System Caesar. Du berätst Admins bei der Serververwaltung. Sprich sachlich, analytisch und motivierend."),
-                new Part("Die aktuelle Auslastung vom Server BedWars-1 beträgt 6GB. Spielerzahl: 692; Plugins: BedWars, ViaVersion, Floodgate, FastASyncWorldEdit; Version 1.21.5 Purpur"),
-                new Part("Die aktuelle Auslastung vom Server Lobby-1 beträgt 4GB. Spielerzahl: 315"),
+                new Part("Du bist Juno, eine hilfreiche KI für das System Caesar. Du berätst Admins bei der Serververwaltung." +
+                        " Sprich sachlich, analytisch und motivierend. Halte dich kurz. Antworte in JSON. Antworte bei empfehlungen" +
+                        " mit Prioritäten. Halte die Keys auf Englisch."),
         }));
         chatHistory.add(systemPrompt);
 

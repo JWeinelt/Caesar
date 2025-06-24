@@ -97,20 +97,4 @@ View the [Roadmap here.](https://github.com/JWeinelt/Caesar/blob/master/RoadMap.
 <a href="https://github.com/zCreeperYT"><img src="https://github.com/zCreeperYT.png" width="50" height="50" alt="@zCreeperYT"/></a>
 <a href="https://github.com/ProJakob"><img src="https://github.com/ProJakob.png" width="50" height="50" alt="@ProJakob"/></a>
 
-## 🖇️ Software used to develop Caesar
-- Lombok
-- Gson
-- Log4J/Logback
-- Apache Commons (fileupload, io, compress)
-- Jetbrains Annotations
-- Lanterna
-- JWT
-- dotenv-java
-- javalin
-- JDA, Lavaplayer
-- java-websocket
-- JDBC mysql-connector
-- guava
-- JLine
-- maven-model
-- maven-artifact
+

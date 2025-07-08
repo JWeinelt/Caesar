@@ -1,4 +1,4 @@
-name: Build & Publish Docker image (Multi-Stage)
+name: Docker Image
 
 on:
   push:

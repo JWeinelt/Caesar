@@ -26,4 +26,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/caesar:latest
+          tags: ghcr.io/${{ github.repository | toLower }}:latest

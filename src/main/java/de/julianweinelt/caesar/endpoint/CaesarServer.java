@@ -105,8 +105,7 @@ public class CaesarServer {
                     String authBasic = ctx.header("Authorization");
                     if (authBasic == null || !authBasic.startsWith("Basic ")) {
                         ctx.status(HttpStatus.UNAUTHORIZED); // 401
-                        ctx.result(createErrorResponse(ErrorType.INVALID_HEADER));
-                        ctx.skipRemainingHandlers();
+                        ctx.result(createErrorResponse(ErrorType.INVALID_HEADER)).skipRemainingHandlers();
                         return;
                     }
                     String base64 = authBasic.substring(6);

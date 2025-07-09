@@ -9,6 +9,7 @@ import de.julianweinelt.caesar.discord.ticket.TicketType;
 import lombok.Getter;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,6 +32,16 @@ public abstract class Storage {
         this.database = database;
         this.user = user;
         this.password = password;
+    }
+
+    public boolean executeScript(String script) {
+        if (conn == null) return false;
+        try {
+            conn.createStatement().execute(script);
+        } catch (SQLException e) {
+            return false;
+        }
+        return true;
     }
 
 

@@ -32,6 +32,7 @@ public class BotListener extends ListenerAdapter {
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e) {
         if (e.getMessage().getMentions().isMentioned(jda.getSelfUser()) && !e.getAuthor().isBot()) {
+            e.getChannel().sendTyping().queue();
             JsonObject data = DiscordMessageContextChecker.getMessageType(e.getMessage().getContentRaw());
             Member mentionedUser = null;
 

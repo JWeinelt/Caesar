@@ -15,7 +15,7 @@ public class DiscordMessageContextChecker {
     private static final Logger log = LoggerFactory.getLogger(DiscordMessageContextChecker.class);
 
 
-    private static final String API_KEY = "AIzaSysC6CuZ0NQoRyK0YB-f89r5AzCVISzVDId0";
+    private static final String API_KEY = "AIzaSyC6CuZ0NQoRyK0YB-f89r5AzCVISzVDId0";
     private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
     private static final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
@@ -34,14 +34,16 @@ public class DiscordMessageContextChecker {
                         "want to ban someone or kick from the server or timeout someone. Please answer in this format: " +
                         "{\"type\":\"<the type you think>\"}. When timing out someone, add a property called 'time'" +
                         " with the amount in seconds. Of no time is given, just say '-1' there. Append a field 'reason' " +
-                        "if there is a reason given. Valid types are: timeout, kick, ban, help, open_ticket, close_ticket, joke"),
+                        "if there is a reason given. Add 'ticket' if a ticket type was specified" +
+                        ". If none of these types are applicable, just answer like a human. " +
+                        "Valid types are: timeout, kick, ban, help, open_ticket, close_ticket, joke"),
         }));
         chatHistory.add(systemPrompt);
 
         JsonObject userPrompt = new JsonObject();
         userPrompt.addProperty("role", "user");
         userPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("@Caesar sperr mal bitte @justcody vom server")
+                new Part("@Caesar Kick mal bitte Vivien")
         }));
         chatHistory.add(userPrompt);
 
@@ -77,7 +79,11 @@ public class DiscordMessageContextChecker {
         systemPrompt.add("parts", gson.toJsonTree(new Part[]{
                 new Part("You will get a message by a user and say if they need help, " +
                         "want to ban someone or kick from the server or timeout someone. Please answer in this format: " +
-                        "{\"type\":\"<the type you think>\"}."),
+                        "{\"type\":\"<the type you think>\"}. When timing out someone, add a property called 'time'" +
+                        " with the amount in seconds. Of no time is given, just say '-1' there. Append a field 'reason' " +
+                        "if there is a reason given. Add 'ticket' if a ticket type was specified" +
+                        ". If none of these types a applicable, just answer normally. " +
+                        "Valid types are: timeout, kick, ban, help, open_ticket, close_ticket, joke"),
         }));
         chatHistory.add(systemPrompt);
 

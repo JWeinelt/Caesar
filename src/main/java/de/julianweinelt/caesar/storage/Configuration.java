@@ -7,6 +7,7 @@ import de.julianweinelt.caesar.endpoint.minecraft.MEndpointCurseForge;
 import de.julianweinelt.caesar.endpoint.minecraft.MEndpointModrinth;
 import de.julianweinelt.caesar.endpoint.minecraft.MEndpointSpigot;
 import de.julianweinelt.caesar.exceptions.InvalidConfigKeyException;
+import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 @Getter
@@ -42,13 +44,10 @@ public class Configuration {
     private int databasePort = 3306;
 
     private String webServerHost = "127.0.0.1";
-    private int webServerPort = 37819;
+    private int webServerPort = 48000;
     private int chatServerPort = 48001;
     private int connectionServerPort = 48002;
     private int clientLinkPort = 48003;
-
-    private String discordBotToken = "SECRET";
-    private OnlineStatus defaultOnlineStatus;
 
     @Getter(AccessLevel.NONE)
     private final String _INFO_CN = "These fields define options for the usage of CloudNET.";
@@ -82,7 +81,7 @@ public class Configuration {
 
     @Getter(AccessLevel.NONE)
     private final String _INFO3 = "Defined Minecraft plugin endpoints are here.";
-    private final List<MCPluginEndpoint> endpoints = new ArrayList<MCPluginEndpoint>
+    private final List<MCPluginEndpoint> endpoints = new ArrayList<>
             (List.of(new MEndpointCurseForge(), new MEndpointSpigot(), new MEndpointModrinth()));
 
     @Getter(AccessLevel.NONE)
@@ -104,7 +103,7 @@ public class Configuration {
     @Getter(AccessLevel.NONE)
     private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES WILL BREAK YOUR SYSTEM!";
     private String languageVersion = "1.0.0";
-    private String configVersion = "1.0.0";
+    private String configVersion = "1.0.4";
     
     public void set(String key, Object value) {
         String[] readOnlyKeys = {
@@ -125,8 +124,6 @@ public class Configuration {
             case "webServerPort" -> webServerPort = (int) value;
             case "chatServerPort" -> chatServerPort = (int) value;
             case "connectionServerPort" -> connectionServerPort = (int) value;
-            case "discordBotToken" -> discordBotToken = (String) value;
-            case "defaultOnlineStatus" -> defaultOnlineStatus = OnlineStatus.valueOf((String) value);
             case "cloudnetEnabled" -> cloudnetEnabled = (boolean) value;
             case "cloudnetHost" -> cloudnetHost = (String) value;
             case "cloudnetUser" -> cloudnetUser = (String) value;
@@ -165,8 +162,6 @@ public class Configuration {
             case "webServerPort" -> webServerPort;
             case "chatServerPort" -> chatServerPort;
             case "connectionServerPort" -> connectionServerPort;
-            case "discordBotToken" -> discordBotToken;
-            case "defaultOnlineStatus" -> defaultOnlineStatus;
             case "cloudnetEnabled" -> cloudnetEnabled;
             case "cloudnetHost" -> cloudnetHost;
             case "cloudnetUser" -> cloudnetUser;

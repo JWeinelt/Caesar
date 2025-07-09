@@ -4,12 +4,16 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import de.julianweinelt.caesar.auth.CaesarLinkServer;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
+import org.java_websocket.framing.CloseFrame;
 import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -18,6 +22,8 @@ import java.time.Instant;
 import java.util.*;
 
 public class ChatServer extends WebSocketServer {
+    private static final Logger log = LoggerFactory.getLogger(ChatServer.class);
+
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final HashMap<UUID, WebSocket> connections = new HashMap<>();
@@ -31,12 +37,15 @@ public class ChatServer extends WebSocketServer {
 
     @Override
     public void onOpen(WebSocket webSocket, ClientHandshake clientHandshake) {
-
+        log.debug("Received handshake by client: {}", webSocket.getRemoteSocketAddress());
     }
 
     @Override
-    public void onClose(WebSocket webSocket, int i, String s, boolean b) {
-
+    public void onClose(WebSocket webSocket, int code, String information, boolean byRemote) {
+        boolean isClient = getByConnection(webSocket) != null;
+        log.info("A running connection has been closed by {} with code {} and additional information {}. {}",
+                (byRemote) ? "remote" : "client", code, information,
+                (isClient ? "The connected WebSocket was a connected user. ID: " + getByConnection(webSocket) : ""));
     }
 
     @Override
@@ -63,6 +72,7 @@ public class ChatServer extends WebSocketServer {
                     UUID userID = UUID.fromString(rootOBJ.get("myID").getAsString());
                     connections.put(userID, conn);
                     sendHandshake(conn);
+                    log.info("Received CaesarHandshake by {} from {}", userID, conn.getRemoteSocketAddress());
                 }
                 case SEND_MESSAGE -> {
                     sendMessageBy(
@@ -85,13 +95,12 @@ public class ChatServer extends WebSocketServer {
     }
 
     @Override
-    public void onError(WebSocket webSocket, Exception e) {
-
-    }
+    public void onError(WebSocket webSocket, Exception e) {}
 
     @Override
     public void onStart() {
-
+        log.info("Chat Server has been started.");
+        log.info("Listening on {}:{}.", getAddress().getHostName(), getPort());
     }
 
     public void sendMessageBy(UUID sender, String message, UUID chat) {

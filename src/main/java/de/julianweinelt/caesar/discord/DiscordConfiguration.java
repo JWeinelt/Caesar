@@ -3,6 +3,7 @@ package de.julianweinelt.caesar.discord;
 import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import lombok.Getter;
 import lombok.Setter;
+import net.dv8tion.jda.api.OnlineStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +11,9 @@ import java.util.List;
 @Getter
 @Setter
 public class DiscordConfiguration {
+    private OnlineStatus defaultOnlineStatus;
+    private String discordBotToken = "SECRET";
+
     private boolean autoMod = false;
     private final List<String> blockedWords = new ArrayList<>();
     private boolean blockCaps = false;

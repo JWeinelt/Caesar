@@ -47,6 +47,13 @@ public class StorageHelperInitializer {
             "caesar.connections.enable",
             "caesar.connections.remove",
             "caesar.connections.update",
+            "caesar.link.ban",
+            "caesar.link.unban",
+            "caesar.link.mute",
+            "caesar.link.unmute",
+            "caesar.link.kick",
+            "caesar.link.warn",
+            "caesar.link.punishment.view"
     };
 
     public static List<TicketStatus> getDefaultTicketStatusList() {

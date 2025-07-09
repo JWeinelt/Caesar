@@ -244,12 +244,28 @@ public class Caesar {
             clearScreen();
 
             String hostName = prompt(terminal, "setup.hostname", InetAddress.getLocalHost().getHostAddress(), getAvailableHostNames());
+            localStorage.getData().setWebServerHost(hostName);
             clearScreen();
 
-            String port = prompt(terminal, "setup.port", "49850", List.of());
-            clearScreen();
-            localStorage.getData().setWebServerHost(hostName);
+            String port = prompt(terminal, "setup.port", localStorage.getData().getWebServerPort() + "", List.of());
             localStorage.getData().setWebServerPort(Integer.parseInt(port));
+            clearScreen();
+            boolean useChatServer = checkBoolInput(prompt(terminal, "setup.chat.use", "yes", getBooleans()));
+            clearScreen();
+            if (useChatServer) {
+                localStorage.getData().setUseChat(true);
+                String portChatServer = prompt(terminal, "setup.chat.port", localStorage.getData().getChatServerPort() + "", List.of());
+                localStorage.getData().setChatServerPort(Integer.parseInt(portChatServer));
+                clearScreen();
+            }
+            int connectionServerPort = Integer.parseInt(prompt(terminal, "setup.mc-conn.port",
+                    localStorage.getData().getConnectionServerPort() + "", List.of()));
+            localStorage.getData().setConnectionServerPort(connectionServerPort);
+            clearScreen();
+            int caesarClientLinkPort = Integer.parseInt(prompt(terminal, "setup.caesar-client-link.port",
+                    localStorage.getData().getClientLinkPort() + "", List.of()));
+            localStorage.getData().setClientLinkPort(caesarClientLinkPort);
+            clearScreen();
 
             userManager = new UserManager();
 

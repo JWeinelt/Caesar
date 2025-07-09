@@ -354,7 +354,7 @@ public class CaesarServer {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String token = rootObj.get("token").getAsString();
-                    LocalStorage.getInstance().getData().setDiscordBotToken(token);
+                    DiscordBot.getInstance().getConfig().setDiscordBotToken(token);
                     LocalStorage.getInstance().saveData();
                     DiscordBot.getInstance().restart();
                     ctx.result(createSuccessResponse());

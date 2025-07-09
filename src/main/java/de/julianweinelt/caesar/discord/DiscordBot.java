@@ -75,7 +75,7 @@ public class DiscordBot {
             return;
         }
 
-        JDABuilder builder = JDABuilder.create(LocalStorage.getInstance().getData().getDiscordBotToken(),
+        JDABuilder builder = JDABuilder.create(config.getDiscordBotToken(),
                 Arrays.asList(GatewayIntent.values()));
         jda = builder.build();
         try {
@@ -123,8 +123,16 @@ public class DiscordBot {
     }
 
     public void restart() {
+        restart(false);
+    }
+
+    public void restart(boolean reloadConfig) {
         log.info("Restarting Discord Bot...");
         stop();
+        if (reloadConfig) {
+            log.info("Reloading config");
+            config = null;
+        }
         log.info("Done! Restarting scheduler...");
         statusScheduler = Executors.newScheduledThreadPool(1);
         start();

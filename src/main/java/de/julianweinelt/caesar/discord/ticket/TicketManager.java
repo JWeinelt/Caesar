@@ -5,6 +5,7 @@ import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.Getter;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,10 @@ public class TicketManager {
         this.ticketTypes.clear();
         this.statuses.addAll(statuses);
         this.ticketTypes.addAll(ticketTypes);
+    }
+
+    public void sendTicketCreateMessage(TextChannel channel) {
+
     }
 
     public void createTicket(String creator, TicketType type) {

@@ -25,49 +25,7 @@ public class DiscordMessageContextChecker {
     private static final Gson gson = new Gson();
 
     public static void main(String[] args) throws IOException {
-        List<JsonObject> chatHistory = new ArrayList<>();
-
-        JsonObject systemPrompt = new JsonObject();
-        systemPrompt.addProperty("role", "user");
-        systemPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("You will get a message by a user and say if they need help, " +
-                        "want to ban someone or kick from the server or timeout someone. Please answer in this format: " +
-                        "{\"type\":\"<the type you think>\"}. When timing out someone, add a property called 'time'" +
-                        " with the amount in seconds. Of no time is given, just say '-1' there. Append a field 'reason' " +
-                        "if there is a reason given. Add 'ticket' if a ticket type was specified" +
-                        ". If none of these types are applicable, just answer like a human. " +
-                        "Valid types are: timeout, kick, ban, help, open_ticket, close_ticket, joke"),
-        }));
-        chatHistory.add(systemPrompt);
-
-        JsonObject userPrompt = new JsonObject();
-        userPrompt.addProperty("role", "user");
-        userPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("@Caesar Kick mal bitte Vivien")
-        }));
-        chatHistory.add(userPrompt);
-
-        JsonObject body = new JsonObject();
-        body.add("contents", gson.toJsonTree(chatHistory));
-
-        Request request = new Request.Builder()
-                .url(ENDPOINT)
-                .post(RequestBody.create(gson.toJson(body), MediaType.get("application/json")))
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code: " + response);
-
-            String responseBody = response.body().string();
-            //System.out.println("Antwort:\n" + responseBody);
-            JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
-            String text = responseJson
-                    .getAsJsonArray("candidates").get(0).getAsJsonObject()
-                    .getAsJsonObject("content").getAsJsonArray("parts").get(0)
-                    .getAsJsonObject().get("text").getAsString();
-
-            System.out.println("Antworttext:\n" + text);
-        }
+        System.out.println(tellJoke());
     }
 
     public static JsonObject getMessageType(String message) {
@@ -90,7 +48,7 @@ public class DiscordMessageContextChecker {
         JsonObject userPrompt = new JsonObject();
         userPrompt.addProperty("role", "user");
         userPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("@Caesar how do I setup this bot?")
+                new Part(message)
         }));
         chatHistory.add(userPrompt);
 
@@ -118,6 +76,50 @@ public class DiscordMessageContextChecker {
             log.error(e.getMessage());
         }
         return new JsonObject();
+    }
+
+    public static String tellJoke() {
+
+        List<JsonObject> chatHistory = new ArrayList<>();
+
+        JsonObject systemPrompt = new JsonObject();
+        systemPrompt.addProperty("role", "user");
+        systemPrompt.add("parts", gson.toJsonTree(new Part[]{
+                new Part("You are a funny bot"),
+        }));
+        chatHistory.add(systemPrompt);
+
+        JsonObject userPrompt = new JsonObject();
+        userPrompt.addProperty("role", "user");
+        userPrompt.add("parts", gson.toJsonTree(new Part[]{
+                new Part("@Caesar Tell me a joke!")
+        }));
+        chatHistory.add(userPrompt);
+
+        JsonObject body = new JsonObject();
+        body.add("contents", gson.toJsonTree(chatHistory));
+
+        Request request = new Request.Builder()
+                .url(ENDPOINT)
+                .post(RequestBody.create(gson.toJson(body), MediaType.get("application/json")))
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) throw new IOException("Unexpected code: " + response);
+
+            String responseBody = response.body().string();
+            //System.out.println("Antwort:\n" + responseBody);
+            JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
+            String text = responseJson
+                    .getAsJsonArray("candidates").get(0).getAsJsonObject()
+                    .getAsJsonObject("content").getAsJsonArray("parts").get(0)
+                    .getAsJsonObject().get("text").getAsString();
+
+            return text;
+        } catch (IOException | NullPointerException e) {
+            log.error(e.getMessage());
+        }
+        return "";
     }
 
     static class Part {

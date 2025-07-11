@@ -262,7 +262,7 @@ public class Caesar {
                     if (cmd.getName().equalsIgnoreCase(args[0]) ||
                             cmd.getAliases().stream().anyMatch(a -> a.equalsIgnoreCase(args[0]))) {
                         cmd.execute(args);
-                        log.info("Executed command: {}", cmd.getName());
+                        log.debug("Executed command: {}", cmd.getName());
                         found = true;
                         break;
                     }

@@ -191,12 +191,7 @@
             <version>3.9.10</version>
         </dependency>
 
-        <!-- Http -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>5.1.0</version>
-        </dependency>
+        <!-- Semantic versioning -->
         <dependency>
             <groupId>com.vdurmont</groupId>
             <artifactId>semver4j</artifactId>

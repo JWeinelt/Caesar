@@ -5,6 +5,7 @@ import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.backup.BackupManager;
 import de.julianweinelt.caesar.commands.CLICommand;
+import de.julianweinelt.caesar.commands.CLITabCompleter;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
@@ -26,6 +27,8 @@ import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
 import io.javalin.util.JavalinBindException;
 import lombok.Getter;
+import org.jline.reader.Candidate;
+import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.impl.completer.StringsCompleter;
@@ -191,27 +194,85 @@ public class Caesar {
         log.info("Caesar has been started.");
         startCLI();
     }
-
     public void startCLI() {
         try {
             Terminal terminal = TerminalBuilder.builder().system(true).build();
 
-            LineReaderBuilder readerBuilder = LineReaderBuilder.builder()
-                    .terminal(terminal);
+            Completer completer = (reader, line, candidates) -> {
+                List<String> words = line.words();
+                String currentWord = line.word();
 
-            LineReader reader = readerBuilder.build();
+                if (words.isEmpty()) {
+                    for (CLICommand cmd : getRegistry().getCommands()) {
+                        candidates.add(new Candidate(cmd.getName()));
+                        cmd.getAliases().forEach(alias -> candidates.add(new Candidate(alias)));
+                    }
+                    return;
+                }
+
+                String commandName = words.get(0);
+                CLICommand matching = getRegistry().getCommands().stream()
+                        .filter(cmd -> cmd.getName().equalsIgnoreCase(commandName) ||
+                                cmd.getAliases().stream().anyMatch(a -> a.equalsIgnoreCase(commandName)))
+                        .findFirst()
+                        .orElse(null);
+
+                if (matching == null) {
+                    for (CLICommand cmd : getRegistry().getCommands()) {
+                        if (cmd.getName().toLowerCase().startsWith(currentWord.toLowerCase())) {
+                            candidates.add(new Candidate(cmd.getName()));
+                        }
+                        for (String alias : cmd.getAliases()) {
+                            if (alias.toLowerCase().startsWith(currentWord.toLowerCase())) {
+                                candidates.add(new Candidate(alias));
+                            }
+                        }
+                    }
+                    return;
+                }
+
+                String[] args = words.subList(1, words.size()).toArray(new String[0]);
+                CLITabCompleter tabCompleter = matching.getTabCompleter();
+                if (tabCompleter != null) {
+                    for (String suggestion : tabCompleter.complete(args)) {
+                        if (suggestion.toLowerCase().startsWith(currentWord.toLowerCase())) {
+                            candidates.add(new Candidate(suggestion));
+                        }
+                    }
+                }
+            };
+
+
+            LineReader reader = LineReaderBuilder.builder()
+                    .terminal(terminal)
+                    .completer(completer)
+                    .build();
+
             reader.setOpt(LineReader.Option.AUTO_LIST);
             reader.setOpt(LineReader.Option.MOUSE);
 
-            String input = reader.readLine();
+            while (true) {
+                String input = reader.readLine("> ");
+                if (input == null || input.trim().equalsIgnoreCase("exit")) break;
 
-            String[] args = input.split(" ");
+                String[] args = input.split(" ");
 
-            for (CLICommand cmd : getRegistry().getCommands())
-                if (cmd.getName().equalsIgnoreCase(args[0]) || cmd.getAliases().contains(args[0])) {
-                    cmd.execute(args);
-                    log.info("Executed command: {}", cmd.getName());
+                boolean found = false;
+                for (CLICommand cmd : getRegistry().getCommands()) {
+                    if (cmd.getName().equalsIgnoreCase(args[0]) ||
+                            cmd.getAliases().stream().anyMatch(a -> a.equalsIgnoreCase(args[0]))) {
+                        cmd.execute(args);
+                        log.info("Executed command: {}", cmd.getName());
+                        found = true;
+                        break;
+                    }
                 }
+
+                if (!found) {
+                    System.out.println("Unknown command: " + args[0]);
+                }
+            }
+
         } catch (IOException e) {
             log.error("Failed to start terminal: {}", e.getMessage());
         }

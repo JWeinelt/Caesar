@@ -14,6 +14,7 @@ public class CLICommand {
     private final List<String> aliases = new ArrayList<>();
 
     private CLICommandExecutor executor;
+    private CLITabCompleter tabCompleter;
 
     public CLICommand(String name) {
         this.name = name;
@@ -35,6 +36,11 @@ public class CLICommand {
 
     public CLICommand executor(CLICommandExecutor executor) {
         this.executor = executor;
+        return this;
+    }
+
+    public CLICommand tabCompleter(CLITabCompleter tabCompleter) {
+        this.tabCompleter = tabCompleter;
         return this;
     }
 

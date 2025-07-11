@@ -3,11 +3,16 @@ package de.julianweinelt.caesar.ai;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.http.HttpClient;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,13 +20,8 @@ public class DiscordMessageContextChecker {
     private static final Logger log = LoggerFactory.getLogger(DiscordMessageContextChecker.class);
 
 
-    private static final String API_KEY = "AIzaSyC6CuZ0NQoRyK0YB-f89r5AzCVISzVDId0";
+    private static final String API_KEY = "AIzaSysC6CuZ0NQoRyK0YB-f89r5AzCVISzVDId0";
     private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
-    private static final OkHttpClient client = new OkHttpClient.Builder()
-            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
-            .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
-            .build();
     private static final Gson gson = new Gson();
 
     public static void main(String[] args) throws IOException {
@@ -55,26 +55,40 @@ public class DiscordMessageContextChecker {
         JsonObject body = new JsonObject();
         body.add("contents", gson.toJsonTree(chatHistory));
 
-        Request request = new Request.Builder()
-                .url(ENDPOINT)
-                .post(RequestBody.create(gson.toJson(body), MediaType.get("application/json")))
-                .build();
+        try {
+            URL url = new URL(ENDPOINT);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code: " + response);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json; utf-8");
+            conn.setDoOutput(true);
 
-            String responseBody = response.body().string();
-            //System.out.println("Antwort:\n" + responseBody);
-            JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
+            int responseCode = conn.getResponseCode();
+
+            BufferedReader reader;
+            if (responseCode >= 200 && responseCode < 300) {
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+            } else {
+                reader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8));
+            }
+
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line.trim());
+            }
+            reader.close();
+            String responseString = response.toString();
+            JsonObject responseJson = JsonParser.parseString(responseString).getAsJsonObject();
             String text = responseJson
                     .getAsJsonArray("candidates").get(0).getAsJsonObject()
                     .getAsJsonObject("content").getAsJsonArray("parts").get(0)
                     .getAsJsonObject().get("text").getAsString();
-
             return JsonParser.parseString(text).getAsJsonObject();
-        } catch (IOException | NullPointerException e) {
-            log.error(e.getMessage());
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
         }
+
         return new JsonObject();
     }
 
@@ -99,25 +113,37 @@ public class DiscordMessageContextChecker {
         JsonObject body = new JsonObject();
         body.add("contents", gson.toJsonTree(chatHistory));
 
-        Request request = new Request.Builder()
-                .url(ENDPOINT)
-                .post(RequestBody.create(gson.toJson(body), MediaType.get("application/json")))
-                .build();
+        try {
+            URL url = new URL(ENDPOINT);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
-        try (Response response = client.newCall(request).execute()) {
-            if (!response.isSuccessful()) throw new IOException("Unexpected code: " + response);
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json; utf-8");
+            conn.setDoOutput(true);
 
-            String responseBody = response.body().string();
-            //System.out.println("Antwort:\n" + responseBody);
-            JsonObject responseJson = JsonParser.parseString(responseBody).getAsJsonObject();
-            String text = responseJson
+            int responseCode = conn.getResponseCode();
+
+            BufferedReader reader;
+            if (responseCode >= 200 && responseCode < 300) {
+                reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
+            } else {
+                reader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8));
+            }
+
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line.trim());
+            }
+            reader.close();
+            String responseString = response.toString();
+            JsonObject responseJson = JsonParser.parseString(responseString).getAsJsonObject();
+            return responseJson
                     .getAsJsonArray("candidates").get(0).getAsJsonObject()
                     .getAsJsonObject("content").getAsJsonArray("parts").get(0)
                     .getAsJsonObject().get("text").getAsString();
-
-            return text;
-        } catch (IOException | NullPointerException e) {
-            log.error(e.getMessage());
+        } catch (IOException e) {
+            log.error(e.getMessage(), e);
         }
         return "";
     }

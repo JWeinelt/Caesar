@@ -234,7 +234,7 @@ public class Caesar {
                 String[] args = words.subList(1, words.size()).toArray(new String[0]);
                 CLITabCompleter tabCompleter = matching.getTabCompleter();
                 if (tabCompleter != null) {
-                    for (String suggestion : tabCompleter.complete(args)) {
+                    for (String suggestion : tabCompleter.onTabCompletion(args)) {
                         if (suggestion.toLowerCase().startsWith(currentWord.toLowerCase())) {
                             candidates.add(new Candidate(suggestion));
                         }

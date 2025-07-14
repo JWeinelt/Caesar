@@ -9,6 +9,7 @@ public class ServerConnection {
     private final String name;
     private String address;
     private int port;
+    private boolean encrypted = false;
 
     public ServerConnection(String name) {
         this.name = name;
@@ -18,5 +19,12 @@ public class ServerConnection {
         this.name = name;
         this.address = address;
         this.port = port;
+    }
+
+    public ServerConnection(String name, String address, int port, boolean encrypted) {
+        this.name = name;
+        this.address = address;
+        this.port = port;
+        this.encrypted = encrypted;
     }
 }

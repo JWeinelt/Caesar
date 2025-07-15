@@ -180,15 +180,18 @@ public class CaesarServer {
                     String connectionAddress = rootObj.get("address").getAsString();
                     int connectionPort = rootObj.get("port").getAsInt();
                     boolean encrypted = rootObj.get("encrypted").getAsBoolean();
-                    byte[] key = CaesarLinkServer.getInstance().generateKey();
-                    APIKeySaver.getInstance().saveKey(connectionName, key);
+                    String key = CaesarLinkServer.getInstance().generateKey();
                     LocalStorage.getInstance().getConnections().add(new ServerConnection(
                             connectionName,
                             connectionAddress,
-                            connectionPort, encrypted)
+                            connectionPort, encrypted, key)
                     );
                     LocalStorage.getInstance().saveConnections();
-                    ctx.result(createSuccessResponse());
+
+                    JsonObject o = new JsonObject();
+                    o.addProperty("success", true);
+                    o.addProperty("key", key);
+                    ctx.result(o.toString());
                 })
                 .get("/connection", ctx -> ctx.result(GSON.toJson(LocalStorage.getInstance().getConnections())))
                 .delete("/connection", ctx -> {

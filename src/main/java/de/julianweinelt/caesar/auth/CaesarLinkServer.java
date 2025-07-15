@@ -31,7 +31,7 @@ public class CaesarLinkServer extends WebSocketServer {
     private boolean encrypted = false;
 
     private final HashMap<String, WebSocket> connections = new HashMap<>();
-    private final HashMap<String, String> keys = new HashMap<>();
+    private final HashMap<WebSocket, String> keys = new HashMap<>();
 
 
     public CaesarLinkServer() {
@@ -48,6 +48,8 @@ public class CaesarLinkServer extends WebSocketServer {
         log.info("Received new connection from {}",
                 webSocket.getRemoteSocketAddress().getAddress().getHostAddress() +
                 ":" + webSocket.getRemoteSocketAddress().getPort());
+
+        keys.put(webSocket, clientHandshake.getFieldValue("ConnectionKey"));
     }
 
     @Override
@@ -71,8 +73,16 @@ public class CaesarLinkServer extends WebSocketServer {
     }
 
     public void handleAction(String json, WebSocket webSocket) {
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        String toParse;
+        try {
+            if (encrypted) toParse = decrypt(json, keys.getOrDefault(webSocket, "invalid").getBytes());
+            else toParse = json;
+        } catch (Exception ignored) {
+            toParse = json;
+        }
+        JsonObject root = JsonParser.parseString(toParse).getAsJsonObject();
         Action action = Action.valueOf(root.get("action").getAsString());
+        String key = keys.getOrDefault(webSocket, "invalid");
         log.info("Received action {} from {}", action, webSocket.getRemoteSocketAddress().getAddress().getHostAddress());
         switch (action) {
             case HANDSHAKE -> {
@@ -85,7 +95,7 @@ public class CaesarLinkServer extends WebSocketServer {
                 webSocket.send(o.toString());
 
                 log.info("Handshake complete for {}", name);
-                webSocket.send(createConfig().toString());
+                sendToSocket(webSocket, createConfig().toString(), key);
             }
             case PLAYER_BANNED -> {
                 UUID banned = UUID.fromString(root.get("banned").getAsString());
@@ -104,12 +114,12 @@ public class CaesarLinkServer extends WebSocketServer {
             case PING -> {
                 JsonObject o = new JsonObject();
                 o.addProperty("action", Action.PONG.name());
-                webSocket.send(o.toString());
+                sendToSocket(webSocket, o.toString(), key);
             }
         }
     }
 
-    public byte[] generateKey() {
+    public String generateKey() {
         try {
             String password = LocalStorage.getInstance().getData().getConnectionAPISecret();
             byte[] salt = new byte[16];
@@ -117,7 +127,7 @@ public class CaesarLinkServer extends WebSocketServer {
 
             PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-            return factory.generateSecret(spec).getEncoded();
+            return new String(factory.generateSecret(spec).getEncoded());
         } catch (Exception e) {
             log.error("Error generating key", e);
         }
@@ -159,6 +169,13 @@ public class CaesarLinkServer extends WebSocketServer {
         return menu;
     }
 
+    private void sendToSocket(WebSocket w, String content, String key) {
+        try {
+            w.send(encrypt(content, key.getBytes()));
+        } catch (Exception e) {
+            w.send(content);
+        }
+    }
 
     private String decrypt(String encryptedBase64, byte[] key) throws Exception {
         byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);

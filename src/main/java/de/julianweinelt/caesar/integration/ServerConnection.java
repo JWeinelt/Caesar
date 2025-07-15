@@ -10,21 +10,25 @@ public class ServerConnection {
     private String address;
     private int port;
     private boolean encrypted = false;
+    private final String key;
 
-    public ServerConnection(String name) {
+    public ServerConnection(String name, String key) {
         this.name = name;
+        this.key = key;
     }
 
-    public ServerConnection(String name, String address, int port) {
+    public ServerConnection(String name, String address, int port, String key) {
         this.name = name;
         this.address = address;
         this.port = port;
+        this.key = key;
     }
 
-    public ServerConnection(String name, String address, int port, boolean encrypted) {
+    public ServerConnection(String name, String address, int port, boolean encrypted, String key) {
         this.name = name;
         this.address = address;
         this.port = port;
         this.encrypted = encrypted;
+        this.key = key;
     }
 }

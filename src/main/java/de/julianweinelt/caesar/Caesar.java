@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar;
 
+import com.vdurmont.semver4j.Semver;
 import de.julianweinelt.caesar.auth.CaesarLinkServer;
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
@@ -19,14 +20,12 @@ import de.julianweinelt.caesar.plugin.PluginLoader;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
-import de.julianweinelt.caesar.storage.APIKeySaver;
-import de.julianweinelt.caesar.storage.LocalStorage;
-import de.julianweinelt.caesar.storage.Storage;
-import de.julianweinelt.caesar.storage.StorageFactory;
+import de.julianweinelt.caesar.storage.*;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
 import io.javalin.util.JavalinBindException;
 import lombok.Getter;
+import lombok.Setter;
 import org.jline.reader.Candidate;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
@@ -49,7 +48,7 @@ public class Caesar {
 
     @Getter
     private static Caesar instance;
-    public static String systemVersion = "1.0";
+    public static String systemVersion = "0.2.0";
 
     private String systemLanguage = "en";
 
@@ -100,6 +99,8 @@ public class Caesar {
 
     @Getter
     private BackupManager backupManager;
+    @Getter @Setter
+    private DatabaseVersionManager dbVersionManager = null;
 
     public static void main(String[] args) {
         instance = new Caesar();
@@ -167,6 +168,17 @@ public class Caesar {
         storageFactory.provide(localStorage.getData().getDatabaseType(), localStorage.getData());
         boolean success = storageFactory.connect();
         if (!success) log.error("Failed to connect to database!");
+        else {
+            log.info("Performing checks...");
+
+            if (localStorage.getData().getCaesarVersion() == null
+                    || new Semver(localStorage.getData().getCaesarVersion()).isLowerThan(systemVersion)) {
+                log.info("Performing update to Caesar v{}...", systemVersion);
+                dbVersionManager.startDownload(systemVersion);
+                localStorage.getData().setCaesarVersion(systemVersion);
+                localStorage.saveData();
+            }
+        }
         chatManager.setServer(chatServer);
         try {
             caesarServer.start();

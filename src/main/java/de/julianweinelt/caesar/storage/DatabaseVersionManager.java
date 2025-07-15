@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.vdurmont.semver4j.Semver;
+import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.util.LanguageManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,10 @@ public class DatabaseVersionManager {
     private static final Logger log = LoggerFactory.getLogger(DatabaseVersionManager.class);
 
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    public static DatabaseVersionManager getInstance() {
+        return Caesar.getInstance().getDbVersionManager();
+    }
 
     public void startDownload(String version) {
         Semver v = new Semver(version);

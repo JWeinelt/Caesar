@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
@@ -9,6 +10,7 @@ import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
+import de.julianweinelt.caesar.storage.DatabaseVersionManager;
 import de.julianweinelt.caesar.storage.Storage;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.storage.StorageHelperInitializer;
@@ -47,6 +49,8 @@ public class MySQLStorageProvider extends Storage {
             log.info("Connected to MySQL database: {}", URL);
             conn.createStatement().execute("USE " + getDatabase());
 
+            Caesar.getInstance().setDbVersionManager(new DatabaseVersionManager());
+
             String[] requiredTables = {
                     "users",
                     "permissions",
@@ -61,14 +65,17 @@ public class MySQLStorageProvider extends Storage {
                     "ticket_types",
                     "processes",
                     "ticket_transcripts",
-                    "server_data"
+                    "server_data",
+                    "punishments",
+                    "punishment_types",
+                    "user_types",
+                    "reports",
+                    "reports_update_history",
+                    "reports_types",
+                    "reports_status",
             };
 
             createTables();
-
-            if (!allTablesExist(requiredTables)) {
-                createTables();
-            }
             if (!systemDataExist()) insertDefaultData();
             log.info("Loading data into memory... This may take a while. Please wait...");
             UserManager.getInstance().getAllPermissions();
@@ -136,182 +143,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void createTables() {
-        try {
-            conn.setAutoCommit(false);
 
-            String users = "create table if not exists users" +
-                    "(" +
-                    "    UUID                varchar(36)       not null" +
-                    "        primary key," +
-                    "    Username            varchar(20)       not null," +
-                    "    PasswordHashed      int               not null," +
-                    "    CreationDate        datetime          null," +
-                    "    Active              tinyint default 1 not null," +
-                    "    NewlyCreated        tinyint default 1 not null," +
-                    "    ApplyPasswordPolicy tinyint default 0 not null," +
-                    "    constraint users_pk_2" +
-                    "        unique (Username)" +
-                    ");";
-            Statement statement = conn.createStatement();
-            String permissions = "create table if not exists permissions" +
-                    "(" +
-                    "    UUID           varchar(36) not null" +
-                    "        primary key," +
-                    "    NameKey        varchar(60) not null," +
-                    "    PermissionKey  varchar(60) not null," +
-                    "    DefaultGranted tinyint     null," +
-                    "    constraint permissions_pk_2" +
-                    "        unique (NameKey)," +
-                    "    constraint permissions_pk_3" +
-                    "        unique (PermissionKey)" +
-                    ");";
-            String userPermissions = "create table if not exists user_permissions" +
-                    "(" +
-                    "    UserID       varchar(36) not null," +
-                    "    PermissionID varchar(36) not null," +
-                    "    constraint user_permissions__perm_fk" +
-                    "        foreign key (PermissionID) references permissions (UUID)," +
-                    "    constraint user_permissions_users_UUID_fk" +
-                    "        foreign key (UserID) references users (UUID)" +
-                    ");";
-            String roles = "create table if not exists roles" +
-                    "(" +
-                    "    UUID         varchar(36)                           not null" +
-                    "        primary key," +
-                    "    NameKey      varchar(60)                           null," +
-                    "    DisplayColor varchar(16) default '0;0;0;100'       not null," +
-                    "    CreationDate datetime    default CURRENT_TIMESTAMP not null" +
-                    ");";
-            String userRoles = "create table if not exists user_roles" +
-                    "(" +
-                    "    UserID varchar(36) not null," +
-                    "    RoleID varchar(36) not null," +
-                    "    constraint user_roles_roles_role_fk" +
-                    "        foreign key (RoleID) references roles (UUID)," +
-                    "    constraint user_roles_users_user_fk" +
-                    "        foreign key (UserID) references users (UUID)" +
-                    ");";
-            String rolePermissions = "create table if not exists role_permissions" +
-                    "(" +
-                    "    RoleID       varchar(36) not null," +
-                    "    PermissionID varchar(36) not null," +
-                    "    constraint role_permissions_permissions_id_fk" +
-                    "        foreign key (PermissionID) references permissions (UUID)," +
-                    "    constraint role_permissions_roles_id_fk" +
-                    "        foreign key (RoleID) references roles (UUID)" +
-                    ");";
-            
-            String processStatusNames = "create table if not exists process_status_names" +
-                    "(" +
-                    "    UUID        varchar(36)                     not null" +
-                    "        primary key," +
-                    "    StatusName  varchar(36)                     not null," +
-                    "    Color       varchar(16) default '0;0;0;100' not null," +
-                    "    Description varchar(150)                    null," +
-                    "    constraint process_status_names_pk_2" +
-                    "        unique (StatusName)" +
-                    ");";
-            String ticketStatusNames = "create table if not exists ticket_status_names" +
-                    "(" +
-                    "    UUID        varchar(36)                     not null" +
-                    "        primary key," +
-                    "    StatusName  varchar(36)                     not null," +
-                    "    Color       varchar(16) default '0;0;0;100' not null," +
-                    "    Description varchar(150)                    null," +
-                    "    constraint ticket_status_names_pk_2" +
-                    "        unique (StatusName)" +
-                    ");";
-            String ticketTypes = """
-                create table if not exists ticket_types (
-                    TypeID varchar(36) not null primary key,
-                    TypeName varchar(16) not null,
-                    Prefix varchar(15) not null default 'ticket',
-                    ShowInSelection tinyint not null default 1,
-                    SelectionEmoji nvarchar(16) null,
-                    SelectionText varchar(30) not null default 'Ticket'
-                );
-""";
-            String processTypes = "create table if not exists process_types" +
-                    "(" +
-                    "    TypeID      varchar(36)       not null" +
-                    "        primary key," +
-                    "    TypeName    varchar(30)       not null," +
-                    "    Active      tinyint default 1 not null," +
-                    "    UsePattern  tinyint default 0 not null," +
-                    "    PatternUsed varchar(36)       null" +
-                    ");";
-            String processes = "create table if not exists processes" +
-                    "(" +
-                    "    ProcessID    varchar(36)                                not null " +
-                    "        primary key," +
-                    "    CreatedBy    varchar(36)                                not null," +
-                    "    Status       varchar(36)                                not null," +
-                    "    ProcessType  varchar(36)                                not null," +
-                    "    CreationDate datetime     default current_timestamp()   not null," +
-                    "    Comment      varchar(150) default 'Nothing to see here' not null," +
-                    "    constraint processes_process_status_names_UUID_fk" +
-                    "        foreign key (Status) references process_status_names (UUID)," +
-                    "    constraint processes_process_types_TypeID_fk" +
-                    "        foreign key (ProcessType) references process_types (TypeID)," +
-                    "    constraint processes_users_UUID_fk" +
-                    "        foreign key (CreatedBy) references users (UUID)" +
-                    ");";
-            String tickets = "create table if not exists tickets" +
-                    "(" +
-                    "    UUID         varchar(36) not null" +
-                    "        primary key," +
-                    "    CreatedBy    varchar(140) null," +
-                    "    HandledBy    varchar(140) null," +
-                    "    CreationDate datetime     null," +
-                    "    TicketStatus varchar(36)  not null," +
-                    "    TicketType varchar(36)  not null," +
-                    "    ChannelID varchar(45)  not null," +
-                    "    constraint tickets_ticket_status_names_UUID_fk" +
-                    "        foreign key (TicketStatus) references ticket_status_names (UUID), " +
-                    "    constraint tickets_ticket_types_UUID_fk" +
-                    "        foreign key (TicketType) references ticket_types (TypeID)" +
-                    ");";
-            String ticketTranscripts = "create table if not exists ticket_transcripts" +
-                    "(" +
-                    "    TicketID       varchar(36)                        not null," +
-                    "    SenderName     varchar(50)                        not null," +
-                    "    MessageContent varchar(5000)                      null," +
-                    "    SentDate       datetime default CURRENT_TIMESTAMP not null," +
-                    "    constraint ticket_transcripts_tickets_UUID_fk" +
-                    "        foreign key (TicketID) references tickets (UUID)" +
-                    ");";
-            String serverData = "create table if not exists server_data" +
-                    "(" +
-                    "    UUID      varchar(36)                        not null," +
-                    "    Name      varchar(80)                        not null," +
-                    "    TimeStamp datetime default CURRENT_TIMESTAMP not null," +
-                    "    Players   int      default 0                 not null," +
-                    "    cpu       float                              not null," +
-                    "    memory    int                                not null," +
-                    "    TPS       int      default 20                not null" +
-                    ");";
-
-            statement.executeUpdate(users);
-            statement.executeUpdate(permissions);
-            statement.executeUpdate(roles);
-            statement.executeUpdate(ticketStatusNames);
-            statement.executeUpdate(ticketTypes);
-            statement.executeUpdate(processStatusNames);
-            statement.executeUpdate(processTypes);
-
-            statement.executeUpdate(userPermissions);
-            statement.executeUpdate(userRoles);
-            statement.executeUpdate(rolePermissions);
-
-            statement.executeUpdate(tickets);
-            statement.executeUpdate(processes);
-            statement.executeUpdate(ticketTranscripts);
-            statement.executeUpdate(serverData);
-
-            log.info("Tables created");
-        } catch (SQLException e) {
-            log.error("Failed to create tables: {}", e.getMessage());
-        }
     }
 
     @Override

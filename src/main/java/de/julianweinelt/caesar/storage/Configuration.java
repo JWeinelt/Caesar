@@ -103,14 +103,16 @@ public class Configuration {
     @Getter(AccessLevel.NONE)
     private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES WILL BREAK YOUR SYSTEM!";
     private String languageVersion = "1.0.0";
-    private String configVersion = "1.0.4";
+    private String configVersion = "1.0.5";
+    private String caesarVersion = "0.2.0";
     
     public void set(String key, Object value) {
         String[] readOnlyKeys = {
                 "languageVersion",
                 "configVersion",
+                "caesarVersion",
         };
-        boolean readOnly = Arrays.stream(readOnlyKeys).toList().contains(key);
+        boolean readOnly = Arrays.stream(readOnlyKeys).toList().contains(key) || key.startsWith("_");
         switch (key) {
             case "jwtSecret" -> jwtSecret = (String) value;
             case "jwtIssuer" -> jwtIssuer = (String) value;

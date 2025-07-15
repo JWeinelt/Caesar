@@ -73,3 +73,7 @@ ALTER TABLE reports_update_history
         FOREIGN KEY (UpdaterUserType) REFERENCES user_types (RecordID),
     ADD CONSTRAINT reports_hist_status_fk
         FOREIGN KEY (NewStatus) REFERENCES reports_status (RecordID);
+
+INSERT INTO user_types (RecordID, Name) VALUES ('b1814b18-664e-4d4c-9a0d-2151fbc5e8ef', 'Console'),
+                                               ('b845e723-a84e-4d89-b1fa-e35a415dd173', 'MinecraftPlayer'),
+                                               ('cab5044e-786b-456b-aaf6-435f5ac685b5', 'CaesarUser');

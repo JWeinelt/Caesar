@@ -8,5 +8,6 @@
     <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/OracleSQLStorageProvider.java" dialect="NetSuite" />
     <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/PostgreSQLStorageProvider.java" dialect="PostgreSQL" />
     <file url="file://$PROJECT_DIR$/src/main/java/de/julianweinelt/caesar/storage/providers/SQLiteStorageProvider.java" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/sql_scripts/v0.2.0.sql" dialect="MariaDB" />
   </component>
 </project>

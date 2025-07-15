@@ -6,10 +6,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.Caesar;
-import de.julianweinelt.caesar.auth.PasswordConditions;
-import de.julianweinelt.caesar.auth.User;
-import de.julianweinelt.caesar.auth.UserManager;
-import de.julianweinelt.caesar.auth.UserRole;
+import de.julianweinelt.caesar.auth.*;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.integration.ServerConnection;
 import de.julianweinelt.caesar.storage.APIKeySaver;
@@ -182,11 +179,13 @@ public class CaesarServer {
                     String connectionName = rootObj.get("name").getAsString();
                     String connectionAddress = rootObj.get("address").getAsString();
                     int connectionPort = rootObj.get("port").getAsInt();
-                    APIKeySaver.getInstance().saveKey(connectionName);
+                    boolean encrypted = rootObj.get("encrypted").getAsBoolean();
+                    byte[] key = CaesarLinkServer.getInstance().generateKey();
+                    APIKeySaver.getInstance().saveKey(connectionName, key);
                     LocalStorage.getInstance().getConnections().add(new ServerConnection(
                             connectionName,
                             connectionAddress,
-                            connectionPort)
+                            connectionPort, encrypted)
                     );
                     LocalStorage.getInstance().saveConnections();
                     ctx.result(createSuccessResponse());

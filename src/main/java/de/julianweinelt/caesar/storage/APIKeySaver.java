@@ -31,7 +31,7 @@ public class APIKeySaver {
         return Caesar.getInstance().getApiKeySaver();
     }
 
-    public String loadKey(String cKey) {
+    public byte[] loadKey(String cKey) {
         try {
             byte[] encryptedData = loadEncryptedData(new File(folder, cKey + ".cae").getPath() );
             byte[] key = encryptionKey.getBytes();
@@ -43,12 +43,12 @@ public class APIKeySaver {
             log.error("Could not parse file. Maybe it's not encrypted?");
             log.error(e.getMessage());
         }
-        return "";
+        return new byte[0];
     }
 
-    public void saveKey(String cKey) {
+    public void saveKey(String cKey, byte[] key) {
         try {
-            byte[] encryptedData = encrypt(GSON.toJson(new ConnectionKey(cKey, JWTUtil.getInstance().generateSecret(15))),
+            byte[] encryptedData = encrypt(GSON.toJson(new ConnectionKey(cKey, key)),
                     encryptionKey.getBytes(), encryptionKey.getBytes());
             try (FileOutputStream fos = new FileOutputStream(new File(folder, cKey + ".json"))) {
                 fos.write(encryptedData);
@@ -108,5 +108,5 @@ public class APIKeySaver {
     }
 
 
-    public record ConnectionKey(String name, String key) {}
+    public record ConnectionKey(String name, byte[] key) {}
 }

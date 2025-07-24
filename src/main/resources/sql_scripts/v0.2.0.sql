@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS process_player_assignment (
 );
 
 CREATE TABLE IF NOT EXISTS players_notes (
+    RecordID varchar(36) NOT NULL PRIMARY KEY,
     PlayerID varchar(36) NOT NULL,
     UserID varchar(36) NOT NULL,
     Note varchar(500) NOT NULL,
@@ -75,6 +76,9 @@ CREATE TABLE IF NOT EXISTS players_mc_accounts (
     MC_UUID varchar(36) NOT NULL,
     MC_Name varchar(36) NOT NULL
 );
+
+ALTER TABLE punishments
+    ADD COLUMN PlayerID varchar(36) NOT NULL;
 
 ALTER TABLE players_notes
     ADD CONSTRAINT player_note_player_fk
@@ -96,6 +100,8 @@ ALTER TABLE process_player_assignment
 ALTER TABLE punishments
     ADD CONSTRAINT punishments_types_fk
         FOREIGN KEY (PunishmentType) REFERENCES punishment_types (TypeID),
+    ADD CONSTRAINT punishments_player_fk
+        FOREIGN KEY (PlayerID) REFERENCES players (PlayerID),
     ADD CONSTRAINT punishments_user_types_fk
         FOREIGN KEY (CreateUserType) REFERENCES user_types (RecordID);
 

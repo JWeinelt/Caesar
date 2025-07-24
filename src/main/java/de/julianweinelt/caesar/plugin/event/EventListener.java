@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 
 public class EventListener {
     private final Object instance;
+    @Getter
     private final Method method;
     @Getter
     private final Priority priority;

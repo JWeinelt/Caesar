@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
@@ -9,6 +11,7 @@ import de.julianweinelt.caesar.discord.ticket.Ticket;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
+import de.julianweinelt.caesar.endpoint.MinecraftUUIDFetcher;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
 import de.julianweinelt.caesar.storage.DatabaseVersionManager;
 import de.julianweinelt.caesar.storage.Storage;
@@ -19,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.security.SecureRandom;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -650,6 +654,8 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void updateTicketStatus(Ticket ticket, TicketStatus ticketStatus) {
+        checkConnection();
+
         try {
             PreparedStatement pS = conn.prepareStatement("UPDATE tickets SET TicketStatus = ? WHERE UUID = ?");
 
@@ -664,6 +670,8 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void handleTicket(Ticket ticket, String handler) {
+        checkConnection();
+
         try {
             PreparedStatement pS = conn.prepareStatement("UPDATE tickets SET HandledBy = ? WHERE UUID = ?");
 
@@ -678,6 +686,8 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void deleteTicket(Ticket ticket) {
+        checkConnection();
+
         try {
             PreparedStatement pS = conn.prepareStatement("DELETE FROM tickets WHERE UUID = ?");
             pS.setString(1, ticket.getUniqueID().toString());
@@ -690,5 +700,228 @@ public class MySQLStorageProvider extends Storage {
     @Override
     public void createTicket(Ticket ticket) {
 
+    }
+
+    @Override
+    public UUID createPlayer() {
+        UUID id = UUID.randomUUID();
+        int number = new SecureRandom().nextInt(1000, 9999);
+        createPlayer(id, number);
+        return id;
+    }
+
+    @Override
+    public void createPlayer(UUID uuid, int number) {
+        checkConnection();
+
+    }
+
+    @Override
+    public void createPlayer(UUID uuid) {
+        int number = new SecureRandom().nextInt(1000, 9999);
+        createPlayer(uuid, number);
+    }
+
+    @Override
+    public void addMCAccount(UUID player, UUID mc) {
+        checkConnection();
+
+        String name = MinecraftUUIDFetcher.getByID(mc);
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO players_mc_accounts " +
+                    "(PlayerID, MC_UUID, MC_Name) VALUES (?, ?, ?);");
+            pS.setString(1, player.toString());
+            pS.setString(2, mc.toString());
+            pS.setString(3, name);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to add Minecraft account to player {}: {}", player.toString(), e.getMessage());
+        }
+    }
+
+    @Override
+    public void removeMCAccount(UUID player, UUID mc) {
+        checkConnection();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM players_mc_accounts " +
+                    "WHERE PlayerID = ? AND MC_UUID = ?");
+            pS.setString(1, player.toString());
+            pS.setString(2, mc.toString());
+        } catch (SQLException e) {
+            log.error("Failed to remove Minecraft account from player {}: {}", player.toString(), e.getMessage());
+        }
+    }
+
+    @Override
+    public String updateMCAccount(UUID player) {
+        String name = MinecraftUUIDFetcher.getByID(player);
+        checkConnection();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("UPDATE players_mc_accounts SET MC_Name = ? WHERE MC_UUID = ?");
+            pS.setString(1, name);
+            pS.setString(2, player.toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to update Minecraft account for player {}: {}", player.toString(), e.getMessage());
+        }
+        return name;
+    }
+
+    @Override
+    public void deletePlayer(UUID player) {
+
+    }
+
+    @Override
+    public JsonObject getPlayer(UUID player) {
+        return null;
+    }
+
+    @Override
+    public UUID getPlayer(int player) {
+        checkConnection();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT PlayerID FROM players WHERE PlayerNumber = ?");
+            pS.setInt(1, player);
+            ResultSet set = pS.executeQuery();
+            if (set.next()) return UUID.fromString(set.getString(1));
+        } catch (SQLException e) {
+            log.error("Failed to get player id for player {}: {}", player, e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public UUID getPlayerByAccount(String mcName) {
+        checkConnection();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT PlayerID FROM players_mc_accounts WHERE MC_Name = ?");
+            pS.setString(1, mcName);
+            ResultSet set = pS.executeQuery();
+            if (set.next()) return UUID.fromString(set.getString(1));
+        } catch (SQLException e) {
+            log.error("Failed to get player by account: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public JsonArray getProcessesForPlayer(UUID player) {
+        JsonArray array = new JsonArray();
+        checkConnection();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT p.ProcessID, p.CreatedBy, p.Status, p.ProcessType, p.Comment" +
+                    " FROM process_player_assignment AS a " +
+                    "LEFT OUTER JOIN processes AS p ON a.ProcessID = p.ProcessID WHERE a.PlayerID = ?");
+            pS.setString(1, player.toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                JsonObject o = new JsonObject();
+                o.addProperty("processID", set.getString(1));
+                o.addProperty("createdBy", set.getString(2));
+                o.addProperty("status", set.getString(3));
+                o.addProperty("type", set.getString(4));
+                o.addProperty("comment", set.getString(5));
+                array.add(o);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to retrieve processes for player {}: {}", player.toString(), e.getMessage());
+        }
+        return array;
+    }
+
+    @Override
+    public JsonArray getPunishmentsForPlayer(UUID player) {
+        return null;
+    }
+
+    @Override
+    public JsonArray getProcessTypes() {
+        checkConnection();
+        JsonArray array = new JsonArray();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM process_types");
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                JsonObject o = new JsonObject();
+                o.addProperty("id", set.getString(1));
+                o.addProperty("name", set.getString(2));
+                o.addProperty("active", set.getBoolean(3));
+                o.addProperty("usePattern", set.getBoolean(4));
+                o.addProperty("pattern", set.getString(5));
+                array.add(o);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to retrieve process types: {}", e.getMessage());
+        }
+        return array;
+    }
+
+    @Override
+    public JsonArray getProcessStatuses() {
+        checkConnection();
+        JsonArray array = new JsonArray();
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM process_status_names");
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                JsonObject o = new JsonObject();
+                o.addProperty("id", set.getString(1));
+                o.addProperty("name", set.getString(2));
+                o.addProperty("description", set.getString(4));
+                o.add("color", DatabaseColorParser.getColor(set.getString(3)));
+                array.add(o);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to retrieve process statuses: {}", e.getMessage());
+        }
+        return array;
+    }
+
+    @Override
+    public JsonArray getPlayerNotes(UUID player) {
+        return null;
+    }
+
+    @Override
+    public void createProcessType(String name, boolean usePattern, String pattern) {
+        checkConnection();
+    }
+
+    @Override
+    public void createProcessStatus(String name, String color, String description) {
+
+    }
+
+    @Override
+    public void createPlayerNote(UUID player, UUID user, String note) {
+
+    }
+
+    @Override
+    public JsonArray getMCAccounts(UUID player) {
+        JsonArray array = new JsonArray();
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM players_mc_accounts WHERE PlayerID = ?");
+            pS.setString(1, player.toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                JsonObject o = new JsonObject();
+                o.addProperty("uuid", set.getString(2));
+                o.addProperty("name", set.getString(3));
+                array.add(o);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to get mc accounts for player: {}", e.getMessage());
+        }
+        return array;
     }
 }

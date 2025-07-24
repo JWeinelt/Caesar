@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.EmbedBuilder;
 
-import java.time.temporal.TemporalAccessor;
-
 @Setter
 @Getter
 public class DiscordEmbedWrapper {

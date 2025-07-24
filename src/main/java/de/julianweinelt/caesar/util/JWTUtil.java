@@ -7,7 +7,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.storage.LocalStorage;
-import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +83,7 @@ public class JWTUtil {
         try {
             return verifier.verify(token);
         } catch (JWTVerificationException e) {
-            log.error("Failed to verify JWT token: {}", e.getMessage());
+            log.error("Failed to decode JWT token: {}", e.getMessage());
             return null;
         }
     }

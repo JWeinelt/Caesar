@@ -5,9 +5,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Retention(RetentionPolicy.RUNTIME) // Annotation bleibt zur Laufzeit erhalten
-@Target(ElementType.METHOD) // Kann nur auf Methoden angewendet werden
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
 public @interface Subscribe {
     String value(); // Event-Name
-    Priority priority() default Priority.NORMAL; // Optional: Priorität
+    Priority priority() default Priority.NORMAL;
 }

@@ -105,7 +105,8 @@ public class Configuration {
     private String languageVersion = "1.0.0";
     private String configVersion = "1.0.5";
     private String caesarVersion = "0.2.0";
-    
+
+    //TODO: Add new keys to list
     public void set(String key, Object value) {
         String[] readOnlyKeys = {
                 "languageVersion",

@@ -12,16 +12,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.NoSuchFileException;
 
-@Deprecated
-/**
- * A utility class for managing the saving and loading of objects to and from JSON files,
- * with optional encryption support.
- *
- * <p>The class is generic and allows type-safe handling of specific types. It uses GSON for
- * serialization and deserialization, and AES encryption for secure storage if enabled.</p>
- *
- * @param <T> The type of object to be managed by this class.
- */
+@Deprecated(since = "0.0.1")
 public abstract class LoadableManager<T> {
 
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

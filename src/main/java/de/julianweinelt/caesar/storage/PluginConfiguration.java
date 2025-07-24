@@ -1,7 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
-import de.julianweinelt.caesar.plugin.CPlugin;
-
+// Wrapper class for plugin.json files
 public class PluginConfiguration {
 
 }

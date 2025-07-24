@@ -95,7 +95,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public boolean allTablesExist(String[] tables) {
-        checkConnection();
+        if (!checkConnection()) return false;
         try {
             DatabaseMetaData meta = conn.getMetaData();
             for (String table : tables) {
@@ -137,11 +137,16 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
-    public void checkConnection() {
+    public boolean checkConnection() {
         try {
-            if (conn == null || conn.isClosed()) connect();
+            if (conn == null || conn.isClosed()) {
+                connect();
+                return false;
+            }
+            return true;
         } catch (SQLException e) {
             log.error("Failed to check connection: {}", e.getMessage());
+            return false;
         }
     }
 
@@ -209,6 +214,8 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public User getUser(String username) {
+        if (!checkConnection()) return null;
+        
         User user = null;
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT * FROM users WHERE Username = ?");
@@ -654,7 +661,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void updateTicketStatus(Ticket ticket, TicketStatus ticketStatus) {
-        checkConnection();
+        if (!checkConnection()) return;
 
         try {
             PreparedStatement pS = conn.prepareStatement("UPDATE tickets SET TicketStatus = ? WHERE UUID = ?");
@@ -670,7 +677,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void handleTicket(Ticket ticket, String handler) {
-        checkConnection();
+        if (!checkConnection()) return;
 
         try {
             PreparedStatement pS = conn.prepareStatement("UPDATE tickets SET HandledBy = ? WHERE UUID = ?");
@@ -686,7 +693,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void deleteTicket(Ticket ticket) {
-        checkConnection();
+        if (!checkConnection()) return;
 
         try {
             PreparedStatement pS = conn.prepareStatement("DELETE FROM tickets WHERE UUID = ?");
@@ -712,7 +719,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void createPlayer(UUID uuid, int number) {
-        checkConnection();
+        if (!checkConnection()) return;
 
     }
 
@@ -724,7 +731,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void addMCAccount(UUID player, UUID mc) {
-        checkConnection();
+        if (!checkConnection()) return;
 
         String name = MinecraftUUIDFetcher.getByID(mc);
 
@@ -742,7 +749,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void removeMCAccount(UUID player, UUID mc) {
-        checkConnection();
+        if (!checkConnection()) return;
 
         try {
             PreparedStatement pS = conn.prepareStatement("DELETE FROM players_mc_accounts " +
@@ -757,7 +764,7 @@ public class MySQLStorageProvider extends Storage {
     @Override
     public String updateMCAccount(UUID player) {
         String name = MinecraftUUIDFetcher.getByID(player);
-        checkConnection();
+        if (!checkConnection()) return "";
 
         try {
             PreparedStatement pS = conn.prepareStatement("UPDATE players_mc_accounts SET MC_Name = ? WHERE MC_UUID = ?");
@@ -776,13 +783,28 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
-    public JsonObject getPlayer(UUID player) {
-        return null;
+    public JsonObject getPlayer(UUID playerID) {
+        JsonObject player = new JsonObject();
+        player.addProperty("UUID", playerID.toString());
+        if (!checkConnection()) return player;
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT PlayerNumber FROM players WHERE PlayerID = ?");
+            pS.setString(1, playerID.toString());
+            ResultSet set = pS.executeQuery();
+            if (set.next()) player.addProperty("playerNumber", set.getInt(1));
+        } catch (SQLException e) {
+            log.error("Failed to get player number for player {}: {}", playerID, e.getMessage());
+        }
+        player.add("mcAccounts", getMCAccounts(playerID));
+        player.add("processes", getProcessesForPlayer(playerID));
+        player.add("punishments", getPunishmentsForPlayer(playerID));
+        player.add("notes", getPlayerNotes(playerID));
+        return player;
     }
 
     @Override
     public UUID getPlayer(int player) {
-        checkConnection();
+        if (!checkConnection()) return null;
 
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT PlayerID FROM players WHERE PlayerNumber = ?");
@@ -797,7 +819,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public UUID getPlayerByAccount(String mcName) {
-        checkConnection();
+        if (!checkConnection()) return null;
 
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT PlayerID FROM players_mc_accounts WHERE MC_Name = ?");
@@ -813,7 +835,7 @@ public class MySQLStorageProvider extends Storage {
     @Override
     public JsonArray getProcessesForPlayer(UUID player) {
         JsonArray array = new JsonArray();
-        checkConnection();
+        if (!checkConnection()) return array;
 
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT p.ProcessID, p.CreatedBy, p.Status, p.ProcessType, p.Comment" +
@@ -838,13 +860,34 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public JsonArray getPunishmentsForPlayer(UUID player) {
-        return null;
+        JsonArray array = new JsonArray();
+        if (!checkConnection()) return array;
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM punishments WHERE PlayerID = ?");
+            pS.setString(1, player.toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                JsonObject o = new JsonObject();
+                o.addProperty("PunishmentType", set.getString(2));
+                o.addProperty("Punished", set.getString(8));
+                o.addProperty("RecordID", set.getString(1));
+                o.addProperty("CreationDate", set.getLong(3));
+                o.addProperty("CreateUserType", set.getString(4));
+                o.addProperty("CreatedBy", set.getString(5));
+                o.addProperty("ActionUntil", set.getLong(6));
+                o.addProperty("Reason", set.getString(7));
+                array.add(o);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to retrieve punishments for player {}: {}", player.toString(), e.getMessage());
+        }
+        return array;
     }
 
     @Override
     public JsonArray getProcessTypes() {
-        checkConnection();
         JsonArray array = new JsonArray();
+        if (!checkConnection()) return array;
 
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT * FROM process_types");
@@ -866,8 +909,8 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public JsonArray getProcessStatuses() {
-        checkConnection();
         JsonArray array = new JsonArray();
+        if (!checkConnection()) return array;
 
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT * FROM process_status_names");
@@ -888,22 +931,74 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public JsonArray getPlayerNotes(UUID player) {
-        return null;
+        JsonArray array = new JsonArray();
+        if (!checkConnection()) return array;
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT * FROM players_notes WHERE PlayerID = ?");
+            pS.setString(1, player.toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) {
+                JsonObject o = new JsonObject();
+                o.addProperty("RecordID", set.getString(1));
+                o.addProperty("PlayerID", set.getString(2));
+                o.addProperty("UserID", set.getString(3));
+                o.addProperty("Note", set.getString(4));
+                o.addProperty("CreationDate", set.getLong(5));
+                array.add(o);
+            }
+        } catch (SQLException e) {
+            log.error("Failed to retrieve notes for player {}: {}", player.toString(), e.getMessage());
+        }
+        return array;
     }
 
     @Override
     public void createProcessType(String name, boolean usePattern, String pattern) {
-        checkConnection();
+        if (!checkConnection()) return;
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO process_types " +
+                    "(TypeID, TypeName, Active, UsePattern, PatternUsed) VALUES (UUID(), ?, ?, ?, ?)");
+            pS.setString(1, name);
+            pS.setBoolean(2, true);
+            pS.setBoolean(3, usePattern);
+            pS.setString(4, pattern);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to create process type: {}", e.getMessage());
+        }
     }
 
     @Override
     public void createProcessStatus(String name, String color, String description) {
-
+        if (!checkConnection()) return;
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO process_status_names " +
+                    "(UUID, StatusName, Color, Description) VALUES (UUID(), ?, ?, ?)");
+            pS.setString(1, name);
+            pS.setString(2, color);
+            pS.setString(3, description);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to create process status: {}", e.getMessage());
+        }
     }
 
     @Override
     public void createPlayerNote(UUID player, UUID user, String note) {
+        if (!checkConnection()) return;
 
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO players_notes " +
+                    "(RecordID, PlayerID, UserID, Note, CreationDate) " +
+                    "VALUES (UUID(), ?, ?, ?, UNIX_TIMESTAMP())");
+            pS.setString(1, player.toString());
+            pS.setString(2, user.toString());
+            pS.setString(3, note);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to create player note: {}", e.getMessage());
+        }
     }
 
     @Override

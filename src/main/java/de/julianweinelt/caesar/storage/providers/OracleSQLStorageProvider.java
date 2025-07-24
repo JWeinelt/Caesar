@@ -53,12 +53,18 @@ public class OracleSQLStorageProvider extends Storage {
         }
     }
 
+
     @Override
-    public void checkConnection() {
+    public boolean checkConnection() {
         try {
-            if (conn == null || conn.isClosed()) connect();
+            if (conn == null || conn.isClosed()) {
+                connect();
+                return false;
+            }
+            return true;
         } catch (SQLException e) {
             log.error("Failed to check connection: {}", e.getMessage());
+            return false;
         }
     }
 

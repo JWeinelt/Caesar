@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.storage.providers;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserRole;
@@ -310,5 +312,100 @@ public class H2StorageProvider extends Storage {
     @Override
     public void createTicket(Ticket ticket) {
 
+    }
+
+    @Override
+    public UUID createPlayer() {
+        return null;
+    }
+
+    @Override
+    public void createPlayer(UUID uuid, int number) {
+
+    }
+
+    @Override
+    public void createPlayer(UUID uuid) {
+
+    }
+
+    @Override
+    public void addMCAccount(UUID player, UUID mc) {
+
+    }
+
+    @Override
+    public void removeMCAccount(UUID player, UUID mc) {
+
+    }
+
+    @Override
+    public void deletePlayer(UUID player) {
+
+    }
+
+    @Override
+    public JsonObject getPlayer(UUID player) {
+        return null;
+    }
+
+    @Override
+    public UUID getPlayer(int player) {
+        return null;
+    }
+
+    @Override
+    public UUID getPlayerByAccount(String mcName) {
+        return null;
+    }
+
+    @Override
+    public JsonArray getProcessesForPlayer(UUID player) {
+        return null;
+    }
+
+    @Override
+    public JsonArray getPunishmentsForPlayer(UUID player) {
+        return null;
+    }
+
+    @Override
+    public JsonArray getPlayerNotes(UUID player) {
+        return null;
+    }
+
+    @Override
+    public void createPlayerNote(UUID player, UUID user, String note) {
+
+    }
+
+    @Override
+    public String updateMCAccount(UUID player) {
+        return "";
+    }
+
+    @Override
+    public void createProcessType(String name, boolean usePattern, String pattern) {
+
+    }
+
+    @Override
+    public void createProcessStatus(String name, String color, String description) {
+
+    }
+
+    @Override
+    public JsonArray getProcessTypes() {
+        return null;
+    }
+
+    @Override
+    public JsonArray getProcessStatuses() {
+        return null;
+    }
+
+    @Override
+    public JsonArray getMCAccounts(UUID player) {
+        return null;
     }
 }

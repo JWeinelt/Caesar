@@ -63,11 +63,24 @@ CREATE TABLE IF NOT EXISTS process_player_assignment (
     PlayerID varchar(36) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS players_notes (
+    PlayerID varchar(36) NOT NULL,
+    UserID varchar(36) NOT NULL,
+    Note varchar(500) NOT NULL,
+    CreationDate long NOT NULL DEFAULT UNIX_TIMESTAMP()
+);
+
 CREATE TABLE IF NOT EXISTS players_mc_accounts (
     PlayerID varchar(36) NOT NULL,
     MC_UUID varchar(36) NOT NULL,
     MC_Name varchar(36) NOT NULL
 );
+
+ALTER TABLE players_notes
+    ADD CONSTRAINT player_note_player_fk
+        FOREIGN KEY (PlayerID) REFERENCES players(PlayerID),
+    ADD CONSTRAINT player_note_user_fk
+        FOREIGN KEY (UserID) REFERENCES users (UUID);
 
 ALTER TABLE players_mc_accounts
     ADD CONSTRAINT players_mc_fk

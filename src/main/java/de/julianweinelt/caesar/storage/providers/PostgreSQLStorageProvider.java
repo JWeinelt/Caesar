@@ -17,6 +17,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PostgreSQLStorageProvider extends Storage {
@@ -67,6 +68,21 @@ public class PostgreSQLStorageProvider extends Storage {
             log.error("Failed to check connection: {}", e.getMessage());
             return false;
         }
+    }
+
+    @Override
+    public UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment) {
+        return null;
+    }
+
+    @Override
+    public void assignPlayerToProcess(UUID process, UUID player) {
+
+    }
+
+    @Override
+    public List<String> getUserPermissions(UUID uuid) {
+        return List.of();
     }
 
     @Override

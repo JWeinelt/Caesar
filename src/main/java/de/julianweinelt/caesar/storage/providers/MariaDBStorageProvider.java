@@ -17,10 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.sql.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 
 public class MariaDBStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(MariaDBStorageProvider.class);
@@ -90,6 +88,21 @@ public class MariaDBStorageProvider extends Storage {
             log.error("Error while checking database: {}", e.getMessage());
             return false;
         }
+    }
+
+    @Override
+    public UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment) {
+        return null;
+    }
+
+    @Override
+    public void assignPlayerToProcess(UUID process, UUID player) {
+
+    }
+
+    @Override
+    public List<String> getUserPermissions(UUID uuid) {
+        return List.of();
     }
 
     @Override

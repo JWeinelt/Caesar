@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.util;
 
+import com.google.gson.JsonObject;
+
 import java.awt.*;
 
 public class DatabaseColorParser {
@@ -15,5 +17,15 @@ public class DatabaseColorParser {
 
     public static String parseColor(Color color) {
         return color.getRed() + ";" + color.getGreen() + ";" + color.getBlue() + ";" + color.getAlpha();
+    }
+
+    public static JsonObject getColor(String dbColor) {
+        JsonObject o = new JsonObject();
+        Color c = parseColor(dbColor);
+        o.addProperty("red", c.getRed());
+        o.addProperty("green", c.getGreen());
+        o.addProperty("blue", c.getBlue());
+        o.addProperty("alpha", c.getAlpha());
+        return o;
     }
 }

@@ -24,10 +24,8 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.security.SecureRandom;
 import java.sql.*;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
 
 
 //TODO: Add database downtime detection
@@ -778,6 +776,16 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
+    public UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment) {
+        return null;
+    }
+
+    @Override
+    public void assignPlayerToProcess(UUID process, UUID player) {
+
+    }
+
+    @Override
     public void deletePlayer(UUID player) {
 
     }
@@ -1018,5 +1026,35 @@ public class MySQLStorageProvider extends Storage {
             log.error("Failed to get mc accounts for player: {}", e.getMessage());
         }
         return array;
+    }
+
+    @Override
+    public List<String> getUserPermissions(UUID uuid) {
+        List<String> permissions = new ArrayList<>();
+        if (!checkConnection()) return permissions;
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("SELECT p.PermissionKey FROM user_permissions AS up" +
+                    " LEFT OUTER JOIN permissions AS p ON up.PermissionID = p.UUID WHERE up.UserID = ?");
+            pS.setString(1, uuid.toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) permissions.add(set.getString(1));
+        } catch (SQLException e) {
+            log.error("Failed to get permissions for player: {}", e.getMessage());
+        }
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("""
+                SELECT p.PermissionKey FROM user_roles AS ur LEFT OUTER JOIN role_permissions AS r ON ur.RoleID = r.RoleID
+                LEFT OUTER JOIN permissions AS p ON r.PermissionID = p.UUID WHERE ur.UserID = ?
+                """
+            );
+            pS.setString(1, uuid.toString());
+            ResultSet set = pS.executeQuery();
+            while (set.next()) permissions.add(set.getString(1));
+        } catch (SQLException e) {
+            log.error("Failed to get role permissions for player: {}", e.getMessage());
+        }
+        return permissions;
     }
 }

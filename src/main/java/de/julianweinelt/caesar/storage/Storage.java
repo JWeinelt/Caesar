@@ -13,6 +13,7 @@ import lombok.Getter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Getter
@@ -102,10 +103,15 @@ public abstract class Storage {
     public abstract void createPlayerNote(UUID player, UUID user, String note);
     public abstract String updateMCAccount(UUID player);
 
+    public abstract UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment);
+    public abstract void assignPlayerToProcess(UUID process, UUID player);
+
     public abstract void createProcessType(String name, boolean usePattern, String pattern);
     public abstract void createProcessStatus(String name, String color, String description);
     public abstract JsonArray getProcessTypes();
     public abstract JsonArray getProcessStatuses();
+
+    public abstract List<String> getUserPermissions(UUID uuid);
 
     public abstract JsonArray getMCAccounts(UUID player);
 }

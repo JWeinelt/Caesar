@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
+import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 
 import java.awt.*;
@@ -63,4 +64,5 @@ public class StorageHelperInitializer {
                 new TicketStatus(UUID.randomUUID(), "ARCHIVED", "Ticket has been archived", Color.GRAY)
         );
     }
+
 }

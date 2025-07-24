@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.storage;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserRole;
@@ -86,10 +88,24 @@ public abstract class Storage {
     public abstract void createTicket(Ticket ticket);
 
     public abstract UUID createPlayer();
+    public abstract void createPlayer(UUID uuid, int number);
+    public abstract void createPlayer(UUID uuid);
     public abstract void addMCAccount(UUID player, UUID mc);
     public abstract void removeMCAccount(UUID player, UUID mc);
     public abstract void deletePlayer(UUID player);
+    public abstract JsonObject getPlayer(UUID player);
+    public abstract UUID getPlayer(int player);
+    public abstract UUID getPlayerByAccount(String mcName);
+    public abstract JsonArray getProcessesForPlayer(UUID player);
+    public abstract JsonArray getPunishmentsForPlayer(UUID player);
+    public abstract JsonArray getPlayerNotes(UUID player);
+    public abstract void createPlayerNote(UUID player, UUID user, String note);
+    public abstract String updateMCAccount(UUID player);
 
     public abstract void createProcessType(String name, boolean usePattern, String pattern);
     public abstract void createProcessStatus(String name, String color, String description);
+    public abstract JsonArray getProcessTypes();
+    public abstract JsonArray getProcessStatuses();
+
+    public abstract JsonArray getMCAccounts(UUID player);
 }

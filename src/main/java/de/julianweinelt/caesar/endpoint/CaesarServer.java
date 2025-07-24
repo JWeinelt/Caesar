@@ -17,6 +17,7 @@ import de.julianweinelt.caesar.util.DatabaseColorParser;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.StringUtil;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.util.JavalinBindException;
 import org.slf4j.Logger;
@@ -28,6 +29,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 
 public class CaesarServer {
@@ -175,6 +177,7 @@ public class CaesarServer {
 
                 // External connections
                 .post("/connection", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.connections.create")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String connectionName = rootObj.get("name").getAsString();
                     String connectionAddress = rootObj.get("address").getAsString();
@@ -190,8 +193,12 @@ public class CaesarServer {
                     LocalStorage.getInstance().saveConnections();
                     ctx.result(createSuccessResponse());
                 })
-                .get("/connection", ctx -> ctx.result(GSON.toJson(LocalStorage.getInstance().getConnections())))
+                .get("/connection", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.connections.view")) return;
+                    ctx.result(GSON.toJson(LocalStorage.getInstance().getConnections()));
+                })
                 .delete("/connection", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.connections.delete")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String connectionName = rootObj.get("name").getAsString();
                     LocalStorage.getInstance().getConnections().removeIf(s -> s.getName().equals(connectionName));
@@ -201,6 +208,7 @@ public class CaesarServer {
 
                 // User management
                 .post("/user", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.create")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String username = rootObj.get("username").getAsString();
                     String password = rootObj.get("password").getAsString();
@@ -224,6 +232,7 @@ public class CaesarServer {
                     UserManager.getInstance().createUser(username, password, discord);
                 })
                 .delete("/user/{user}", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.delete")) return;
                     String username = ctx.pathParam("user");
                     if (StringUtil.isUUID(username)) {
                         UserManager.getInstance().deleteUser(UUID.fromString(username));
@@ -232,6 +241,7 @@ public class CaesarServer {
                     UserManager.getInstance().deleteUser(username);
                 })
                 .get("/user/{user}", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.view")) return;
                     String username = ctx.pathParam("user");
                     if (StringUtil.isUUID(username)) {
                         User u = UserManager.getInstance().getUser(UUID.fromString(username));
@@ -251,6 +261,7 @@ public class CaesarServer {
                     }
                 })
                 .patch("/user", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.edit")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String username = rootObj.get("username").getAsString();
@@ -264,6 +275,7 @@ public class CaesarServer {
                     StorageFactory.getInstance().getUsedStorage().updateUser(user);
                 })
                 .get("/user", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.list")) return;
                     ctx.result(GSON.toJson(UserManager.getInstance().getUsers()));
                 })
                 .patch("/user/password", ctx -> {
@@ -292,6 +304,7 @@ public class CaesarServer {
 
                 // Permission management
                 .post("/user/permission", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.permission.add")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String username = rootObj.get("username").getAsString();
@@ -306,9 +319,11 @@ public class CaesarServer {
                 })
 
                 .get("/role", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.role.list")) return;
                     ctx.result(GSON.toJson(UserManager.getInstance().getUserRoles()));
                 })
                 .post("/role", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.role.create")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String name = rootObj.get("name").getAsString();
                     String color = rootObj.get("color").getAsString();
@@ -317,6 +332,7 @@ public class CaesarServer {
                     ctx.result(createSuccessResponse());
                 })
                 .post("/role/permission", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.permission.add")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String key = rootObj.get("permission").getAsString();
                     String role = rootObj.get("role").getAsString();
@@ -353,6 +369,7 @@ public class CaesarServer {
 
                 // Discord
                 .put("/discord/token", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String token = rootObj.get("token").getAsString();
@@ -399,15 +416,76 @@ public class CaesarServer {
 
                 // Player management
                 .post("/player", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.create")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+
+                    String id = rootObj.get("playerID").getAsString();
+                    if (id == null) id = UUID.randomUUID().toString();
+                    int number;
+                    if (rootObj.has("number"))
+                        number = rootObj.get("playerNumber").getAsInt();
+                    else number = new SecureRandom().nextInt(1000, 9999);
+
+                    StorageFactory.getInstance().getUsedStorage().createPlayer(UUID.fromString(id), number);
+                    ctx.result(createSuccessResponse());
                 })
                 .get("/player/id/{id}", ctx -> {
-
+                    if (lackingPermissions(ctx, "caesar.players.view")) return;
+                    int number = Integer.parseInt(ctx.pathParam("id"));
+                    ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
+                            StorageFactory.getInstance().getUsedStorage().getPlayer(number)
+                    ).toString());
+                })
+                .get("/player/uuid/{id}", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.view")) return;
+                    ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
+                            UUID.fromString(ctx.pathParam("id"))
+                    ).toString());
+                })
+                .delete("/player/{id}", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.delete")) return;
+                    StorageFactory.getInstance().getUsedStorage().deletePlayer(UUID.fromString(ctx.pathParam("id")));
+                    ctx.result(createSuccessResponse());
+                })
+                .post("/player/note", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.notes.create")) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
+                    UUID userID = getUserID(ctx);
+                    String note = rootObj.get("note").getAsString();
+                    StorageFactory.getInstance().getUsedStorage().createPlayerNote(playerID, userID, note);
+                    ctx.result(createSuccessResponse());
+                })
+                .delete("/player/note", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.notes.delete")) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    UUID noteID = UUID.fromString(rootObj.get("noteID").getAsString());
+                    //TODO: Add function to database
+                    ctx.result(createSuccessResponse());
                 })
 
-                // Important for final setup
+                // Process management
+                .post("/process", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.process.create")) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    UUID type = UUID.fromString(rootObj.get("processType").getAsString());
+                    UUID status = UUID.fromString(rootObj.get("processStatus").getAsString());
+                    String comment = "Not given";
+                    if (rootObj.has("comment")) comment = rootObj.get("comment").getAsString();
+                    UUID processID = StorageFactory.getInstance().getUsedStorage().createProcess(
+                            type, status, getUserID(ctx), Optional.of(comment));
 
-
+                    JsonObject o = new JsonObject();
+                    o.addProperty("success", true);
+                    o.addProperty("processID", processID.toString());
+                    ctx.result(o.toString());
+                })
+                .patch("/process/status", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.process.change-status")) return;
+                })
+                .patch("/process/player", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.process.assign-player")) return;
+                })
                 .start(LocalStorage.getInstance().getData().getWebServerPort());
     }
 
@@ -435,6 +513,34 @@ public class CaesarServer {
         return o.toString();
     }
 
+
+    private boolean lackingPermissions(Context ctx, String... requiredPermissions) {
+        String token = ctx.header("Authorization");
+        if (token == null) {
+            ctx.skipRemainingHandlers().result(createErrorResponse(ErrorType.NO_PERMISSION)).status(HttpStatus.FORBIDDEN);
+            return true;
+        }
+        token = token.replace("Bearer ", "");
+        DecodedJWT decoded = JWTUtil.getInstance().decode(token);
+        User user = UserManager.getInstance().getUser(decoded.getSubject());
+        for (String requiredPermission : requiredPermissions) {
+            if (!user.getPermissions().contains(requiredPermission)) {
+                ctx.skipRemainingHandlers().result(createErrorResponse(ErrorType.NO_PERMISSION)).status(HttpStatus.FORBIDDEN);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private UUID getUserID(Context ctx) {
+        String token = ctx.header("Authorization");
+        if (token == null) return null;
+        token = token.replace("Bearer ", "");
+        DecodedJWT decoded = JWTUtil.getInstance().decode(token);
+        User user = UserManager.getInstance().getUser(decoded.getSubject());
+        return user.getUuid();
+    }
+
     public enum ErrorType {
         TOKEN_EXPIRED,
         TOKEN_INVALID,
@@ -444,6 +550,7 @@ public class CaesarServer {
         USER_NOT_FOUND,
         USER_DISABLED,
         INVALID_HEADER,
-        INVALID_SETUP_CODE
+        INVALID_SETUP_CODE,
+        NO_PERMISSION
     }
 }

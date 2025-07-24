@@ -50,7 +50,7 @@ public abstract class Storage {
 
     public abstract boolean connect();
     public abstract void disconnect();
-    public abstract void checkConnection();
+    public abstract boolean checkConnection();
     public abstract boolean allTablesExist(String[] tables);
     public abstract boolean systemDataExist();
 

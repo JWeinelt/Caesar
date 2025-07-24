@@ -7,6 +7,7 @@ import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.backup.BackupManager;
 import de.julianweinelt.caesar.commands.CLICommand;
 import de.julianweinelt.caesar.commands.CLITabCompleter;
+import de.julianweinelt.caesar.commands.system.PluginCommand;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
@@ -19,6 +20,7 @@ import de.julianweinelt.caesar.exceptions.logging.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
+import de.julianweinelt.caesar.plugin.event.Priority;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.*;
 import de.julianweinelt.caesar.util.JWTUtil;
@@ -196,6 +198,8 @@ public class Caesar {
         if (localStorage.getData().isUseDiscord()) {
             discordBot = new DiscordBot();
             discordBot.start();
+
+            registry.registerListener(this, Registry.getInstance().getSystemPlugin());
         }
 
         registry.callEvent(new Event("StorageReadyEvent"));
@@ -296,6 +300,7 @@ public class Caesar {
                         .aliases("exit", "quit", "shutdown")
                         .executor((label, args) -> Caesar.this.shutdown())
         );
+        getRegistry().registerCommand(new CLICommand("plugins").executor(new PluginCommand()));
     }
 
     public void startFirstStartup() {
@@ -578,7 +583,7 @@ public class Caesar {
         return List.of("true", "false", "yes", "no", "on", "off", "1", "0");
     }
 
-    @Subscribe("StorageReadyEvent")
+    @Subscribe(value = "StorageReadyEvent", priority = Priority.HIGH)
     public void onStorageReady(Event event) {
         DiscordConfiguration dc = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
         if (dc == null) return;

@@ -56,6 +56,10 @@ public class DiscordBot {
         return Caesar.getInstance().getDiscordBot();
     }
 
+    public DiscordBot() {
+        Registry.getInstance().registerListener(this, Registry.getInstance().getSystemPlugin());
+    }
+
 
     @Subscribe("StorageReadyEvent")
     public void onStorageReady(Event event) {

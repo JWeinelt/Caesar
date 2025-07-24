@@ -93,7 +93,7 @@ public class StorageFactory {
         Mariadb(3306),
         SQLite(0),
         H2(0),
-        ORACLE(1521 ),
+        ORACLE(1521),
         POSTGRESQL(5432);
 
         public final int port;

@@ -112,6 +112,14 @@ public class UserManager {
         return null;
     }
 
+    public void syncUserPermissions() {
+        for (User u : users) {
+            List<String> permissions = StorageFactory.getInstance().getUsedStorage().getUserPermissions(u.getUuid());
+            u.getPermissions().clear();
+            for (String permission : permissions) u.addPermission(permission);
+        }
+    }
+
     public void setUserActive(String username, boolean active) {
         getUser(username).setActive(active);
         StorageFactory.getInstance().getUsedStorage().updateUser(getUser(username));

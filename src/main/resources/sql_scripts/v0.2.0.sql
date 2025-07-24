@@ -53,6 +53,32 @@ CREATE TABLE IF NOT EXISTS reports_status (
     IsArchive TINYINT NOT NULL DEFAULT 0
 );
 
+CREATE TABLE IF NOT EXISTS players (
+    PlayerID varchar(36) NOT NULL PRIMARY KEY,
+    PlayerNumber int NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS process_player_assignment (
+    ProcessID varchar(36) NOT NULL,
+    PlayerID varchar(36) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS players_mc_accounts (
+    PlayerID varchar(36) NOT NULL,
+    MC_UUID varchar(36) NOT NULL,
+    MC_Name varchar(36) NOT NULL
+);
+
+ALTER TABLE players_mc_accounts
+    ADD CONSTRAINT players_mc_fk
+        FOREIGN KEY (PlayerID) REFERENCES players (PlayerID);
+
+ALTER TABLE process_player_assignment
+    ADD CONSTRAINT process_player_process_id_fk
+        FOREIGN KEY (ProcessID) REFERENCES processes (ProcessID),
+    ADD CONSTRAINT process_player_player_id_fk
+        FOREIGN KEY (PlayerID) REFERENCES players(PlayerID);
+
 
 ALTER TABLE punishments
     ADD CONSTRAINT punishments_types_fk

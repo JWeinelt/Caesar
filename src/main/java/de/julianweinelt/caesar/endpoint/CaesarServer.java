@@ -397,6 +397,14 @@ public class CaesarServer {
                     ctx.result(GSON.toJson(LocalStorage.getInstance().getData()));
                 })
 
+                // Player management
+                .post("/player", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                })
+                .get("/player/id/{id}", ctx -> {
+
+                })
+
                 // Important for final setup
 
 

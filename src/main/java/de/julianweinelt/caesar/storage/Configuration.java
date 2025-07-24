@@ -75,8 +75,8 @@ public class Configuration {
 
     @Getter(AccessLevel.NONE)
     private final String _INFO1 = "Here you can set custom API endpoints. Only change if you know what you are doing!";
-    //private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
-    private String caesarAPIEndpoint = "http://localhost:48009/";
+    private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
+    //private String caesarAPIEndpoint = "http://localhost:48009/";
     private boolean apiEndpointKeyRequired = false;
 
     @Getter(AccessLevel.NONE)

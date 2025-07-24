@@ -84,4 +84,12 @@ public abstract class Storage {
     public abstract void handleTicket(Ticket ticket, String handler);
     public abstract void deleteTicket(Ticket ticket);
     public abstract void createTicket(Ticket ticket);
+
+    public abstract UUID createPlayer();
+    public abstract void addMCAccount(UUID player, UUID mc);
+    public abstract void removeMCAccount(UUID player, UUID mc);
+    public abstract void deletePlayer(UUID player);
+
+    public abstract void createProcessType(String name, boolean usePattern, String pattern);
+    public abstract void createProcessStatus(String name, String color, String description);
 }

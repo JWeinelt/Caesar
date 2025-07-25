@@ -150,12 +150,8 @@ public class Caesar {
         log.info("Starting backup service...");
         backupManager = new  BackupManager();
         backupManager.configure(localStorage.getData());
-        log.info("Preparing plugin loading...");
-        pluginLoader.prepareLoading();
-        log.info("Loading plugins...");
-        pluginLoader.loadPlugins();
-        log.info("Enabling plugins...");
-        pluginLoader.enablePlugins();
+        log.info("Loading Caesar server plugins...");
+        pluginLoader.loadAll();
         log.info("Plugin loading complete.");
         log.info("Starting endpoints...");
         if (chatManager == null) chatManager = new ChatManager();

@@ -1,8 +1,6 @@
 package de.julianweinelt.caesar.plugin;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.exceptions.PluginInvalidException;
 import de.julianweinelt.caesar.plugin.event.Event;
@@ -26,186 +24,89 @@ public class PluginLoader {
     private static final Logger log = LoggerFactory.getLogger(PluginLoader.class);
 
     private final Registry registry;
-    private final HashMap<String, URL> moduleURLs = new HashMap<>();
-    private final List<String> alreadyLoaded = new ArrayList<>();
-    private URLClassLoader sharedLoader;
+    private final PluginScanner scanner = new PluginScanner();
+    private final PluginInstantiator instantiator = new PluginInstantiator();
+    private final PluginClassLoaderFactory loaderFactory = new PluginClassLoaderFactory(false); // oder true
+
+    private final ClassLoader parentLoader = getClass().getClassLoader();
 
     public PluginLoader(Registry registry) {
         this.registry = registry;
     }
 
-    public void prepareLoading() {
-        File folder = new File("plugins");
-        if (!folder.exists()) folder.mkdirs();
-        File[] modules = folder.listFiles();
-        if (modules == null) return;
-        for (File f : modules) {
-            if (f.getName().endsWith(".jar")) {
-                try {
-                    Path jarPath = Path.of("plugins/" + f.getName());
+    public void loadAll() {
+        File pluginDir = new File("plugins");
 
-                    try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-                        ZipEntry jsonEntry = jarFile.getEntry("plugin.json");
-                        if (jsonEntry == null) {
-                            throw new PluginInvalidException("The loaded file " + f.getName() + " does not contain a plugin.json file.");
-                        }
-
-                        try(InputStream inputStream = jarFile.getInputStream(jsonEntry)) {
-                            String jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                            JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
-
-                            URL jarURL = jarPath.toUri().toURL();
-                            moduleURLs.put(json.get("pluginName").getAsString(), jarURL);
-                        }
-
-                    }
-                } catch (Exception e) {
-                    log.error("Error while loading plugin.");
-                    log.error(e.getMessage());
-                    for (StackTraceElement s : e.getStackTrace()) {
-                        log.error(s.toString());
-                    }
-                }
-            }
+        if (!pluginDir.exists() || !pluginDir.isDirectory()) {
+            log.warn("Plugin directory does not exist: {}", pluginDir.getAbsolutePath());
+            return;
         }
 
+        File[] jarFiles = pluginDir.listFiles((dir, name) -> name.endsWith(".jar"));
+        if (jarFiles == null || jarFiles.length == 0) {
+            log.info("No plugins found in directory {}", pluginDir.getAbsolutePath());
+            return;
+        }
 
-        sharedLoader = new URLClassLoader(moduleURLs.values().toArray(URL[]::new), getClass().getClassLoader());
+        for (File file : jarFiles) {
+            String pluginName = file.getName().replace(".jar", "");
+            loadPlugin(pluginName);
+        }
     }
 
-    public void loadPlugins() {
-        File folder = new File("plugins");
-        File[] modules = folder.listFiles();
-        if (modules == null) return;
-        for (File f : modules) {
-            if (f.getName().endsWith(".jar")) {
-                loadPlugin(f.getName().replace(".jar", ""));
-            }
-        }
+
+    public void unload(String name) {
+        CPlugin plugin = registry.getPlugin(name);
+        if (plugin == null) return;
+        plugin.onDisable();
+        registry.removePlugin(name);
+        log.info("Unloaded plugin: {}", name);
     }
 
     public void loadPlugin(String name) {
-        log.info("Loading {}", name);
-        name = name.replace(".jar", "");
-        try {
-            Path jarPath = Path.of("plugins/"+name+".jar");
+        File pluginFile = new File("plugins", name.endsWith(".jar") ? name : name + ".jar");
 
-            try (JarFile jarFile = new JarFile(jarPath.toFile())) {
-                ZipEntry jsonEntry = jarFile.getEntry("plugin.json");
-                if (jsonEntry == null) {
-                    throw new PluginInvalidException("The loaded file " + name + ".jar does not contain a plugin.json file.");
-                }
+        if (!pluginFile.exists()) {
+            log.warn("Plugin file not found: {}", pluginFile.getName());
+            return;
+        }
 
-
-                try(InputStream inputStream = jarFile.getInputStream(jsonEntry)) {
-                    String jsonString = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-                    JsonObject json = JsonParser.parseString(jsonString).getAsJsonObject();
-                    List<String> authors = new ArrayList<>();
-                    for (JsonElement e : json.get("authors").getAsJsonArray()) authors.add(e.getAsString());
-                    StringBuilder autorString = new StringBuilder();
-                    for (String s : authors) autorString.append(s).append(",");
-                    log.info("Detected plugin with name {} created by {}.", json.get("pluginName").getAsString(), autorString);
-                    log.info("Version: {}", json.get("version").getAsString());
-
-                    if (registry.getPlugin(name) != null) {
-                        return; // Module with the name is already loaded
-                    }
-
-                    String mainClassName = json.get("mainClass").getAsString();
-                    URLClassLoader classLoader = sharedLoader;
-
-                    log.info("Loading {}", mainClassName);
-
-                    Class<?> mainClass = Class.forName(mainClassName, true, classLoader);
-
-                    if (!CPlugin.class.isAssignableFrom(mainClass)) {
-                        throw new PluginInvalidException("Main class must implement CPlugin interface");
-                    }
-
-                    CPlugin moduleInstance = (CPlugin) mainClass.getDeclaredConstructor().newInstance();
-                    log.info("Module Classloader: {}", moduleInstance.getClass().getClassLoader());
-
-                    try {
-                        moduleInstance.setName(json.get("pluginName").getAsString());
-                        moduleInstance.setDescription(json.get("description").getAsString());
-                        moduleInstance.setVersion(json.get("version").getAsString());
-                    } catch (NullPointerException ignored) {
-                        log.error("It looks like the author of the Plugin {} forgot to add important information" +
-                                " to their plugin.json. Please contact them for support.", name);
-                        log.error("Plugin {} can't be loaded due to a fatal error while loading.", name);
-                        return;
-                    }
-
-                    try {
-                        JsonElement minAPI = json.get("minAPIVersion");
-                        if (minAPI == null) log.warn("Plugin {} does not request a minimum API version. " +
-                                "This is recommended, as the API may change. Please report any problems" +
-                                " related to this module to the corresponding author(s).", moduleInstance.getName());
-                        else {
-                            moduleInstance.setMinAPIVersion(minAPI.getAsString());
-                            ComparableVersion moduleVersion = new ComparableVersion(minAPI.getAsString());
-                            ComparableVersion systemVersion = new ComparableVersion(Caesar.systemVersion);
-                            if (systemVersion.compareTo(moduleVersion) > 0) log.warn("Plugin {} is using an older version of" +
-                                    " Caesar: {}, but the server is using {}. Expect weird things while using.",
-                                    name, minAPI.getAsString(), Caesar.systemVersion);
-                        }
-                        moduleInstance.setStoresSensitiveData(json.get("storesSensitiveData").getAsBoolean());
-                        moduleInstance.setUsesEncryption(json.get("usesEncryption").getAsBoolean());
-
-                    } catch (NullPointerException ignored) {
-                        log.error("The Plugin.json of {} provides some broken information. Please let the Author(s) " +
-                                "correct them.", moduleInstance.getName());
-                    }
-                    moduleInstance.onLoad();
-                    registry.addPlugin(moduleInstance);
-                    StringBuilder s = new StringBuilder();
-                    for (CPlugin p : registry.getPlugins()) {
-                        s.append(p.getName()).append(", ");
-                    }
-                    s = new StringBuilder(s.substring(0, s.length() - 2));
-                    log.info(s.toString());
-
-                    File dataFolder = new File("data/" + moduleInstance.getName());
-                    if (dataFolder.mkdir()) log.info("Created new data folder for {}.", moduleInstance.getName());
-                    registry.callEvent(
-                            new Event("ServerPluginLoadEvent")
-                                    .set("plugin", moduleInstance.getName())
-                                    .set("description", moduleInstance.getDescription())
-                                    .set("authors", moduleInstance.getAuthors())
-                                    .set("version", moduleInstance.getVersion())
-                                    .set("dataFolder", moduleInstance.getDataFolder())
-                    );
-
-                    moduleInstance.onDefineEvents();
-                    moduleInstance.onCreateCommands();
-                    moduleInstance.onEnable();
-                }
-
+        try (JarFile jarFile = new JarFile(pluginFile)) {
+            ZipEntry entry = jarFile.getEntry("plugin.json");
+            if (entry == null) {
+                log.error("Plugin {} does not contain a plugin.json", name);
+                return;
             }
+
+            try (InputStream in = jarFile.getInputStream(entry)) {
+                String json = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                PluginConfiguration config = new Gson().fromJson(json, PluginConfiguration.class);
+                String pluginName = config.pluginName();
+
+                if (registry.getPlugin(pluginName) != null) {
+                    log.warn("Plugin {} is already loaded.", pluginName);
+                    return;
+                }
+
+                URLClassLoader loader = loaderFactory.createLoader(pluginFile.toURI().toURL(), parentLoader);
+                PluginDescriptor descriptor = new PluginDescriptor(pluginName, pluginFile, pluginFile.toURI().toURL(), config);
+                CPlugin plugin = instantiator.instantiate(descriptor, loader);
+
+                plugin.onLoad();
+                plugin.onDefineEvents();
+                plugin.onCreateCommands();
+                plugin.onEnable();
+
+                File dataFolder = new File("data/" + plugin.getName());
+                if (dataFolder.mkdir()) log.info("Created data folder for {}", plugin.getName());
+
+                registry.addPlugin(plugin);
+                log.info("Successfully loaded plugin: {}", plugin.getName());
+            }
+
         } catch (Exception e) {
-            log.error("Error while loading plugin {}.", name);
-            log.error(e.getMessage());
-            printStacktrace(e);
+            log.error("Failed to load plugin {}", name, e);
         }
     }
 
-    public void enablePlugins() {
-        for (CPlugin m : registry.getPlugins()) {
-            m.onCreateCommands();
-            m.onDefineEvents();
-            m.onEnable();
-        }
-    }
-
-    public void unloadPlugin(String name) {
-        log.info("Disabling {}...", name);
-        registry.getPlugin(name).onDisable();
-        registry.removePlugin(name);
-    }
-
-    private void printStacktrace(Exception e) {
-        for (StackTraceElement a : e.getStackTrace()) {
-            log.error(a.toString());
-        }
-    }
 }

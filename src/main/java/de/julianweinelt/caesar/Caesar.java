@@ -13,6 +13,7 @@ import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.endpoint.CaesarServiceProvider;
+import de.julianweinelt.caesar.endpoint.MinecraftUUIDFetcher;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
 import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
@@ -209,6 +210,9 @@ public class Caesar {
 
         log.info("Caesar has been started.");
         startCLI();
+
+        MinecraftUUIDFetcher.prepareCacheDirectory();
+        MinecraftUUIDFetcher.loadCache();
     }
     public void startCLI() {
         try {

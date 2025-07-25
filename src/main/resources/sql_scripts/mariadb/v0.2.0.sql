@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS players_mc_accounts (
 );
 
 ALTER TABLE punishments
-    ADD COLUMN PlayerID varchar(36) NOT NULL;
+    ADD COLUMN PlayerID varchar(36) NOT NULL DEFAULT '';
 
 ALTER TABLE players_notes
     ADD CONSTRAINT player_note_player_fk

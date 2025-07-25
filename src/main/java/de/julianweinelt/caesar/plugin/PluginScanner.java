@@ -37,7 +37,7 @@ public class PluginScanner {
                     descriptors.add(new PluginDescriptor(config.pluginName(), jar, url, config));
                 }
             } catch (Exception e) {
-                LoggerFactory.getLogger(PluginScanner.class).warn("Failed to read plugin: {}", jar.getName(), e);
+                log.warn("Failed to read plugin: {}", jar.getName(), e);
             }
         }
 

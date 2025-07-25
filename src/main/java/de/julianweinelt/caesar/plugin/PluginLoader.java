@@ -125,7 +125,11 @@ public class PluginLoader {
 
         visiting.add(plugin);
 
-        List<String> dependencies = configs.get(plugin).requires();
+        PluginConfiguration config = configs.get(plugin);
+        if (config == null) {
+            throw new IllegalStateException("Plugin configuration for '" + plugin + "' is missing.");
+        }
+        List<String> dependencies = config.requires();
         if (dependencies != null) {
             for (String dep : dependencies) {
                 if (!configs.containsKey(dep)) {

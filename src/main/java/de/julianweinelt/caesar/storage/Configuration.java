@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.Setter;
 import net.dv8tion.jda.api.OnlineStatus;
 
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,6 +84,7 @@ public class Configuration {
     private final String _INFO3 = "Defined Minecraft plugin endpoints are here.";
     private final List<MCPluginEndpoint> endpoints = new ArrayList<>
             (List.of(new MEndpointCurseForge(), new MEndpointSpigot(), new MEndpointModrinth()));
+    private final long cacheExpiration = Duration.ofHours(12).toMillis();
 
     @Getter(AccessLevel.NONE)
     private final String _INFO_UPDATES = "Update logic";

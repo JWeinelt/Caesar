@@ -704,7 +704,7 @@ public class MySQLStorageProvider extends Storage {
     public void addMCAccount(UUID player, UUID mc) {
         if (!checkConnection()) return;
 
-        String name = MinecraftUUIDFetcher.getByID(mc);
+        String name = MinecraftUUIDFetcher.getByID(mc).orElse("unknown");
 
         try {
             PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO players_mc_accounts " +
@@ -734,7 +734,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public String updateMCAccount(UUID player) {
-        String name = MinecraftUUIDFetcher.getByID(player);
+        String name = MinecraftUUIDFetcher.getByID(player).orElse("unknown");
         if (!checkConnection()) return "";
 
         try {

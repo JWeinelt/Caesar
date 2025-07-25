@@ -24,7 +24,7 @@ public class OracleSQLStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(OracleSQLStorageProvider.class);
 
     public OracleSQLStorageProvider(String host, int port, String database, String user, String password) {
-        super(StorageFactory.StorageType.ORACLE, host, port, database, user, password);
+        super(host, port, database, user, password);
     }
 
     @Override

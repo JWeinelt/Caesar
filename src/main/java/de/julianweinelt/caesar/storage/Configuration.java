@@ -36,7 +36,7 @@ public class Configuration {
 
     @Getter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";
-    private StorageFactory.StorageType databaseType;
+    private String databaseType;
     private String databaseHost = "localhost";
     private String databaseName = "caesar";
     private String databaseUser = "caesar";
@@ -117,7 +117,7 @@ public class Configuration {
         switch (key) {
             case "jwtSecret" -> jwtSecret = (String) value;
             case "jwtIssuer" -> jwtIssuer = (String) value;
-            case "databaseType" -> databaseType = StorageFactory.StorageType.valueOf((String) value);
+            case "databaseType" -> databaseType = (String) value;
             case "databaseHost" -> databaseHost = (String) value;
             case "databaseName" -> databaseName = (String) value;
             case "databaseUser" -> databaseUser = (String) value;

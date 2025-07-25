@@ -33,7 +33,7 @@ public class MySQLStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(MySQLStorageProvider.class);
 
     public MySQLStorageProvider(String host, int port, String database, String user, String password) {
-        super(StorageFactory.StorageType.MYSQL, host, port, database, user, password);
+        super(host, port, database, user, password);
     }
 
     @Override
@@ -53,31 +53,6 @@ public class MySQLStorageProvider extends Storage {
 
             Caesar.getInstance().setDbVersionManager(new DatabaseVersionManager());
 
-            String[] requiredTables = {
-                    "users",
-                    "permissions",
-                    "roles",
-                    "ticket_status_names",
-                    "process_status_names",
-                    "process_types",
-                    "user_permissions",
-                    "user_roles",
-                    "role_permissions",
-                    "tickets",
-                    "ticket_types",
-                    "processes",
-                    "ticket_transcripts",
-                    "server_data",
-                    "punishments",
-                    "punishment_types",
-                    "user_types",
-                    "reports",
-                    "reports_update_history",
-                    "reports_types",
-                    "reports_status",
-            };
-
-            createTables();
             if (!systemDataExist()) insertDefaultData();
             log.info("Loading data into memory... This may take a while. Please wait...");
             UserManager.getInstance().getAllPermissions();
@@ -149,9 +124,7 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
-    public void createTables() {
-
-    }
+    public void createTables() {}
 
     @Override
     public void insertDefaultData() {
@@ -777,12 +750,36 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment) {
-        return null;
+        if (!checkConnection()) return null;
+        UUID process = UUID.randomUUID();
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT INTO processes" +
+                    " (ProcessID, CreatedBy, Status, ProcessType, CreationDate, Comment) " +
+                    "VALUES (?, ?, ?, ?, UNIX_TIMESTAMP(), ?)");
+            pS.setString(1, process.toString());
+            pS.setString(2, creator.toString());
+            pS.setString(3, initialStatus.toString());
+            pS.setString(4, type.toString());
+            pS.setString(5, comment.orElse(""));
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to create process for type {}: {}", type.toString(), e.getMessage());
+        }
+        return process;
     }
 
     @Override
     public void assignPlayerToProcess(UUID process, UUID player) {
-
+        if (!checkConnection()) return;
+        try {
+            PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO process_player_assignment (ProcessID, PlayerID) " +
+                    "VALUES (?, ?)");
+            pS.setString(1, process.toString());
+            pS.setString(2, player.toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to assign player to process {}: {}", process.toString(), e.getMessage());
+        }
     }
 
     @Override

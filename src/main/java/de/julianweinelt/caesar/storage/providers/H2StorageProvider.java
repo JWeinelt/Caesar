@@ -24,7 +24,7 @@ public class H2StorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(H2StorageProvider.class);
 
     public H2StorageProvider(String database) {
-        super(StorageFactory.StorageType.H2, "", 0, database, "", "");
+        super("", 0, database, "", "");
     }
 
     @Override

@@ -167,7 +167,7 @@ public class Caesar {
         serviceProvider = new CaesarServiceProvider();
         serviceProvider.start();
         log.info("Connecting to database...");
-        storageFactory.provide(localStorage.getData().getDatabaseType(), localStorage.getData());
+        storageFactory.provide(StorageType.get(localStorage.getData().getDatabaseType()), localStorage.getData());
         boolean success = storageFactory.connect();
         if (!success) log.error("Failed to connect to database!");
         else {
@@ -362,10 +362,10 @@ public class Caesar {
 
     private void databaseProcedure(Terminal terminal) {
         List<String> databases = new ArrayList<>();
-        for (StorageFactory.StorageType type : StorageFactory.StorageType.values()) databases.add(type.name());
+        for (StorageType type : StorageType.values()) databases.add(type.getName());
         String databaseType = prompt(terminal, "setup.database.type", "MYSQL",
                 databases);
-        StorageFactory.StorageType storageType = StorageFactory.StorageType.valueOf(databaseType.toUpperCase());
+        StorageType storageType = StorageType.get(databaseType);
         clearScreen();
 
         String databaseHost = prompt(terminal, "setup.database.host",
@@ -373,7 +373,7 @@ public class Caesar {
         clearScreen();
 
         String databasePort = "0";
-        String defaultDatabasePort = "" + storageType.port;
+        String defaultDatabasePort = "" + storageType.getDefaultPort();
         if (!defaultDatabasePort.equals("0")) {
             databasePort = prompt(terminal, "setup.database.port", defaultDatabasePort, List.of());
             clearScreen();
@@ -386,7 +386,7 @@ public class Caesar {
         String databasePassword = prompt(terminal, "setup.database.password", "", List.of());
         clearScreen();
         log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.try-to-connect"));
-        localStorage.getData().setDatabaseType(storageType);
+        localStorage.getData().setDatabaseType(databaseType);
         localStorage.getData().setDatabaseHost(databaseHost);
         localStorage.getData().setDatabasePort(Integer.parseInt(databasePort));
         localStorage.getData().setDatabaseName(databaseName);
@@ -440,29 +440,8 @@ public class Caesar {
     private void finishSetup() {
         localStorage.saveData();
         log.info("Finishing database setup...");
-        storageFactory.getUsedStorage().createTables();
         Storage s = storageFactory.getUsedStorage();
-
-        String[] requiredTables = {
-                "users",
-                "permissions",
-                "roles",
-                "ticket_status_names",
-                "process_status_names",
-                "process_types",
-                "user_permissions",
-                "user_roles",
-                "role_permissions",
-                "tickets",
-                "ticket_types",
-                "processes",
-                "ticket_transcripts",
-                "server_data"
-        };
-
-        if (!s.allTablesExist(requiredTables)) {
-            s.createTables();
-        }
+        DatabaseVersionManager.getInstance().downloadVersion(systemVersion);
         if (!s.systemDataExist()) s.insertDefaultData();
 
         storageFactory.getUsedStorage().insertDefaultData();

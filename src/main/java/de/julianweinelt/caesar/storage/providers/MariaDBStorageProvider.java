@@ -24,7 +24,7 @@ public class MariaDBStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(MariaDBStorageProvider.class);
 
     public MariaDBStorageProvider(String host, int port, String database, String user, String password) {
-        super(StorageFactory.StorageType.Mariadb, host, port, database, user, password);
+        super(host, port, database, user, password);
     }
 
     @Override

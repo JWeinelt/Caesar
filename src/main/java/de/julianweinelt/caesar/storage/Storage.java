@@ -18,8 +18,6 @@ import java.util.UUID;
 
 @Getter
 public abstract class Storage {
-    private final StorageFactory.StorageType type;
-
     private final String host;
     private final int port;
     private final String database;
@@ -28,8 +26,7 @@ public abstract class Storage {
 
     public Connection conn;
 
-    protected Storage(StorageFactory.StorageType type, String host, int port, String database, String user, String password) {
-        this.type = type;
+    protected Storage(String host, int port, String database, String user, String password) {
         this.host = host;
         this.port = port;
         this.database = database;
@@ -55,6 +52,7 @@ public abstract class Storage {
     public abstract boolean allTablesExist(String[] tables);
     public abstract boolean systemDataExist();
 
+    @Deprecated(forRemoval = true, since = "0.0.2")
     public abstract void createTables();
     public abstract void insertDefaultData();
 

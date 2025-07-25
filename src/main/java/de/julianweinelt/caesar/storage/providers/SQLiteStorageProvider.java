@@ -24,7 +24,7 @@ public class SQLiteStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(SQLiteStorageProvider.class);
 
     public SQLiteStorageProvider(String database) {
-        super(StorageFactory.StorageType.SQLite, "", 0, database, "", "");
+        super("", 0, database, "", "");
     }
 
     @Override

@@ -18,7 +18,9 @@ public class PluginLoader {
     private final Registry registry;
     private final PluginScanner scanner = new PluginScanner();
     private final PluginInstantiator instantiator = new PluginInstantiator();
-    private final PluginClassLoaderFactory loaderFactory = new PluginClassLoaderFactory(false); // or true
+    private final PluginClassLoaderFactory loaderFactory = new PluginClassLoaderFactory(false);
+
+    private final Map<String, String> pluginFileNames = new HashMap<>();
 
     private final ClassLoader parentLoader = getClass().getClassLoader();
 
@@ -40,6 +42,7 @@ public class PluginLoader {
             PluginConfiguration config = pluginConfigs.get(pluginName);
             if (pluginFile != null && config != null) {
                 try {
+                    pluginFileNames.put(config.pluginName(), pluginFile.getName());
                     loadPlugin(config.pluginName());
                 } catch (Exception e) {
                     log.error("Failed to load plugin '{}'", pluginName, e);
@@ -57,6 +60,7 @@ public class PluginLoader {
     }
 
     public void loadPlugin(String name) {
+        if (pluginFileNames.containsKey(name)) name = pluginFileNames.get(name);
         File pluginFile = new File("plugins", name.endsWith(".jar") ? name : name + ".jar");
 
         if (!pluginFile.exists()) {

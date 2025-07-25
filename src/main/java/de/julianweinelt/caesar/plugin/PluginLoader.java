@@ -1,21 +1,13 @@
 package de.julianweinelt.caesar.plugin;
 
-import com.google.gson.*;
-import de.julianweinelt.caesar.Caesar;
-import de.julianweinelt.caesar.exceptions.PluginInvalidException;
-import de.julianweinelt.caesar.plugin.event.Event;
-import org.apache.maven.artifact.versioning.ComparableVersion;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;

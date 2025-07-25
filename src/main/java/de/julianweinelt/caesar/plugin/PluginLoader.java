@@ -35,28 +35,11 @@ public class PluginLoader {
     }
 
     public void loadAll() {
-        File pluginDir = new File("plugins");
-
-        Map<String, File> pluginFiles = new HashMap<>();
+        List<PluginDescriptor> descriptors = scanner.scan();
         Map<String, PluginConfiguration> pluginConfigs = new HashMap<>();
-
-        File[] files = pluginDir.listFiles((dir, name) -> name.endsWith(".jar"));
-        if (files == null) return;
-
-        for (File file : files) {
-            try (JarFile jar = new JarFile(file)) {
-                ZipEntry entry = jar.getEntry("plugin.json");
-                if (entry == null) continue;
-
-                try (InputStream in = jar.getInputStream(entry)) {
-                    PluginConfiguration config = new Gson().fromJson(new InputStreamReader(in), PluginConfiguration.class);
-                    pluginConfigs.put(config.pluginName(), config);
-                    pluginFiles.put(config.pluginName(), file);
-                }
-            } catch (IOException e) {
-                log.warn("Could not read plugin.json from {}", file.getName(), e);
-            }
-        }
+        Map<String, File> pluginFiles = new HashMap<>();
+        for (PluginDescriptor descriptor : descriptors) pluginConfigs.put(descriptor.name(), descriptor.config());
+        for (PluginDescriptor descriptor : descriptors) pluginFiles.put(descriptor.name(), descriptor.jarFile());
 
         List<String> loadOrder = resolveLoadOrder(pluginConfigs);
 
@@ -72,8 +55,6 @@ public class PluginLoader {
             }
         }
     }
-
-
 
     public void unload(String name) {
         CPlugin plugin = registry.getPlugin(name);

@@ -18,7 +18,7 @@ public class PluginLoader {
     private final Registry registry;
     private final PluginScanner scanner = new PluginScanner();
     private final PluginInstantiator instantiator = new PluginInstantiator();
-    private final PluginClassLoaderFactory loaderFactory = new PluginClassLoaderFactory(false); // oder true
+    private final PluginClassLoaderFactory loaderFactory = new PluginClassLoaderFactory(false); // or true
 
     private final ClassLoader parentLoader = getClass().getClassLoader();
 

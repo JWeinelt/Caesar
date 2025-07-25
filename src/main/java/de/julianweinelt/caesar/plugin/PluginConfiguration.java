@@ -14,6 +14,7 @@ public record PluginConfiguration(
         boolean usesEncryption,
         boolean usesDatabase,
         boolean storesSensitiveData,
-        boolean compatibleWithMinecraft
+        boolean compatibleWithMinecraft,
+        List<String> requires
 
 ) {}

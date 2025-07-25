@@ -9,14 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
@@ -37,22 +37,42 @@ public class PluginLoader {
     public void loadAll() {
         File pluginDir = new File("plugins");
 
-        if (!pluginDir.exists() || !pluginDir.isDirectory()) {
-            log.warn("Plugin directory does not exist: {}", pluginDir.getAbsolutePath());
-            return;
+        Map<String, File> pluginFiles = new HashMap<>();
+        Map<String, PluginConfiguration> pluginConfigs = new HashMap<>();
+
+        File[] files = pluginDir.listFiles((dir, name) -> name.endsWith(".jar"));
+        if (files == null) return;
+
+        for (File file : files) {
+            try (JarFile jar = new JarFile(file)) {
+                ZipEntry entry = jar.getEntry("plugin.json");
+                if (entry == null) continue;
+
+                try (InputStream in = jar.getInputStream(entry)) {
+                    PluginConfiguration config = new Gson().fromJson(new InputStreamReader(in), PluginConfiguration.class);
+                    pluginConfigs.put(config.pluginName(), config);
+                    pluginFiles.put(config.pluginName(), file);
+                }
+            } catch (IOException e) {
+                log.warn("Could not read plugin.json from {}", file.getName(), e);
+            }
         }
 
-        File[] jarFiles = pluginDir.listFiles((dir, name) -> name.endsWith(".jar"));
-        if (jarFiles == null || jarFiles.length == 0) {
-            log.info("No plugins found in directory {}", pluginDir.getAbsolutePath());
-            return;
-        }
+        List<String> loadOrder = resolveLoadOrder(pluginConfigs);
 
-        for (File file : jarFiles) {
-            String pluginName = file.getName().replace(".jar", "");
-            loadPlugin(pluginName);
+        for (String pluginName : loadOrder) {
+            File pluginFile = pluginFiles.get(pluginName);
+            PluginConfiguration config = pluginConfigs.get(pluginName);
+            if (pluginFile != null && config != null) {
+                try {
+                    loadPlugin(config.pluginName());
+                } catch (Exception e) {
+                    log.error("Failed to load plugin '{}'", pluginName, e);
+                }
+            }
         }
     }
+
 
 
     public void unload(String name) {
@@ -107,6 +127,44 @@ public class PluginLoader {
         } catch (Exception e) {
             log.error("Failed to load plugin {}", name, e);
         }
+    }
+
+    private List<String> resolveLoadOrder(Map<String, PluginConfiguration> configs) {
+        List<String> loadOrder = new ArrayList<>();
+        Set<String> visited = new HashSet<>();
+        Set<String> visiting = new HashSet<>();
+
+        for (String plugin : configs.keySet()) {
+            visit(plugin, configs, loadOrder, visited, visiting);
+        }
+
+        return loadOrder;
+    }
+
+    private void visit(String plugin,
+                       Map<String, PluginConfiguration> configs,
+                       List<String> loadOrder,
+                       Set<String> visited,
+                       Set<String> visiting) {
+        if (visited.contains(plugin)) return;
+        if (visiting.contains(plugin))
+            throw new IllegalStateException("Cyclic dependency involving: " + plugin);
+
+        visiting.add(plugin);
+
+        List<String> dependencies = configs.get(plugin).requires();
+        if (dependencies != null) {
+            for (String dep : dependencies) {
+                if (!configs.containsKey(dep)) {
+                    throw new IllegalStateException("Missing dependency: " + dep + " required by " + plugin);
+                }
+                visit(dep, configs, loadOrder, visited, visiting);
+            }
+        }
+
+        visiting.remove(plugin);
+        visited.add(plugin);
+        loadOrder.add(plugin);
     }
 
 }

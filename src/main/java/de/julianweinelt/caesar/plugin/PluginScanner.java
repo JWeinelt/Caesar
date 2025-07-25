@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar.plugin;
 
 import com.google.gson.Gson;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -13,12 +14,13 @@ import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
 public class PluginScanner {
+    private static final Logger log = LoggerFactory.getLogger(PluginScanner.class);
 
     private final File pluginFolder = new File("plugins");
 
     public List<PluginDescriptor> scan() {
         List<PluginDescriptor> descriptors = new ArrayList<>();
-        if (!pluginFolder.exists()) pluginFolder.mkdirs();
+        if (!pluginFolder.exists()) if (pluginFolder.mkdirs()) log.info("PluginFolder created");
 
         File[] files = pluginFolder.listFiles((dir, name) -> name.endsWith(".jar"));
         if (files == null) return descriptors;

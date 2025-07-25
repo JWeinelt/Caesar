@@ -10,16 +10,14 @@ import de.julianweinelt.caesar.storage.LocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.security.SecureRandom;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
 
+@SuppressWarnings({"unused", "RedundantSuppression"})
 public class JWTUtil {
     private static final Logger log = LoggerFactory.getLogger(JWTUtil.class);
-
-    private final SecureRandom random = new SecureRandom();
 
     private final JWTVerifier verifier;
 
@@ -29,24 +27,6 @@ public class JWTUtil {
 
     public static JWTUtil getInstance() {
         return Caesar.getInstance().getJwt();
-    }
-
-    public String generateSecret(int length) {
-        StringBuilder characterPool = new StringBuilder();
-        String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-        characterPool.append(LETTERS);
-        String DIGITS = "0123456789";
-        characterPool.append(DIGITS);
-        String SYMBOLS = "!@#$%^&*()-_=+[]{}|;:,.<>?";
-        characterPool.append(SYMBOLS);
-
-        StringBuilder result = new StringBuilder(length);
-        for (int i = 0; i < length; i++) {
-            int index = random.nextInt(characterPool.length());
-            result.append(characterPool.charAt(index));
-        }
-
-        return result.toString();
     }
 
     public String token(String username) {

@@ -46,6 +46,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings({"RedundantSuppression", "unused", "SpellCheckingInspection"})
 public class Caesar {
     private static final Logger log = LoggerFactory.getLogger(Caesar.class);
 
@@ -290,7 +291,7 @@ public class Caesar {
             }
 
         } catch (IOException e) {
-            log.error("Failed to start terminal: {}", e.getMessage());
+            log.error("Failed to start terminal CLI: {}", e.getMessage());
         }
     }
 
@@ -395,12 +396,6 @@ public class Caesar {
         storageFactory = new StorageFactory();
         storageFactory.provide(storageType, localStorage.getData());
         boolean success = storageFactory.getUsedStorage().connect();
-        /*boolean hasTables = storageFactory.getUsedStorage().hasTables();
-        if (hasTables) {
-            log.warn(languageManager.getTranslation(systemLanguage, "setup.database.info.tables-already-exists"));
-            databaseProcedure(terminal);
-            return;
-        }*/
         if (success) {
             localStorage.saveData();
             log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.connected"));

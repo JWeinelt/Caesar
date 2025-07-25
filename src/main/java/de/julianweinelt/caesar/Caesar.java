@@ -13,6 +13,7 @@ import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.endpoint.CaesarServiceProvider;
+import de.julianweinelt.caesar.endpoint.MinecraftUUIDFetcher;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
 import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
@@ -45,6 +46,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings({"RedundantSuppression", "unused", "SpellCheckingInspection"})
 public class Caesar {
     private static final Logger log = LoggerFactory.getLogger(Caesar.class);
 
@@ -149,12 +151,8 @@ public class Caesar {
         log.info("Starting backup service...");
         backupManager = new  BackupManager();
         backupManager.configure(localStorage.getData());
-        log.info("Preparing plugin loading...");
-        pluginLoader.prepareLoading();
-        log.info("Loading plugins...");
-        pluginLoader.loadPlugins();
-        log.info("Enabling plugins...");
-        pluginLoader.enablePlugins();
+        log.info("Loading Caesar server plugins...");
+        pluginLoader.loadAll();
         log.info("Plugin loading complete.");
         log.info("Starting endpoints...");
         if (chatManager == null) chatManager = new ChatManager();
@@ -209,6 +207,9 @@ public class Caesar {
 
         log.info("Caesar has been started.");
         startCLI();
+
+        MinecraftUUIDFetcher.prepareCacheDirectory();
+        MinecraftUUIDFetcher.loadCache();
     }
     public void startCLI() {
         try {
@@ -290,7 +291,7 @@ public class Caesar {
             }
 
         } catch (IOException e) {
-            log.error("Failed to start terminal: {}", e.getMessage());
+            log.error("Failed to start terminal CLI: {}", e.getMessage());
         }
     }
 
@@ -395,12 +396,6 @@ public class Caesar {
         storageFactory = new StorageFactory();
         storageFactory.provide(storageType, localStorage.getData());
         boolean success = storageFactory.getUsedStorage().connect();
-        /*boolean hasTables = storageFactory.getUsedStorage().hasTables();
-        if (hasTables) {
-            log.warn(languageManager.getTranslation(systemLanguage, "setup.database.info.tables-already-exists"));
-            databaseProcedure(terminal);
-            return;
-        }*/
         if (success) {
             localStorage.saveData();
             log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.connected"));

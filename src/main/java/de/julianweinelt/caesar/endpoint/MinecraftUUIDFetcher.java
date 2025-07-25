@@ -31,7 +31,7 @@ public class MinecraftUUIDFetcher {
 
     public static void prepareCacheDirectory() {
         if (new File("cache").mkdirs()) log.info("Created cache directory");
-        saveCache();
+        if (!cacheFile.exists()) saveCache();
     }
 
     public static void loadCache() {

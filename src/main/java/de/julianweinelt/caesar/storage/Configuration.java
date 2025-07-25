@@ -7,19 +7,15 @@ import de.julianweinelt.caesar.endpoint.minecraft.MEndpointCurseForge;
 import de.julianweinelt.caesar.endpoint.minecraft.MEndpointModrinth;
 import de.julianweinelt.caesar.endpoint.minecraft.MEndpointSpigot;
 import de.julianweinelt.caesar.exceptions.InvalidConfigKeyException;
-import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
-import net.dv8tion.jda.api.OnlineStatus;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Getter
 @Setter
@@ -142,9 +138,7 @@ public class Configuration {
             case "useChat" -> useChat = (boolean) value;
             case "allowVoiceChat" -> allowVoiceChat = (boolean) value;
             case "allowPublicChats" -> allowPublicChats = (boolean) value;
-            default -> {
-                throw new InvalidConfigKeyException(key, readOnly);
-            }
+            default -> throw new InvalidConfigKeyException(key, readOnly);
         }
     }
 

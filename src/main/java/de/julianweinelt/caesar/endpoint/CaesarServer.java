@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("SpellCheckingInspection")
 public class CaesarServer {
     private static final Logger log = LoggerFactory.getLogger(CaesarServer.class);
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -39,7 +40,7 @@ public class CaesarServer {
 
     private Javalin app;
 
-    private boolean isSetupMode;
+    private final boolean isSetupMode;
     private int setupCode;
 
     public CaesarServer() {
@@ -52,9 +53,7 @@ public class CaesarServer {
     }
 
     public void start() throws JavalinBindException {
-        app = Javalin.create(javalinConfig -> {
-            javalinConfig.showJavalinBanner = false;
-                })
+        app = Javalin.create(javalinConfig -> javalinConfig.showJavalinBanner = false)
                 .before(ctx -> ctx.contentType("application/json"))
 
                 // For connection checking
@@ -314,9 +313,7 @@ public class CaesarServer {
                             .updateUser(UserManager.getInstance().getUser(username));
                 })
 
-                .get("/permission", ctx -> {
-                    ctx.result(GSON.toJson(UserManager.getInstance().getPermissions()));
-                })
+                .get("/permission", ctx -> ctx.result(GSON.toJson(UserManager.getInstance().getPermissions())))
 
                 .get("/role", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.role.list")) return;
@@ -410,9 +407,7 @@ public class CaesarServer {
                     ctx.result(createSuccessResponse());
                     ctx.status(HttpStatus.OK);
                 })
-                .get("/config", ctx -> {
-                    ctx.result(GSON.toJson(LocalStorage.getInstance().getData()));
-                })
+                .get("/config", ctx -> ctx.result(GSON.toJson(LocalStorage.getInstance().getData())))
 
                 // Player management
                 .post("/player", ctx -> {
@@ -460,6 +455,7 @@ public class CaesarServer {
                     if (lackingPermissions(ctx, "caesar.players.notes.delete")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID noteID = UUID.fromString(rootObj.get("noteID").getAsString());
+                    log.debug(noteID.toString());
                     //TODO: Add function to database
                     ctx.result(createSuccessResponse());
                 })
@@ -482,9 +478,11 @@ public class CaesarServer {
                 })
                 .patch("/process/status", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.change-status")) return;
+                    ctx.result(createSuccessResponse());
                 })
                 .patch("/process/player", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.assign-player")) return;
+                    ctx.result(createSuccessResponse());
                 })
                 .start(LocalStorage.getInstance().getData().getWebServerPort());
     }

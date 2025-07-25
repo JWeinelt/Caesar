@@ -455,7 +455,7 @@ public class CaesarServer {
                     if (lackingPermissions(ctx, "caesar.players.notes.delete")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID noteID = UUID.fromString(rootObj.get("noteID").getAsString());
-                    log.info(noteID.toString());
+                    log.debug(noteID.toString());
                     //TODO: Add function to database
                     ctx.result(createSuccessResponse());
                 })

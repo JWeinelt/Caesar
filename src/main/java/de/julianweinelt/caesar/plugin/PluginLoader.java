@@ -47,7 +47,7 @@ public class PluginLoader {
                     try (JarFile jarFile = new JarFile(jarPath.toFile())) {
                         ZipEntry jsonEntry = jarFile.getEntry("plugin.json");
                         if (jsonEntry == null) {
-                            throw new PluginInvalidException("The loaded file " + f.getName() + " does not contain a module.json file.");
+                            throw new PluginInvalidException("The loaded file " + f.getName() + " does not contain a plugin.json file.");
                         }
 
                         try(InputStream inputStream = jarFile.getInputStream(jsonEntry)) {

@@ -1,10 +1,7 @@
 package de.julianweinelt.caesar.endpoint;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.*;
 import de.julianweinelt.caesar.discord.DiscordBot;
@@ -40,7 +37,7 @@ public class CaesarServer {
 
     private Javalin app;
 
-    private final boolean isSetupMode;
+    private boolean isSetupMode;
     private int setupCode;
 
     public CaesarServer() {
@@ -93,6 +90,7 @@ public class CaesarServer {
                         if (rootObj.get("code").getAsInt() == setupCode) {
                             JsonObject o = new JsonObject();
                             o.addProperty("success", true);
+                            isSetupMode = false;
                             ctx.result(o.toString());
                         } else {
                             ctx.result(createErrorResponse(ErrorType.INVALID_SETUP_CODE));
@@ -146,6 +144,16 @@ public class CaesarServer {
                         c.addProperty("host", LocalStorage.getInstance().getData().getCloudnetHost());
                         o.add("cloudnet", c);
                     }
+                    o.addProperty("chatServer", LocalStorage.getInstance().getData().getChatServerPort());
+                    JsonObject features = new JsonObject();
+                    features.addProperty("chat", LocalStorage.getInstance().getData().isUseChat());
+                    features.addProperty("mail", LocalStorage.getInstance().getData().isUseMailClient());
+                    features.addProperty("support", LocalStorage.getInstance().getData().isUseSupport());
+                    features.addProperty("files", LocalStorage.getInstance().getData().isEnableFileBrowser());
+                    o.add("features", features);
+                    JsonArray permissions = new JsonArray();
+                    for (String s : user.getPermissions()) permissions.add(s);
+                    o.add("permissions", permissions);
                     ctx.result(o.toString());
                 })
 
@@ -274,7 +282,6 @@ public class CaesarServer {
                     StorageFactory.getInstance().getUsedStorage().updateUser(user);
                 })
                 .get("/user", ctx -> {
-                    if (lackingPermissions(ctx, "caesar.admin.user.list")) return;
                     ctx.result(GSON.toJson(UserManager.getInstance().getUsers()));
                 })
                 .patch("/user/password", ctx -> {
@@ -311,6 +318,18 @@ public class CaesarServer {
                     UserManager.getInstance().getUser(username).addPermission(permission);
                     StorageFactory.getInstance().getUsedStorage()
                             .updateUser(UserManager.getInstance().getUser(username));
+                    ctx.result(createSuccessResponse("Permission added successfully"));
+                })
+                .post("/user/permissions", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.user.permission.add")) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+
+                    String username = rootObj.get("username").getAsString();
+                    JsonArray permissions = rootObj.get("permissions").getAsJsonArray();
+                    User u = UserManager.getInstance().getUser(username);
+                    for (JsonElement e : permissions) u.addPermission(e.getAsString());
+                    StorageFactory.getInstance().getUsedStorage().updateUser(u);
+                    ctx.result(createSuccessResponse("Permissions added successfully"));
                 })
 
                 .get("/permission", ctx -> ctx.result(GSON.toJson(UserManager.getInstance().getPermissions())))
@@ -521,6 +540,7 @@ public class CaesarServer {
         token = token.replace("Bearer ", "");
         DecodedJWT decoded = JWTUtil.getInstance().decode(token);
         User user = UserManager.getInstance().getUser(decoded.getSubject());
+        if (user.getUsername().equals("admin")) return false;
         for (String requiredPermission : requiredPermissions) {
             if (!user.getPermissions().contains(requiredPermission)) {
                 ctx.skipRemainingHandlers().result(createErrorResponse(ErrorType.NO_PERMISSION)).status(HttpStatus.FORBIDDEN);

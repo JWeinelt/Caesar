@@ -2,13 +2,18 @@ package de.julianweinelt.caesar.auth;
 
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.storage.StorageFactory;
+import de.julianweinelt.caesar.storage.providers.MySQLStorageProvider;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 public class UserManager {
+    private static final Logger log = LoggerFactory.getLogger(UserManager.class);
+
     public static UserManager getInstance() {
         return Caesar.getInstance().getUserManager();
     }
@@ -42,10 +47,17 @@ public class UserManager {
     }
 
     public User getUser(String username) {
+        log.debug("Users found: {}", users.size());
         for (User user : users) {
-            if (user.getUsername().equals(username)) return user;
+            if (user.getUsername().equals(username)) {
+                log.debug("Found user: {}", username);
+                return user;
+            }
         }
-        return null;
+        log.debug("User {} not found in memory. Loading from database", username);
+        User u = StorageFactory.getInstance().getUsedStorage().getUser(username);
+        users.add(u);
+        return u;
     }
 
     public User getUser(UUID uuid) {

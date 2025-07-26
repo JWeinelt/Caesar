@@ -24,14 +24,14 @@ public class Configuration {
         return LocalStorage.getInstance().getData();
     }
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _NOTE = "The values in this file should NOT be changed manually. Instead use the Caesar Client to manage them.";
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_JWT = "These parameters are important for token issuing. Keep it secret at every time. If you think someone got it, change the secret IMMEDIATELY! It won't break your stored data but reconnect all clients.";
     private String jwtSecret;
     private String jwtIssuer;
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";
     private String databaseType;
     private String databaseHost = "localhost";
@@ -46,18 +46,18 @@ public class Configuration {
     private int connectionServerPort = 48002;
     private int clientLinkPort = 48003;
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_CN = "These fields define options for the usage of CloudNET.";
     private boolean cloudnetEnabled = false;
     private String cloudnetHost = "localhost";
     private String cloudnetUser = "admin";
     private String cloudnetPassword = "secret";
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO2 = "This value is defined in minutes.";
     private int tokenExpirationTime = 360*4; // Default: 24 hours
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private String _INFO_SECRET = "Changing this value will invalidate ALL connections in your system.";
     private String connectionAPISecret = "";
 
@@ -69,26 +69,29 @@ public class Configuration {
     private boolean useChat = false;
     private boolean allowVoiceChat = false;
     private boolean allowPublicChats = false;
+    private boolean useMailClient = false;
+    private boolean useSupport = true;
+    private boolean enableFileBrowser = false;
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO1 = "Here you can set custom API endpoints. Only change if you know what you are doing!";
     private String caesarAPIEndpoint = "https://api.caesarnet.cloud/";
     //private String caesarAPIEndpoint = "http://localhost:48009/";
     private boolean apiEndpointKeyRequired = false;
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO3 = "Defined Minecraft plugin endpoints are here.";
     private final List<MCPluginEndpoint> endpoints = new ArrayList<>
             (List.of(new MEndpointCurseForge(), new MEndpointSpigot(), new MEndpointModrinth()));
     private final long cacheExpiration = Duration.ofHours(12).toMillis();
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_UPDATES = "Update logic";
     private boolean autoUpdateServerOnStartup = true;
     private boolean autoUpdateClients = true;
     private UpdateChannel updateChannel = UpdateChannel.STABLE;
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_BACKUPS = "These values specify backup logics.";
     private boolean doAutoBackups = true;
     private int interval = 1;
@@ -98,13 +101,15 @@ public class Configuration {
     private BackupCompressType compressType = BackupCompressType.TAR;
 
 
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _DO_NOT_CHANGE = "CHANGING THESE VALUES WILL BREAK YOUR SYSTEM!";
+    @Setter(AccessLevel.NONE)
     private String languageVersion = "1.0.0";
+    @Setter(AccessLevel.NONE)
     private String configVersion = "1.0.5";
+    @Setter(AccessLevel.NONE)
     private String caesarVersion = "0.2.0";
 
-    //TODO: Add new keys to list
     public void set(String key, Object value) {
         String[] readOnlyKeys = {
                 "languageVersion",
@@ -138,6 +143,20 @@ public class Configuration {
             case "useChat" -> useChat = (boolean) value;
             case "allowVoiceChat" -> allowVoiceChat = (boolean) value;
             case "allowPublicChats" -> allowPublicChats = (boolean) value;
+            case "useMailClient" -> useMailClient = (boolean) value;
+            case "useSupport" -> useSupport = (boolean) value;
+            case "enableFileBrowser" -> enableFileBrowser = (boolean) value;
+            case "backupType" -> backupType = BackupType.valueOf((String) value);
+            case "caesarAPIEndpoint" -> caesarAPIEndpoint = (String) value;
+            case "caesarVersion" -> caesarVersion = (String) value;
+            case "apiEndpointKeyRequired" -> apiEndpointKeyRequired = (boolean) value;
+            case "afterBackupAction" -> afterBackupAction = AfterBackupAction.valueOf((String) value);
+            case "updateChannel" -> updateChannel = UpdateChannel.valueOf((String) value);
+            case "intervalType" -> intervalType = ChronoUnit.valueOf((String) value);
+            case "compressType" -> compressType = BackupCompressType.valueOf((String) value);
+            case "doAutoBackups" -> doAutoBackups = (boolean) value;
+            case "autoUpdateClients" -> autoUpdateClients = (boolean) value;
+            case "autoUpdateServerOnStartup" -> autoUpdateServerOnStartup = (boolean) value;
             default -> throw new InvalidConfigKeyException(key, readOnly);
         }
     }
@@ -174,6 +193,20 @@ public class Configuration {
             case "useChat" -> useChat;
             case "allowVoiceChat" -> allowVoiceChat;
             case "allowPublicChats" -> allowPublicChats;
+            case "useMailClient" -> useMailClient;
+            case "useSupport" -> useSupport;
+            case "enableFileBrowser" -> enableFileBrowser;
+            case "backupType" -> backupType;
+            case "caesarAPIEndpoint" -> caesarAPIEndpoint;
+            case "caesarVersion" -> caesarVersion;
+            case "apiEndpointKeyRequired" -> apiEndpointKeyRequired;
+            case "afterBackupAction" -> afterBackupAction;
+            case "updateChannel" -> updateChannel;
+            case "intervalType" -> intervalType;
+            case "compressType" -> compressType;
+            case "doAutoBackups" -> doAutoBackups;
+            case "autoUpdateClients" -> autoUpdateClients;
+            case "autoUpdateServerOnStartup" -> autoUpdateServerOnStartup;
             default -> throw new InvalidConfigKeyException(key, readOnly);
         };
     }

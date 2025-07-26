@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class Chat {
-    private final ChatServer server;
+    private transient final ChatServer server;
 
     @Getter
     private final UUID uniqueID;

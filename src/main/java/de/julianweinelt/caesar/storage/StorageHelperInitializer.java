@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public class StorageHelperInitializer {
     public static final String[] PERMISSIONS = {
+            "*",
             "caesar.admin.user.create",
             "caesar.admin.user.delete",
             "caesar.admin.user.view",
@@ -21,6 +22,7 @@ public class StorageHelperInitializer {
             "caesar.admin.role.edit",
             "caesar.admin.role.view",
             "caesar.admin.role.list",
+            "caesar.admin.change-config",
             "caesar.admin.discord.manage",
             "caesar.view.server",
             "caesar.view.server.services",
@@ -34,6 +36,9 @@ public class StorageHelperInitializer {
             "caesar.view.files.upload",
             "caesar.view.files.download",
             "caesar.view.consoles",
+            "caesar.view.support",
+            "caesar.view.chat",
+            "caesar.view.mails",
             "caesar.server.tasks.create",
             "caesar.server.tasks.edit",
             "caesar.server.tasks.delete",

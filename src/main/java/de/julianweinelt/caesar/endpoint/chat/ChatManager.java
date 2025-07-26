@@ -22,4 +22,12 @@ public class ChatManager {
         for (Chat c : chats) if (c.getUsers().contains(uuid)) result.add(c);
         return result;
     }
+
+    public Chat createChat(UUID creator) {
+        Chat chat = new Chat(server, UUID.randomUUID());
+        chat.setCustomName("New Chat");
+        chat.addUser(creator);
+        chats.add(chat);
+        return chat;
+    }
 }

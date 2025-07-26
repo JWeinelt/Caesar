@@ -93,7 +93,8 @@ public class MySQLStorageProvider extends Storage {
             ResultSet set = pS.executeQuery();
             int i = 0;
             while (set.next()) i++;
-            return i != 0;
+            log.info("Found {} permissions in database. System permissions: {}", i, StorageHelperInitializer.PERMISSIONS.length);
+            return i == StorageHelperInitializer.PERMISSIONS.length;
         } catch (SQLException e) {
             log.error("Failed to check system storage data: {}", e.getMessage());
             return false;
@@ -130,7 +131,7 @@ public class MySQLStorageProvider extends Storage {
     public void insertDefaultData() {
         try {
             log.info("Creating default permission data...");
-            PreparedStatement permissionPS = conn.prepareStatement("INSERT INTO permissions " +
+            PreparedStatement permissionPS = conn.prepareStatement("INSERT IGNORE INTO permissions " +
                     "(UUID, NameKey, PermissionKey, DefaultGranted) VALUES (?, ?, ?, ?)");
             for (String p : StorageHelperInitializer.PERMISSIONS) {
                 permissionPS.setString(1, UUID.randomUUID().toString());
@@ -142,7 +143,7 @@ public class MySQLStorageProvider extends Storage {
             permissionPS.executeBatch();
 
             log.info("Creating default ticket status names...");
-            PreparedStatement ticketStatusPS = conn.prepareStatement("INSERT INTO ticket_status_names " +
+            PreparedStatement ticketStatusPS = conn.prepareStatement("INSERT IGNORE INTO ticket_status_names " +
                     "(UUID, StatusName, Color, Description) VALUES (?, ?, ?, ?)");
             for (TicketStatus s : StorageHelperInitializer.getDefaultTicketStatusList()) {
                 ticketStatusPS.setString(1, s.uniqueID().toString());
@@ -155,7 +156,7 @@ public class MySQLStorageProvider extends Storage {
 
 
             log.info("Creating default user roles...");
-            PreparedStatement pSRoles = conn.prepareStatement("INSERT INTO roles (UUID, NameKey, DisplayColor)" +
+            PreparedStatement pSRoles = conn.prepareStatement("INSERT IGNORE INTO roles (UUID, NameKey, DisplayColor)" +
                     " VALUES (?, ?, ?)");
             pSRoles.setString(1, UUID.randomUUID().toString());
             pSRoles.setString(2, "admin");
@@ -194,6 +195,10 @@ public class MySQLStorageProvider extends Storage {
             ResultSet set = pS.executeQuery();
             if (set.next()) {
                 user =  new User(UUID.fromString(set.getString(1)));
+                user.setUsername(username);
+                user.setActive(set.getBoolean("Active"));
+                user.setNewlyCreated(set.getBoolean("NewlyCreated"));
+                user.setPassword(set.getInt("PasswordHashed"));
             }
         } catch (SQLException e) {
             log.error("Failed to get user: {}", e.getMessage());
@@ -221,6 +226,7 @@ public class MySQLStorageProvider extends Storage {
         } catch (SQLException e) {
             log.error("Failed to get user roles: {}", e.getMessage());
         }
+        log.info("Loaded {} permissions in total for user {}", user.getPermissions().size(), username);
         return user;
     }
 
@@ -258,6 +264,7 @@ public class MySQLStorageProvider extends Storage {
 
     @Override
     public void updateUser(User user) {
+        log.debug("Received command to update user. Loading from database.");
         User existing = getUser(user.getUsername());
 
         StringBuilder sql = new StringBuilder("UPDATE users SET ");
@@ -290,50 +297,66 @@ public class MySQLStorageProvider extends Storage {
             values.add(user.isApplyPasswordPolicy());
         }
 
-        if (fields.isEmpty()) {
-            return; // Nichts zu ändern
-        }
+        if (!fields.isEmpty()) {
+            sql.append(String.join(", ", fields));
+            sql.append(" WHERE UUID = ?");
+            values.add(user.getUuid().toString());
 
-        sql.append(String.join(", ", fields));
-        sql.append(" WHERE UUID = ?");
-        values.add(user.getUuid().toString());
+            try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
 
-        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+                for (int i = 0; i < values.size(); i++) {
+                    stmt.setObject(i + 1, values.get(i));
+                }
 
-            for (int i = 0; i < values.size(); i++) {
-                stmt.setObject(i + 1, values.get(i));
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                log.error("Failed to update user: {}", e.getMessage());
             }
-
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            log.error("Failed to update user: {}", e.getMessage());
         }
 
+        log.debug("Updating user permissions. User {} and all references updated.", user.getUsername());
+        log.debug("Updating {} permissions.", user.getPermissions().size());
+        int skipped = 0;
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM user_permissions WHERE UserID = ?");
+            pS.setString(1, user.getUuid().toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to reset user permissions: {}", e.getMessage());
+        }
         try {
             conn.setAutoCommit(false);
-            PreparedStatement pS = conn.prepareStatement("INSERT INTO user_permissions " +
-                    "(UserID, PermissionID) VALUES (?, ?) ON DUPLICATE KEY UPDATE PermissionID = PermissionID");
+            PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO user_permissions " +
+                    "(UserID, PermissionID) VALUES (?, ?)");
             for (String perm : user.getPermissions()) {
                 CPermission permission = UserManager.getInstance().getPermission(perm);
-                if (permission == null) continue;
+                if (permission == null) {
+                    skipped++;
+                    continue;
+                }
                 pS.setString(1, user.getUuid().toString());
                 pS.setString(2, permission.uniqueID().toString());
                 pS.addBatch();
             }
-            pS.executeBatch();
+            int[] result = pS.executeBatch();
+            conn.commit();
+            int rI = 0;
+            for (int j : result) rI += j;
+            log.debug("Updated {} rows.", rI);
         } catch (SQLException e) {
             log.error("Failed to update user permissions: {}", e.getMessage());
         }
+        if (skipped > 0) log.warn("Skipped {} user permissions.", skipped);
         try {
             conn.setAutoCommit(false);
-            PreparedStatement pS = conn.prepareStatement("INSERT INTO user_roles (UserID, RoleID) VALUES (?, ?)" +
-                    " ON DUPLICATE KEY UPDATE RoleID = RoleID");
+            PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO user_roles (UserID, RoleID) VALUES (?, ?)");
             for (UserRole role : user.getRoles()) {
                 pS.setString(1, user.getUuid().toString());
                 pS.setString(2, role.getUniqueID().toString());
                 pS.addBatch();
             }
             pS.executeBatch();
+            conn.commit();
         } catch (SQLException e) {
             log.error("Failed to update user roles: {}", e.getMessage());
         }
@@ -360,16 +383,9 @@ public class MySQLStorageProvider extends Storage {
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         try {
-            ResultSet set = conn.createStatement().executeQuery("SELECT * FROM users");
+            ResultSet set = conn.createStatement().executeQuery("SELECT Username FROM users");
             while (set.next()) {
-                User user = new User(
-                        UUID.fromString(set.getString(1)),
-                        set.getString(2), set.getInt(3), ""
-                );
-                user.setActive(set.getBoolean(5));
-                user.setNewlyCreated(set.getBoolean(6));
-                user.setApplyPasswordPolicy(set.getBoolean(7));
-                users.add(user);
+                users.add(getUser(set.getString(1)));
             }
         } catch (SQLException e) {
             log.error("Failed to get all users: {}", e.getMessage());

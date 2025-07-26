@@ -14,6 +14,7 @@ public enum ChatAction {
         SYSTEM, // When the server sends a system message to a chat
         USER_LIST, // When the client wants to get the user list of a chat
         CREATE_CHAT, // When a client creates a chat
+        RENAME_CHAT,
         ADD_USER, // When a client adds a user to a chat
         KICK_USER, // When a client kicks a user from a chat
         MUTE_USER, // When a client mutes a user in a chat
@@ -22,7 +23,6 @@ public enum ChatAction {
         SEND_ERROR, // When the server sends an error message to a client
         @ServerOnly
         HANDSHAKE, // For sending a handshake to the client
-        @ServerOnly
         SEND_CHAT_LIST, // For sending all chats of a client
         UNKNOWN; // When the server receives an unknown action
 

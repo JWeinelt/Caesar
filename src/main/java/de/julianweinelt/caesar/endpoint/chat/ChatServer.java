@@ -43,7 +43,7 @@ public class ChatServer extends WebSocketServer {
     @Override
     public void onClose(WebSocket webSocket, int code, String information, boolean byRemote) {
         boolean isClient = getByConnection(webSocket) != null;
-        log.info("A running connection has been closed by {} with code {} and additional information {}. {}",
+        log.debug("A running connection has been closed by {} with code {} and additional information {}. {}",
                 (byRemote) ? "remote" : "client", code, information,
                 (isClient ? "The connected WebSocket was a connected user. ID: " + getByConnection(webSocket) : ""));
     }
@@ -72,7 +72,8 @@ public class ChatServer extends WebSocketServer {
                     UUID userID = UUID.fromString(rootOBJ.get("myID").getAsString());
                     connections.put(userID, conn);
                     sendHandshake(conn);
-                    log.info("Received CaesarHandshake by {} from {}", userID, conn.getRemoteSocketAddress());
+                    sendChatList(userID);
+                    log.debug("Received CaesarHandshake by {} from {}", userID, conn.getRemoteSocketAddress());
                 }
                 case SEND_MESSAGE -> {
                     sendMessageBy(
@@ -90,6 +91,37 @@ public class ChatServer extends WebSocketServer {
                     ch.removeUser(user);
                     sendMessageSystem("{!user:" + user + "} left the chat.", chat);
                 }
+                case SEND_CHAT_LIST -> {
+                    UUID user = UUID.fromString(rootOBJ.get("user").getAsString());
+                    sendChatList(user);
+                }
+                case CREATE_CHAT -> {
+                    UUID user = getByConnection(conn);
+                    User userObj = UserManager.getInstance().getUser(user);
+                    Chat chat = chatManager.createChat(user);
+                    sendChatList(user);
+                    sendMessageSystem("The chat \"New Chat\" has been created by " + userObj.getUsername() + ".", chat.getUniqueID());
+                }
+                case RENAME_CHAT -> {
+                    UUID user = getByConnection(conn);
+                    User userObj = UserManager.getInstance().getUser(user);
+                    Chat chat = chatManager.getChat(UUID.fromString(rootOBJ.get("chat").getAsString()));
+                    String newName = rootOBJ.get("newName").getAsString();
+                    chat.setCustomName(newName);
+                    sendChatRename(chat);
+                    sendMessageSystem("[b]" + userObj.getUsername() + "[/b] set the name of the chat to [b]"
+                            + newName + ".[/b]", chat.getUniqueID());
+                }
+                case ADD_USER -> {
+                    User senderU = UserManager.getInstance().getUser(getByConnection(conn));
+                    String addName = rootOBJ.get("toAdd").getAsString();
+                    User userToAdd = UserManager.getInstance().getUser(addName);
+                    UUID chat = UUID.fromString(rootOBJ.get("chat").getAsString());
+                    Chat chat1 = chatManager.getChat(chat);
+                    chat1.addUser(userToAdd.getUuid());
+                    sendMessageSystem(senderU.getUsername() + " added " + userToAdd.getUsername() + " to the chat.", chat1.getUniqueID());
+                    sendChatList(userToAdd.getUuid());
+                }
             }
         }
     }
@@ -104,6 +136,7 @@ public class ChatServer extends WebSocketServer {
     }
 
     public void sendMessageBy(UUID sender, String message, UUID chat) {
+        User sendingUser = UserManager.getInstance().getUser(sender);
         JsonObject o = new JsonObject();
         o.addProperty("type", ChatAction.MESSAGE.name());
         o.add("sender", createSenderOBJ(sender));
@@ -111,10 +144,12 @@ public class ChatServer extends WebSocketServer {
         o.addProperty("chat", chat.toString());
         o.addProperty("timestamp", System.currentTimeMillis());
         Chat c = chatManager.getChat(chat);
+        c.registerNewMessage(new Message(message, sendingUser.getUsername(), System.currentTimeMillis()));
         for (UUID uuid : c.getUsers()) {
-            if (uuid.equals(sender)) continue;
+            log.debug("Sending message to chat {} for user {} by {}", c.getUniqueID(), uuid, sender);
             WebSocket conn = getConnection(uuid);
             if (conn != null) {
+                log.debug("Sent");
                 conn.send(o.toString());
             }
         }
@@ -122,7 +157,8 @@ public class ChatServer extends WebSocketServer {
 
     public void sendMessageSystem(String message, UUID chat) {
         JsonObject o = new JsonObject();
-        o.addProperty("type", ChatAction.SYSTEM.name());
+        o.addProperty("type", ChatAction.MESSAGE.name());
+        o.add("sender", createSenderOBJ("SYSTEM"));
         o.addProperty("message", message);
         o.addProperty("chat", chat.toString());
         o.addProperty("timestamp", System.currentTimeMillis());
@@ -133,7 +169,20 @@ public class ChatServer extends WebSocketServer {
                 conn.send(o.toString());
             }
         }
-        c.registerNewMessage(new Message(message, "SYSTEM", Date.from(Instant.now())));
+        c.registerNewMessage(new Message(message, "SYSTEM", System.currentTimeMillis()));
+    }
+
+    public void sendChatRename(Chat chat) {
+        for (UUID uuid : chat.getUsers()) {
+            WebSocket conn = getConnection(uuid);
+            if (conn != null) {
+                JsonObject o = new JsonObject();
+                o.addProperty("type", "RENAME_CHAT");
+                o.addProperty("chat", chat.getUniqueID().toString());
+                o.addProperty("newName", chat.getCustomName());
+                conn.send(o.toString());
+            }
+        }
     }
 
     public JsonObject createSenderOBJ(UUID sender) {
@@ -146,6 +195,25 @@ public class ChatServer extends WebSocketServer {
             o.addProperty("username", user.getUsername());
         }
         return o;
+    }
+
+    public JsonObject createSenderOBJ(String sender) {
+        JsonObject o = new JsonObject();
+        o.addProperty("uuid", "Unknown");
+        o.addProperty("username", sender);
+        return o;
+    }
+
+    public void sendChatList(UUID user) {
+        List<Chat> chats = chatManager.getChatsUser(user);
+        WebSocket conn = getConnection(user);
+        if (conn != null) {
+            JsonObject o = new JsonObject();
+            o.addProperty("type", ChatAction.SEND_CHAT_LIST.name());
+            o.add("chats", GSON.toJsonTree(chats));
+            conn.send(o.toString());
+        }
+
     }
 
     public WebSocket getConnection(UUID uuid) {

@@ -120,3 +120,4 @@ build/
 /run/config.json
 /run/service.json
 /run/task.json
+/run/plugins/SamplePlugin-1.0.0.jar

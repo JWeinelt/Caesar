@@ -107,7 +107,6 @@ public class Configuration {
     private String languageVersion = "1.0.0";
     @Setter(AccessLevel.NONE)
     private String configVersion = "1.0.5";
-    @Setter(AccessLevel.NONE)
     private String caesarVersion = "0.2.0";
 
     public void set(String key, Object value) {

@@ -8,6 +8,8 @@ import java.lang.reflect.Field;
 public enum ChatAction {
         @ClientOnly
         AUTHENTICATE, // When a client authenticates to the server
+        @ClientOnly
+        CLOSE_REQUEST, // Sent by the client to close connection
         LEAVE, // When a client leaves the chat
         MESSAGE, // When the server sends a message to a client
         SEND_MESSAGE, // When a client sends a message to the server

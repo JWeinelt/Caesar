@@ -77,6 +77,11 @@ CREATE TABLE IF NOT EXISTS players_mc_accounts (
     MC_Name varchar(36) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS punishments_user_assignments (
+    ProcessID varchar(36) NOT NULL,
+    UserID varchar(36) NOT NULL
+);
+
 ALTER TABLE punishments
     ADD COLUMN PlayerID varchar(36) NOT NULL DEFAULT '';
 

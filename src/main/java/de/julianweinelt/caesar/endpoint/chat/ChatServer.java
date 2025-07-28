@@ -122,6 +122,11 @@ public class ChatServer extends WebSocketServer {
                     sendMessageSystem(senderU.getUsername() + " added " + userToAdd.getUsername() + " to the chat.", chat1.getUniqueID());
                     sendChatList(userToAdd.getUuid());
                 }
+                case CLOSE_REQUEST -> {
+                    UUID user = getByConnection(conn);
+                    connections.remove(user);
+                    conn.close(CloseFrame.NORMAL, "Goodbye");
+                }
             }
         }
     }

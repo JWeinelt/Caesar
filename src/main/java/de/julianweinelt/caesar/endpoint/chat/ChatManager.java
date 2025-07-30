@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 public class ChatManager {
     private final Logger log = LoggerFactory.getLogger(ChatManager.class);
+    @Getter
     private final UUID junoID = UUID.fromString("438c2559-6c71-44ec-8a2c-b16304f62939");
 
     @Getter

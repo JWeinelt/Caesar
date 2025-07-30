@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import de.julianweinelt.caesar.ai.AIManager;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.storage.LocalStorage;
@@ -169,6 +170,14 @@ public class ChatServer extends WebSocketServer {
                 log.debug("Sent");
                 conn.send(o.toString());
             }
+        }
+
+        if (!c.isDirectMessage() && LocalStorage.getInstance().getData().isUseAIChat()) { // TODO: Replace with global field for AI options
+            if (ChatMention.isMentioned(chatManager.getJunoID(), mentions)) {
+                sendMessageBy(chatManager.getJunoID(), AIManager.getInstance().answerMessage(message), chat);
+            }
+        } else if (c.isDirectMessage() && c.hasUser(chatManager.getJunoID())) {
+            sendMessageBy(chatManager.getJunoID(), AIManager.getInstance().answerMessage(message), chat);
         }
     }
 

@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
+import de.julianweinelt.caesar.annotation.BetaFeature;
 import de.julianweinelt.caesar.auth.PasswordConditions;
 import de.julianweinelt.caesar.endpoint.CorporateDesign;
 import de.julianweinelt.caesar.endpoint.minecraft.MCPluginEndpoint;
@@ -32,6 +33,10 @@ public class Configuration {
     private String jwtIssuer;
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
+    private final String _INFO_BETA = "Do not enable this in production environments.";
+    private boolean enableBetaFeatures = false;
+
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";
     private String databaseType;
     private String databaseHost = "localhost";
@@ -45,6 +50,7 @@ public class Configuration {
     private int chatServerPort = 48001;
     private int connectionServerPort = 48002;
     private int clientLinkPort = 48003;
+    private int voiceServerPort = 48004;
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_CN = "These fields define options for the usage of CloudNET.";
@@ -67,6 +73,7 @@ public class Configuration {
     private boolean useCorporateDesign = false;
 
     private boolean useChat = false;
+    @BetaFeature
     private boolean allowVoiceChat = false;
     private boolean allowPublicChats = false;
     private boolean useMailClient = false;

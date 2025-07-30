@@ -7,6 +7,7 @@ import de.julianweinelt.caesar.discord.wrapping.ChannelType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelWrapper;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
+import de.julianweinelt.caesar.plugin.event.EventListener;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;

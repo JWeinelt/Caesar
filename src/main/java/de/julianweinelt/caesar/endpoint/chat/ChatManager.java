@@ -59,11 +59,15 @@ public class ChatManager {
             return;
         }
         for (User u : UserManager.getInstance().getUsers()) {
+            boolean found = false;
             for (Chat chat : chats) {
-                if (chat.isDirectMessage() && chat.hasUser(u) && chat.hasUser(junoID)) break;
-                else {
-                    createDMChat(u.getUuid(), junoID);
+                if (chat.isDirectMessage() && chat.hasUser(u) && chat.hasUser(junoID)) {
+                    found = true;
+                    break;
                 }
+            }
+            if (!found) {
+                createDMChat(u.getUuid(), junoID);
             }
         }
     }

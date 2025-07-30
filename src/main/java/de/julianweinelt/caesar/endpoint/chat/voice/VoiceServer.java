@@ -10,23 +10,19 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VoiceServer {
-
     private static final Logger log = LoggerFactory.getLogger(VoiceServer.class);
+    private final int SOCKET_TIMEOUT_MS = 1000;
 
     private final DatagramSocket socket;
-
-    // Sessions: Raum-ID -> Teilnehmer
     private final Map<UUID, Set<SocketAddress>> sessions = new ConcurrentHashMap<>();
-    // Client -> Raum
     private final Map<SocketAddress, UUID> clientRooms = new ConcurrentHashMap<>();
-    // Client -> UserID
     private final Map<SocketAddress, UUID> clientIDs = new ConcurrentHashMap<>();
 
     private volatile boolean running = true;
 
     public VoiceServer(int port) throws SocketException {
         socket = new DatagramSocket(port);
-        socket.setSoTimeout(SOCKET_TIMEOUT_MS); // 1 Sekunde Timeout, damit running regelmäßig geprüft wird
+        socket.setSoTimeout(SOCKET_TIMEOUT_MS);
     }
 
     public void start() {

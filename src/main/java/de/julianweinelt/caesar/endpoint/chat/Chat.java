@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.endpoint.chat;
 
+import de.julianweinelt.caesar.auth.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -48,9 +49,19 @@ public class Chat {
     public void removeUser(UUID uuid) {
         users.remove(uuid);
     }
+    public boolean hasUser(User u) {
+        return hasUser(u.getUuid());
+    }
+    public boolean hasUser(UUID uuid) {
+        return users.contains(uuid);
+    }
 
 
     public void registerNewMessage(Message message) {
         messages.add(message);
+    }
+
+    public boolean isGroupChat() {
+        return !isDirectMessage;
     }
 }

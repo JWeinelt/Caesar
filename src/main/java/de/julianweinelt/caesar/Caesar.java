@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar;
 
 import com.vdurmont.semver4j.Semver;
+import de.julianweinelt.caesar.ai.AIManager;
 import de.julianweinelt.caesar.auth.CaesarLinkServer;
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
@@ -63,6 +64,9 @@ public class Caesar {
     private PluginLoader pluginLoader = null;
     @Getter
     private LocalStorage localStorage = null;
+
+    @Getter
+    private AIManager aiManager = null;
 
     @Getter
     private CaesarServer caesarServer = null;
@@ -130,6 +134,9 @@ public class Caesar {
         registry = new Registry();
         log.info("Registering basic events...");
         registry.registerEvents(
+                "UserCreateEvent",
+                "UserChangeEvent",
+                "UserDeleteEvent",
                 "StorageReadyEvent",
                 "ServerStartupEvent",
                 "ServerShutdownEvent",
@@ -164,6 +171,9 @@ public class Caesar {
             } catch (Exception ex) {
                 log.error("Failed to load voice server", ex);
             }
+        }
+        if (localStorage.getData().isUseAIChat() && !localStorage.getData().getChatAIAPISecret().isEmpty()) {
+            aiManager = new AIManager();
         }
         userManager = new UserManager();
         serviceProvider = new CaesarServiceProvider();

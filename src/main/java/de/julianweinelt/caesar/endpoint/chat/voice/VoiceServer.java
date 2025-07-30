@@ -26,7 +26,7 @@ public class VoiceServer {
 
     public VoiceServer(int port) throws SocketException {
         socket = new DatagramSocket(port);
-        socket.setSoTimeout(1000); // 1 Sekunde Timeout, damit running regelmäßig geprüft wird
+        socket.setSoTimeout(SOCKET_TIMEOUT_MS); // 1 Sekunde Timeout, damit running regelmäßig geprüft wird
     }
 
     public void start() {

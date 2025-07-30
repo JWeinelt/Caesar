@@ -159,8 +159,8 @@ public class Caesar {
         pluginLoader.loadAll();
         log.info("Plugin loading complete.");
         log.info("Starting endpoints...");
+        if (chatManager == null && localStorage.getData().isUseChat()) chatManager = new ChatManager();
         if (chatServer == null && localStorage.getData().isUseChat()) chatServer = new ChatServer(chatManager);
-        if (chatManager == null && localStorage.getData().isUseChat()) chatManager = new ChatManager(chatServer);
         if (caesarServer == null) caesarServer = new CaesarServer();
         if (connectionServer == null) connectionServer = new CaesarLinkServer();
         if (clientLinkServer == null) clientLinkServer = new CaesarClientLinkServer(localStorage.getData().getClientLinkPort());

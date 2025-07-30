@@ -194,10 +194,10 @@ public class Caesar {
             }
         }
         try {
+            caesarServer.start();
             if (localStorage.getData().isUseChat()) {
-                caesarServer.start();
+                chatServer.start();
             }
-            chatServer.start();
             connectionServer.start();
             clientLinkServer.start();
             if (localStorage.getData().isAllowVoiceChat()) {

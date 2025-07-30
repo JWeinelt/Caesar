@@ -299,10 +299,12 @@ public class ChatServer extends WebSocketServer {
         Matcher matcher = mentionPattern.matcher(message);
         while (matcher.find()) {
             String username = matcher.group(1);
-            UUID mentionedId = UserManager.getInstance().getUser(username).getUuid();
-
-            if (mentionedId != null) {
-                mentions.add(new ChatMention(mentionedId, chatId, senderId));
+            User user = UserManager.getInstance().getUser(username);
+            if (user != null) {
+                UUID mentionedId = user.getUuid();
+                if (mentionedId != null) {
+                    mentions.add(new ChatMention(mentionedId, chatId, senderId));
+                }
             }
         }
 

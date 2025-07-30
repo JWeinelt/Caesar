@@ -24,7 +24,7 @@ public class VoiceServer {
 
     private volatile boolean running = true;
 
-    public VoiceServer(int port) throws Exception {
+    public VoiceServer(int port) throws SocketException {
         socket = new DatagramSocket(port);
         socket.setSoTimeout(1000); // 1 Sekunde Timeout, damit running regelmäßig geprüft wird
     }

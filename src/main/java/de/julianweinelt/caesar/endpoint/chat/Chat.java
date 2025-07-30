@@ -24,7 +24,13 @@ public class Chat {
 
     @Getter
     @Setter
+    private boolean voiceChat = false;
+
+    @Getter
+    @Setter
     private boolean publicChat = false;
+    @Getter @Setter
+    private boolean isDirectMessage = false;
 
     public Chat(ChatServer server, UUID uniqueID) {
         this.server = server;

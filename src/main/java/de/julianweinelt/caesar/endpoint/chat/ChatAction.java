@@ -16,7 +16,8 @@ public enum ChatAction {
         SYSTEM, // When the server sends a system message to a chat
         USER_LIST, // When the client wants to get the user list of a chat
         CREATE_CHAT, // When a client creates a chat
-        RENAME_CHAT,
+        RENAME_CHAT, // When a client renames a chat
+        DELETE_CHAT, // When a client wants to delete a chat
         ADD_USER, // When a client adds a user to a chat
         KICK_USER, // When a client kicks a user from a chat
         MUTE_USER, // When a client mutes a user in a chat

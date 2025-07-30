@@ -12,7 +12,6 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.nio.file.NoSuchFileException;
 
-@Deprecated(since = "0.0.1")
 public abstract class LoadableManager<T> {
 
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

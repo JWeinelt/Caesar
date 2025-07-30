@@ -31,7 +31,7 @@ public class ChatDataManager extends LoadableManager<List<Chat>> {
         try {
             chatManager.setChats(loadObject(file.toPath().toString(), t));
         } catch (NoSuchFileException e) {
-            log.error(e.getMessage());
+            log.error("Failed to load chat data from file '{}': {}", file.toPath().toString(), e.getMessage());
         }
     }
 

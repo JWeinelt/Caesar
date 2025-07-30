@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
+import de.julianweinelt.caesar.ai.AIModel;
 import de.julianweinelt.caesar.annotation.BetaFeature;
 import de.julianweinelt.caesar.auth.PasswordConditions;
 import de.julianweinelt.caesar.endpoint.CorporateDesign;
@@ -34,7 +35,7 @@ public class Configuration {
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_BETA = "Do not enable this in production environments.";
-    private boolean enableBetaFeatures = false;
+    private boolean enableBetaFeatures = false; // TODO: Add get/set
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";
@@ -66,6 +67,12 @@ public class Configuration {
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private String _INFO_SECRET = "Changing this value will invalidate ALL connections in your system.";
     private String connectionAPISecret = "";
+
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
+    private String _INFO_AI = "These settings are related to AI in chat. It won't be active if useChat is set to false.";
+    private boolean useAIChat = false; // TODO: Add get/set
+    private String chatAIAPISecret = ""; // TODO: Add get/set
+    private AIModel chatAIModel = AIModel.GEMINI_2_5_FLASH; // TODO: Add get/set
 
     private PasswordConditions passwordConditions = new PasswordConditions();
     private boolean useDiscord = false;

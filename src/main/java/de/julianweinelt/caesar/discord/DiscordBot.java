@@ -59,13 +59,26 @@ public class DiscordBot {
 
     public DiscordBot() {
         Registry.getInstance().registerListener(this, Registry.getInstance().getSystemPlugin());
+        registerEvents();
+    }
+
+    private void registerEvents() {
+        Registry.getInstance().registerEvents(
+                "DiscordReadyEvent",
+                "DiscordStopEvent",
+                "DiscordTicketCreateEvent",
+                "DiscordTicketEditEvent",
+                "DiscordStatusChangeEvent",
+                "DiscordConnectionInterruptEvent",
+                "DiscordConfigReloadEvent"
+        );
     }
 
 
     @Subscribe("StorageReadyEvent")
     public void onStorageReady(Event event) {
         config = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
-        start();
+        start(false);
     }
 
     public DiscordEmbedWrapper getEmbedWrapped(String name) {
@@ -73,7 +86,7 @@ public class DiscordBot {
         return null;
     }
 
-    public void start() {
+    public void start(boolean wasRestart) {
         log.info("Starting Discord bot instance...");
         if (config == null) {
             log.warn("Discord configuration not loaded yet.");
@@ -98,7 +111,12 @@ public class DiscordBot {
 
         log.info("Discord bot instance started.");
 
-        Registry.getInstance().callEvent(new Event("DiscordReadyEvent").set("mainGuild", mainGuild.getId()));
+        Registry.getInstance().callEvent(new Event("DiscordReadyEvent")
+                .set("mainGuild", mainGuild.getId())
+                .set("jda", jda)
+                .set("config", config)
+                .set("was-restart", wasRestart)
+        );
     }
 
     public void stop() {
@@ -112,13 +130,21 @@ public class DiscordBot {
             }
 
             if (jda != null) {
+                log.info("Shutting down status scheduler...");
+                statusScheduler.shutdown();
                 log.info("Shutting down JDA...");
                 boolean success = jda.awaitShutdown(10, TimeUnit.SECONDS);
                 if (success) {
                     log.info("JDA has been shut down.");
+                    Registry.getInstance().callEvent(new Event("DiscordStopEvent")
+                            .set("jda", jda)
+                            .set("was-clean", true));
                 } else {
                     log.error("JDA could not be shut down. Terminating...");
                     jda.shutdownNow();
+                    Registry.getInstance().callEvent(new Event("DiscordStopEvent")
+                            .set("jda", jda)
+                            .set("was-clean", false));
                 }
                 defaultListener = null;
             }
@@ -137,10 +163,13 @@ public class DiscordBot {
         if (reloadConfig) {
             log.info("Reloading config");
             config = null;
+            Registry.getInstance().callEvent(new Event("DiscordConfigReloadEvent")
+                    .set("jda", jda)
+                    .set("instance", this));
         }
         log.info("Done! Restarting scheduler...");
         statusScheduler = Executors.newScheduledThreadPool(1);
-        start();
+        start(true);
     }
 
     public void disableDefaultListener() {

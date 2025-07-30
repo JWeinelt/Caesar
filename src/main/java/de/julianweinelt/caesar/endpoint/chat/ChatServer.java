@@ -7,6 +7,8 @@ import com.google.gson.JsonParser;
 import de.julianweinelt.caesar.ai.AIManager;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
 import org.java_websocket.framing.CloseFrame;
@@ -73,6 +75,15 @@ public class ChatServer extends WebSocketServer {
                 sendError("Unknown action", conn);
                 return;
             }
+
+            Registry.getInstance().callEvent(new Event("ChatActionEvent")
+                    .set("action", action.toString())
+                    .set("user", getByConnection(conn))
+                    .set("server", this)
+                    .set("manager", chatManager)
+                    .set("data", rootOBJ)
+            );
+
             switch (action) {
                 case AUTHENTICATE -> {
                     UUID userID = UUID.fromString(rootOBJ.get("myID").getAsString());

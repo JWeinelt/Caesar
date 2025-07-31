@@ -64,7 +64,7 @@ public class CaesarServer {
                                                         .description("Caesar REST endpoint")
                                                         .termsOfService("https://caesarnet.cloud/tos")
                                                         .contact("API Support", "https://dc.caesarnet.cloud")
-                                                        .license("GNU GPL v3", "");
+                                                        .license("GNU GPL v3", "https://www.gnu.org/licenses/gpl-3.0.en.html");
                                             })
                                             .withServer(openApiServer -> {
                                                 openApiServer.description("Caesar REST endpoint")

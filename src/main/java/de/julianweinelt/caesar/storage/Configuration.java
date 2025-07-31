@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.storage;
 
+import com.google.gson.Gson;
 import de.julianweinelt.caesar.ai.AIModel;
 import de.julianweinelt.caesar.annotation.BetaFeature;
 import de.julianweinelt.caesar.auth.PasswordConditions;
@@ -12,6 +13,8 @@ import de.julianweinelt.caesar.exceptions.InvalidConfigKeyException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -227,10 +230,16 @@ public class Configuration {
         };
     }
 
-    public void setCustomValue(String key, Object defaultValue) {
-        customValues.put(key, defaultValue);
+    public void setCustomValue(String key, Object value) {
+        if (value != null && !isGsonSerializable(value)) {
+            throw new IllegalArgumentException(
+                    "Value for key '" + key + "' cannot be serialized by Gson: " + value.getClass()
+            );
+        }
+        customValues.put(key, value);
     }
 
+    @NotNull
     public <T> T getCustomValue(String key, Class<T> type, T defaultValue) {
         Object value = customValues.get(key);
 
@@ -243,6 +252,7 @@ public class Configuration {
         return type.cast(value);
     }
 
+    @Nullable
     public <T> T getCustomValue(String key, Class<T> type) {
         Object value = customValues.get(key);
 
@@ -253,6 +263,17 @@ public class Configuration {
             throw new ClassCastException("Value for key '" + key + "' is not of type " + type.getName());
         }
         return type.cast(value);
+    }
+
+    private final Gson gson = new Gson();
+
+    private boolean isGsonSerializable(Object value) {
+        try {
+            gson.toJson(value);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 

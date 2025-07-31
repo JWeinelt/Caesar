@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar.endpoint;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.gson.*;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.*;
@@ -16,6 +17,7 @@ import de.julianweinelt.caesar.util.StringUtil;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
+import io.javalin.openapi.plugin.OpenApiPlugin;
 import io.javalin.util.JavalinBindException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,7 +52,49 @@ public class CaesarServer {
     }
 
     public void start() throws JavalinBindException {
-        app = Javalin.create(javalinConfig -> javalinConfig.showJavalinBanner = false)
+        app = Javalin.create(javalinConfig -> {
+                    javalinConfig.showJavalinBanner = false;
+                    javalinConfig.registerPlugin(new OpenApiPlugin(openApiConfig -> {
+                        openApiConfig
+                                .withDocumentationPath("/openapi.json")
+                                .withDefinitionConfiguration((version, openApiDefinition) -> {
+                                    openApiDefinition
+                                            .withInfo(openApiInfo -> {
+                                                openApiInfo
+                                                        .description("Caesar REST endpoint")
+                                                        .termsOfService("https://caesarnet.cloud/tos")
+                                                        .contact("API Support", "https://dc.caesarnet.cloud")
+                                                        .license("GNU GPL v3", "");
+                                            })
+                                            .withServer(openApiServer -> {
+                                                openApiServer.description("Caesar REST endpoint")
+                                                        .url("http://localhost:{port}/{basePath}")
+                                                        .variable("port", "Server's port", "8080", "8080", "7070")
+                                                        .variable("basePath", "Base path of the server", "", "", "v1");
+                                            })
+                                            .withSecurity(openApiSecurity ->
+                                                    openApiSecurity
+                                                            .withBasicAuth()
+                                                            .withBearerAuth()
+                                                            .withApiKeyAuth("ApiKeyAuth", "X-Api-Key")
+                                                            .withCookieAuth("CookieAuth", "JSESSIONID")
+                                                            .withOAuth2("OAuth2", "This API uses OAuth 2 with the implicit grant flow.", oauth2 ->
+                                                                    oauth2
+                                                                            .withClientCredentials("https://api.example.com/credentials/authorize")
+                                                            )
+                                                            .withGlobalSecurity("OAuth2", globalSecurity ->
+                                                                    globalSecurity
+                                                                            .withScope("write_pets")
+                                                                            .withScope("read_pets")
+                                                            )
+                                            )
+                                            .withDefinitionProcessor(content -> { // you can add whatever you want to this document using your favourite json api
+                                                content.set("test", new TextNode("Value"));
+                                                return content.toPrettyString();
+                                            });
+                                });
+                    }));
+                })
                 .before(ctx -> ctx.contentType("application/json"))
 
                 // For connection checking

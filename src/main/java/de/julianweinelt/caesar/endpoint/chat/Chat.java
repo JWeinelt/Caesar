@@ -63,11 +63,9 @@ public class Chat {
     public void removeModerator(UUID uuid) {
         moderators.remove(uuid);
     }
-
     public boolean isModerator(UUID uuid) {
         return moderators.contains(uuid);
     }
-
 
     public void registerNewMessage(Message message) {
         messages.add(message);

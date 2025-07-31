@@ -128,7 +128,7 @@ public class CaesarLinkServer extends WebSocketServer {
         JsonObject config = new JsonObject();
         config.addProperty("discordEnabled", Configuration.getInstance().isUseDiscord());
         config.addProperty("action", Action.TRANSFER_CONFIG.name());
-        config.addProperty("useReports", true); // TODO
+        config.addProperty("useReports", true);
 
         JsonObject o = new JsonObject();
         o.addProperty("viewPortSize", 3);

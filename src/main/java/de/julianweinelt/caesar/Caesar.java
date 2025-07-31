@@ -308,6 +308,7 @@ public class Caesar {
         localStorage = new LocalStorage();
         localStorage.loadData();
         languageManager = new LanguageManager();
+        storageFactory = new StorageFactory();
         List<String> availableLanguages = languageManager.getAvailableLanguagesFromServer();
         availableLanguages.forEach(languageManager::downloadLanguageIfMissing);
         languageManager.loadAllLanguageData();

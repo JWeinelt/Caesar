@@ -45,7 +45,7 @@ public class VoiceServer {
                 }
 
             } catch (SocketTimeoutException e) {
-                // Timeout erlaubt es, die Schleife kontrolliert zu verlassen
+                log.debug("Socket timeout on port {}", socket.getLocalPort());
             } catch (IOException e) {
                 if (running) log.error("Error in VoiceServer loop: {}", e.getMessage(), e);
             }
@@ -61,7 +61,6 @@ public class VoiceServer {
         socket.close();
     }
 
-    // ----------- Handler -----------
 
     private void handleControl(SocketAddress client, String msg) throws IOException {
         // join:<roomUUID>:<userUUID>

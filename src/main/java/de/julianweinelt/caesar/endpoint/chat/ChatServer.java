@@ -158,6 +158,7 @@ public class ChatServer extends WebSocketServer {
     public void onStart() {
         log.info("Chat Server has been started.");
         log.info("Listening on {}:{}.", getAddress().getHostName(), getPort());
+        Registry.getInstance().callEvent(new Event("ChatServerStartupEvent").set("server", this));
     }
 
     public void sendMessageBy(UUID sender, String message, UUID chat) {

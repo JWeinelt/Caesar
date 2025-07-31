@@ -153,7 +153,7 @@ public class Caesar {
         );
         pluginLoader = new PluginLoader(registry);
         log.info("Starting backup service...");
-        backupManager = new  BackupManager();
+        backupManager = new BackupManager();
         backupManager.configure(localStorage.getData());
         log.info("Loading Caesar server plugins...");
         pluginLoader.loadAll();

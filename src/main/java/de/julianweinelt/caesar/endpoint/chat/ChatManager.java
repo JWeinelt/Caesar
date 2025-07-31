@@ -31,22 +31,19 @@ public class ChatManager {
 
     private final ChatDataManager dataManager;
 
-    private final ChatServer server;
+    private ChatServer server;
 
-    public ChatManager(ChatServer server) {
+    public ChatManager() {
         registerEvents();
         Registry.getInstance().registerListener(this, Registry.getInstance().getSystemPlugin());
-        this.server = server;
         dataManager = new ChatDataManager(this);
         dataManager.loadData();
-        log.info("Starting chat save task...");
-        checkJunoDM();
-        scheduler.scheduleAtFixedRate(dataManager::saveData, 20, 60, TimeUnit.SECONDS);
     }
 
     private void registerEvents() {
         Registry.getInstance().registerEvents(
                 "ChatDataSaveEvent",
+                "ChatServerStartupEvent",
                 "ChatServerShutdownEvent",
                 "ChatActionEvent"
         );
@@ -58,6 +55,14 @@ public class ChatManager {
         if (LocalStorage.getInstance().getData().isUseAIChat()) {
             createDMChat(userID, junoID);
         }
+    }
+
+    @Subscribe("ChatServerStartupEvent")
+    public void onChatServerStartup(Event e) {
+        this.server = e.get("server").getAs(ChatServer.class);
+        log.info("Starting chat save task...");
+        checkJunoDM();
+        scheduler.scheduleAtFixedRate(dataManager::saveData, 20, 60, TimeUnit.SECONDS);
     }
 
     private void checkJunoDM() {

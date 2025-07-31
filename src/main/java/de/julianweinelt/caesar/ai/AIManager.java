@@ -22,10 +22,15 @@ import java.util.List;
 public class AIManager {
     private final Logger log = LoggerFactory.getLogger(AIManager.class);
 
-
-    private final String API_KEY = LocalStorage.getInstance().getData().getChatAIAPISecret();
-    private final String ENDPOINT = Configuration.getInstance().getChatAIModel().apiEndpoint + API_KEY;
+    private final String API_KEY;
+    private final String ENDPOINT;
     private final Gson gson = new Gson();
+
+
+    public AIManager() {
+        API_KEY = LocalStorage.getInstance().getData().getChatAIAPISecret();
+        ENDPOINT = Configuration.getInstance().getChatAIModel().apiEndpoint + API_KEY;
+    }
 
     public static AIManager getInstance() {
         if (Caesar.getInstance().getAiManager() == null) throw new FeatureNotActiveException("AI for chats");

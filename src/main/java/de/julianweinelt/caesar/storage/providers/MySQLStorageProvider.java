@@ -28,7 +28,6 @@ import java.util.*;
 import java.util.List;
 
 
-//TODO: Add database downtime detection
 public class MySQLStorageProvider extends Storage {
     private static final Logger log = LoggerFactory.getLogger(MySQLStorageProvider.class);
 
@@ -1069,5 +1068,17 @@ public class MySQLStorageProvider extends Storage {
             log.error("Failed to get role permissions for player: {}", e.getMessage());
         }
         return permissions;
+    }
+
+    @Override
+    public void deletePlayerNote(UUID player, UUID user, UUID note) {
+        if (!checkConnection()) return;
+        try {
+            PreparedStatement pS = conn.prepareStatement("DELETE FROM players_notes WHERE RecordID = ?");
+            pS.setString(1, note.toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to delete player note: {}", e.getMessage());
+        }
     }
 }

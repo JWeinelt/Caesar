@@ -99,6 +99,7 @@ public abstract class Storage {
     public abstract JsonArray getPunishmentsForPlayer(UUID player);
     public abstract JsonArray getPlayerNotes(UUID player);
     public abstract void createPlayerNote(UUID player, UUID user, String note);
+    public abstract void deletePlayerNote(UUID player, UUID user, UUID note);
     public abstract String updateMCAccount(UUID player);
 
     public abstract UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment);

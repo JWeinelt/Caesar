@@ -96,121 +96,12 @@ public class PostgreSQLStorageProvider extends Storage {
     }
 
     @Override
-    public void createTables() {
-        try {
-            Statement statement = conn.createStatement();
-            String sql = """
-                    CREATE TABLE IF NOT EXISTS users (
-                        UUID varchar(36) PRIMARY KEY,
-                        Username varchar(20) NOT NULL UNIQUE,
-                        PasswordHashed integer NOT NULL,
-                        CreationDate timestamp NULL,
-                        Active smallint NOT NULL DEFAULT 1,
-                        NewlyCreated smallint NOT NULL DEFAULT 1,
-                        ApplyPasswordPolicy smallint NOT NULL DEFAULT 0
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS permissions (
-                        UUID varchar(36) PRIMARY KEY,
-                        NameKey varchar(60) NOT NULL UNIQUE,
-                        PermissionKey varchar(60) NOT NULL UNIQUE,
-                        DefaultGranted smallint NULL
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS user_permissions (
-                        UserID varchar(36) NOT NULL,
-                        PermissionID varchar(36) NOT NULL,
-                        FOREIGN KEY (PermissionID) REFERENCES permissions(UUID),
-                        FOREIGN KEY (UserID) REFERENCES users(UUID)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS roles (
-                        UUID varchar(36) PRIMARY KEY,
-                        NameKey varchar(60),
-                        DisplayColor varchar(16) NOT NULL DEFAULT '0;0;0;100',
-                        CreationDate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS user_roles (
-                        UserID varchar(36) NOT NULL,
-                        RoleID varchar(36) NOT NULL,
-                        FOREIGN KEY (RoleID) REFERENCES roles(UUID),
-                        FOREIGN KEY (UserID) REFERENCES users(UUID)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS role_permissions (
-                        RoleID varchar(36) NOT NULL,
-                        PermissionID varchar(36) NOT NULL,
-                        FOREIGN KEY (PermissionID) REFERENCES permissions(UUID),
-                        FOREIGN KEY (RoleID) REFERENCES roles(UUID)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS process_status_names (
-                        UUID varchar(36) PRIMARY KEY,
-                        StatusName varchar(36) NOT NULL UNIQUE,
-                        Color varchar(16) NOT NULL DEFAULT '0;0;0;100',
-                        Description varchar(150)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS ticket_status_names (
-                        UUID varchar(36) PRIMARY KEY,
-                        StatusName varchar(36) NOT NULL UNIQUE,
-                        Color varchar(16) NOT NULL DEFAULT '0;0;0;100',
-                        Description varchar(150)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS process_types (
-                        TypeID varchar(36) PRIMARY KEY,
-                        TypeName varchar(30) NOT NULL,
-                        Active smallint NOT NULL DEFAULT 1,
-                        UsePattern smallint NOT NULL DEFAULT 0,
-                        PatternUsed varchar(36)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS processes (
-                        ProcessID varchar(36) PRIMARY KEY,
-                        CreatedBy varchar(36) NOT NULL,
-                        Status varchar(36) NOT NULL,
-                        ProcessType varchar(36) NOT NULL,
-                        CreationDate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        Comment varchar(150) NOT NULL DEFAULT 'Nothing to see here',
-                        FOREIGN KEY (Status) REFERENCES process_status_names(UUID),
-                        FOREIGN KEY (ProcessType) REFERENCES process_types(TypeID),
-                        FOREIGN KEY (CreatedBy) REFERENCES users(UUID)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS tickets (
-                        UUID varchar(36) PRIMARY KEY,
-                        CreatedBy varchar(140),
-                        HandledBy varchar(140),
-                        CreationDate timestamp,
-                        TicketStatus varchar(36) NOT NULL,
-                        FOREIGN KEY (TicketStatus) REFERENCES ticket_status_names(UUID)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS ticket_transcripts (
-                        TicketID varchar(36) NOT NULL,
-                        SenderName varchar(50) NOT NULL,
-                        MessageContent varchar(5000),
-                        SentDate timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        FOREIGN KEY (TicketID) REFERENCES tickets(UUID)
-                    );
-                    
-                    CREATE TABLE IF NOT EXISTS server_data (
-                        UUID varchar(36) NOT NULL,
-                        Name varchar(80) NOT NULL,
-                        TimeStamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                        Players integer NOT NULL DEFAULT 0,
-                        cpu real NOT NULL,
-                        memory integer NOT NULL,
-                        TPS integer NOT NULL DEFAULT 20
-                    );
-                    """;
-            statement.executeUpdate(sql);
-        } catch (SQLException e) {
-            log.error("Failed to create tables: {}", e.getMessage());
-        }
+    public void deletePlayerNote(UUID player, UUID user, UUID note) {
+
     }
+
+    @Override
+    public void createTables() {}
 
     @Override
     public void insertDefaultData() {

@@ -17,6 +17,7 @@ public class VoiceServer {
     private final Map<UUID, Set<SocketAddress>> sessions = new ConcurrentHashMap<>();
     private final Map<SocketAddress, UUID> clientRooms = new ConcurrentHashMap<>();
     private final Map<SocketAddress, UUID> clientIDs = new ConcurrentHashMap<>();
+    private final Map<SocketAddress, Integer> bitRates = new ConcurrentHashMap<>();
 
     private volatile boolean running = true;
 
@@ -69,14 +70,17 @@ public class VoiceServer {
             String action = parts[0];
             UUID room = UUID.fromString(parts[1]);
             UUID userID = parts.length >= 3 ? UUID.fromString(parts[2]) : UUID.randomUUID();
+            int bitrate = parts.length >= 4 ? Integer.parseInt(parts[3]) : 32; // default
 
             switch (action) {
                 case "join" -> {
                     clientRooms.put(client, room);
                     clientIDs.put(client, userID);
                     sessions.computeIfAbsent(room, r -> ConcurrentHashMap.newKeySet()).add(client);
+                    bitRates.put(client, bitrate);
 
                     log.info("{} joined room {}", userID, room);
+                    log.debug("{} is using {}kbps as bitrate", userID, bitrate);
                     broadcastEvent(room, "joined:" + userID, client);
                 }
                 case "leave" -> {

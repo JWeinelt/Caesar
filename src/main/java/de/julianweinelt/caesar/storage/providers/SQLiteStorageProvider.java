@@ -220,6 +220,11 @@ public class SQLiteStorageProvider extends Storage {
     }
 
     @Override
+    public void deletePlayerNote(UUID player, UUID user, UUID note) {
+
+    }
+
+    @Override
     public boolean hasTables() {
         return false;
     }

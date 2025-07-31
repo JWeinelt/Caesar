@@ -95,6 +95,11 @@ public class OracleSQLStorageProvider extends Storage {
     }
 
     @Override
+    public void deletePlayerNote(UUID player, UUID user, UUID note) {
+
+    }
+
+    @Override
     public void createTables() {
         try {
             String sql = """

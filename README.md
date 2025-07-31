@@ -3,8 +3,6 @@
 
 **Caesar** is the central backend-component for managing Minecraft server networks - especially for [CloudNet v4](https://cloudnetservice.eu/). Caesar is a fast, secure and flexible application for modern Minecraft infrastructures.
 
-*Caesar is not available for download yet.*
-
 > **DISCLAIMER**: Caesar is **not** web-based. You have to download the [Caesar Client](https://github.com/JWeinelt/Caesar-Panel) to work with the backend system.
 
 ---
@@ -98,5 +96,6 @@ View the [Roadmap here.](https://github.com/JWeinelt/Caesar/blob/master/RoadMap.
 <a href="https://github.com/PhastixTV"><img src="https://github.com/PhastixTV.png" width="50" height="50" alt="@PhastixTV"/></a>
 <a href="https://github.com/zCreeperYT"><img src="https://github.com/zCreeperYT.png" width="50" height="50" alt="@zCreeperYT"/></a>
 <a href="https://github.com/ProJakob"><img src="https://github.com/ProJakob.png" width="50" height="50" alt="@ProJakob"/></a>
+<a href="https://github.com/FlashTalkN"><img src="https://github.com/FlashTalkN.png" width="50" height="50" alt="@FlashTalkN"/></a>
 
 

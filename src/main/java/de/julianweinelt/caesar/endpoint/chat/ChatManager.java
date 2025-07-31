@@ -90,6 +90,9 @@ public class ChatManager {
         for (Chat c : chats) if (c.getUniqueID().equals(uuid)) return c;
         return null;
     }
+    public boolean chatExists(UUID uuid) {
+        return getChat(uuid) != null;
+    }
 
     public List<Chat> getChatsUser(UUID uuid) {
         List<Chat> result = new ArrayList<>();
@@ -133,5 +136,14 @@ public class ChatManager {
         chat.setDirectMessage(true);
         chats.add(chat);
         return chat;
+    }
+
+    public boolean deleteChat(UUID uuid) {
+        if (!chatExists(uuid)) return false;
+        chats.remove(getChat(uuid));
+        return true;
+    }
+    public boolean deleteChat(Chat chat) {
+        return deleteChat(chat.getUniqueID());
     }
 }

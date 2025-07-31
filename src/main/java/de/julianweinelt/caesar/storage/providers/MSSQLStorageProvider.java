@@ -71,6 +71,11 @@ public class MSSQLStorageProvider extends Storage {
     }
 
     @Override
+    public void deletePlayerNote(UUID player, UUID user, UUID note) {
+
+    }
+
+    @Override
     public boolean allTablesExist(String[] tables) {
         return false;
     }

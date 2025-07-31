@@ -3,10 +3,13 @@ package de.julianweinelt.caesar.endpoint.chat;
 import de.julianweinelt.caesar.auth.User;
 import lombok.Getter;
 import lombok.Setter;
+import org.java_websocket.WebSocket;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class Chat {
     private transient final ChatServer server;
@@ -20,6 +23,8 @@ public class Chat {
 
     @Getter
     private final List<UUID> users = new ArrayList<>();
+    @Getter
+    private final List<UUID> moderators = new ArrayList<>();
     @Getter
     private final List<Message> messages = new ArrayList<>();
 
@@ -55,7 +60,15 @@ public class Chat {
     public boolean hasUser(UUID uuid) {
         return users.contains(uuid);
     }
-
+    public void addModerator(UUID uuid) {
+        moderators.add(uuid);
+    }
+    public void removeModerator(UUID uuid) {
+        moderators.remove(uuid);
+    }
+    public boolean isModerator(UUID uuid) {
+        return moderators.contains(uuid);
+    }
 
     public void registerNewMessage(Message message) {
         messages.add(message);
@@ -63,5 +76,20 @@ public class Chat {
 
     public boolean isGroupChat() {
         return !isDirectMessage;
+    }
+
+    @Nullable
+    public Message getMessageByID(UUID uuid) {
+        for (Message message : messages) {
+            if (message.uniqueID().equals(uuid)) return message;
+        }
+        return null;
+    }
+
+    public void sendToUsers(Consumer<WebSocket> action) {
+        for (UUID uuid : users) {
+            WebSocket conn = server.getConnection(uuid);
+            if (conn != null) action.accept(conn);
+        }
     }
 }

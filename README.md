@@ -96,5 +96,6 @@ View the [Roadmap here.](https://github.com/JWeinelt/Caesar/blob/master/RoadMap.
 <a href="https://github.com/PhastixTV"><img src="https://github.com/PhastixTV.png" width="50" height="50" alt="@PhastixTV"/></a>
 <a href="https://github.com/zCreeperYT"><img src="https://github.com/zCreeperYT.png" width="50" height="50" alt="@zCreeperYT"/></a>
 <a href="https://github.com/ProJakob"><img src="https://github.com/ProJakob.png" width="50" height="50" alt="@ProJakob"/></a>
+<a href="https://github.com/FlashTalkN"><img src="https://github.com/FlashTalkN.png" width="50" height="50" alt="@FlashTalkN"/></a>
 
 

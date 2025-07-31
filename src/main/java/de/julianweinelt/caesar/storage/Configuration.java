@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 @Getter
@@ -123,6 +124,8 @@ public class Configuration {
     private String configVersion = "1.0.5";
     private String caesarVersion = "0.2.0";
 
+    private HashMap<String, Object> customValues = new HashMap<>();
+
     public void set(String key, Object value) {
         String[] readOnlyKeys = {
                 "languageVersion",
@@ -222,6 +225,34 @@ public class Configuration {
             case "autoUpdateServerOnStartup" -> autoUpdateServerOnStartup;
             default -> throw new InvalidConfigKeyException(key, readOnly);
         };
+    }
+
+    public void setCustomValue(String key, Object defaultValue) {
+        customValues.put(key, defaultValue);
+    }
+
+    public <T> T getCustomValue(String key, Class<T> type, T defaultValue) {
+        Object value = customValues.get(key);
+
+        if (value == null) {
+            return defaultValue;
+        }
+        if (!type.isInstance(value)) {
+            throw new ClassCastException("Value for key '" + key + "' is not of type " + type.getName());
+        }
+        return type.cast(value);
+    }
+
+    public <T> T getCustomValue(String key, Class<T> type) {
+        Object value = customValues.get(key);
+
+        if (value == null) {
+            return null;
+        }
+        if (!type.isInstance(value)) {
+            throw new ClassCastException("Value for key '" + key + "' is not of type " + type.getName());
+        }
+        return type.cast(value);
     }
 
 

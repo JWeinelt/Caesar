@@ -14,6 +14,9 @@ public enum ChatAction {
         LEAVE, // When a client leaves the chat
         MESSAGE, // When the server sends a message to a client
         SEND_MESSAGE, // When a client sends a message to the server
+        MESSAGE_REACTION_ADD, // When a client react to a message
+        MESSAGE_REACTION_REMOVE, // When a client removes their reaction or an admin removes it.
+        MESSAGE_REACTION_REMOVE_ALL, // When an admin client removed all reactions from a message
         SYSTEM, // When the server sends a system message to a chat
         USER_LIST, // When the client wants to get the user list of a chat
         CREATE_CHAT, // When a client creates a chat

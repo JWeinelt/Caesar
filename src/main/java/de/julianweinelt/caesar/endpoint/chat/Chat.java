@@ -21,6 +21,8 @@ public class Chat {
     @Getter
     private final List<UUID> users = new ArrayList<>();
     @Getter
+    private final List<UUID> moderators = new ArrayList<>();
+    @Getter
     private final List<Message> messages = new ArrayList<>();
 
     @Getter
@@ -54,6 +56,16 @@ public class Chat {
     }
     public boolean hasUser(UUID uuid) {
         return users.contains(uuid);
+    }
+    public void addModerator(UUID uuid) {
+        moderators.add(uuid);
+    }
+    public void removeModerator(UUID uuid) {
+        moderators.remove(uuid);
+    }
+
+    public boolean isModerator(UUID uuid) {
+        return moderators.contains(uuid);
     }
 
 

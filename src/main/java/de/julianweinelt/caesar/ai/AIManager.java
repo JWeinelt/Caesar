@@ -3,6 +3,10 @@ package de.julianweinelt.caesar.ai;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.exceptions.FeatureNotActiveException;
+import de.julianweinelt.caesar.storage.Configuration;
+import de.julianweinelt.caesar.storage.LocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,24 +15,29 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DiscordMessageContextChecker {
-    private static final Logger log = LoggerFactory.getLogger(DiscordMessageContextChecker.class);
+public class AIManager {
+    private final Logger log = LoggerFactory.getLogger(AIManager.class);
+
+    private final String API_KEY;
+    private final String ENDPOINT;
+    private final Gson gson = new Gson();
 
 
-    private static final String API_KEY = "AIzaSysC6CuZ0NQoRyK0YB-f89r5AzCVISzVDId0";
-    private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
-    private static final Gson gson = new Gson();
-
-    public static void main(String[] args) throws IOException {
-        System.out.println(tellJoke());
+    public AIManager() {
+        API_KEY = LocalStorage.getInstance().getData().getChatAIAPISecret();
+        ENDPOINT = Configuration.getInstance().getChatAIModel().apiEndpoint + API_KEY;
     }
 
-    public static JsonObject getMessageType(String message) {
+    public static AIManager getInstance() {
+        if (Caesar.getInstance().getAiManager() == null) throw new FeatureNotActiveException("AI for chats");
+        return Caesar.getInstance().getAiManager();
+    }
+
+    public JsonObject getDiscordMessageType(String message) {
 
         List<JsonObject> chatHistory = new ArrayList<>();
 
@@ -92,21 +101,24 @@ public class DiscordMessageContextChecker {
         return new JsonObject();
     }
 
-    public static String tellJoke() {
+    public String tellJoke() {
+        return answerMessage("Tell me a joke!");
+    }
 
+    public String answerMessage(String inputMessage) {
         List<JsonObject> chatHistory = new ArrayList<>();
 
         JsonObject systemPrompt = new JsonObject();
         systemPrompt.addProperty("role", "user");
         systemPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("You are a funny bot"),
+                new Part("You are a helpful bot"),
         }));
         chatHistory.add(systemPrompt);
 
         JsonObject userPrompt = new JsonObject();
         userPrompt.addProperty("role", "user");
         userPrompt.add("parts", gson.toJsonTree(new Part[]{
-                new Part("@Caesar Tell me a joke!")
+                new Part(inputMessage)
         }));
         chatHistory.add(userPrompt);
 

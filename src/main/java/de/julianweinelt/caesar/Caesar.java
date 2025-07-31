@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar;
 
 import com.vdurmont.semver4j.Semver;
+import de.julianweinelt.caesar.ai.AIManager;
 import de.julianweinelt.caesar.auth.CaesarLinkServer;
 import de.julianweinelt.caesar.auth.CloudNETConnectionChecker;
 import de.julianweinelt.caesar.auth.UserManager;
@@ -16,6 +17,7 @@ import de.julianweinelt.caesar.endpoint.CaesarServiceProvider;
 import de.julianweinelt.caesar.endpoint.MinecraftUUIDFetcher;
 import de.julianweinelt.caesar.endpoint.chat.ChatManager;
 import de.julianweinelt.caesar.endpoint.chat.ChatServer;
+import de.julianweinelt.caesar.endpoint.chat.voice.VoiceServer;
 import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
 import de.julianweinelt.caesar.exceptions.logging.ProblemLogger;
 import de.julianweinelt.caesar.plugin.PluginLoader;
@@ -64,6 +66,9 @@ public class Caesar {
     private LocalStorage localStorage = null;
 
     @Getter
+    private AIManager aiManager = null;
+
+    @Getter
     private CaesarServer caesarServer = null;
     @Getter
     private ChatServer chatServer = null;
@@ -71,6 +76,8 @@ public class Caesar {
     private CaesarLinkServer connectionServer = null;
     @Getter
     private CaesarClientLinkServer clientLinkServer = null;
+    @Getter
+    private VoiceServer voiceServer = null;
 
     @Getter
     private CaesarServiceProvider serviceProvider = null;
@@ -82,25 +89,19 @@ public class Caesar {
     private JWTUtil jwt = null;
     @Getter
     private APIKeySaver apiKeySaver = null;
-
     @Getter
     private StorageFactory storageFactory = null;
-
     @Getter
     private LanguageManager languageManager = null;
-
     @Getter
     private UserManager userManager = null;
-
     @Getter
     private ProblemLogger problemLogger = null;
-
 
     @Getter
     private DiscordBot discordBot = null;
     @Getter
     private TicketManager ticketManager = null;
-
     @Getter
     private BackupManager backupManager;
     @Getter @Setter
@@ -133,14 +134,17 @@ public class Caesar {
         registry = new Registry();
         log.info("Registering basic events...");
         registry.registerEvents(
+                "BackupCreateEvent",
+                "UserCreateEvent",
+                "UserChangeEvent",
+                "UserDeleteEvent",
+                "ChatCreateEvent",
+                "ChatDeleteEvent",
+                "ChatAddUserEvent",
+                "ChatRemoveUserEvent",
                 "StorageReadyEvent",
                 "ServerStartupEvent",
                 "ServerShutdownEvent",
-                "PluginLoadEvent",
-                "PluginEnableEvent",
-                "PluginDisableEvent",
-                "DiscordReadyEvent",
-                "DiscordShutdownEvent",
                 "ConfigChangeEvent",
                 "DatabaseConnectedEvent",
                 "DatabaseDisconnectedEvent",
@@ -149,18 +153,28 @@ public class Caesar {
         );
         pluginLoader = new PluginLoader(registry);
         log.info("Starting backup service...");
-        backupManager = new  BackupManager();
+        backupManager = new BackupManager();
         backupManager.configure(localStorage.getData());
         log.info("Loading Caesar server plugins...");
         pluginLoader.loadAll();
         log.info("Plugin loading complete.");
         log.info("Starting endpoints...");
-        if (chatManager == null) chatManager = new ChatManager();
+        if (chatManager == null && localStorage.getData().isUseChat()) chatManager = new ChatManager();
+        if (chatServer == null && localStorage.getData().isUseChat()) chatServer = new ChatServer(chatManager);
         if (caesarServer == null) caesarServer = new CaesarServer();
-        if (chatServer == null) chatServer = new ChatServer(chatManager);
         if (connectionServer == null) connectionServer = new CaesarLinkServer();
         if (clientLinkServer == null) clientLinkServer = new CaesarClientLinkServer(localStorage.getData().getClientLinkPort());
         if (storageFactory == null) storageFactory = new StorageFactory();
+        if (voiceServer == null && localStorage.getData().isAllowVoiceChat()) {
+            try {
+                voiceServer = new VoiceServer(localStorage.getData().getVoiceServerPort());
+            } catch (Exception ex) {
+                log.error("Failed to load voice server", ex);
+            }
+        }
+        if (localStorage.getData().isUseAIChat() && !localStorage.getData().getChatAIAPISecret().isEmpty()) {
+            aiManager = new AIManager();
+        }
         userManager = new UserManager();
         serviceProvider = new CaesarServiceProvider();
         serviceProvider.start();
@@ -179,12 +193,17 @@ public class Caesar {
                 localStorage.saveData();
             }
         }
-        chatManager.setServer(chatServer);
         try {
             caesarServer.start();
-            chatServer.start();
+            if (localStorage.getData().isUseChat()) {
+                chatServer.start();
+            }
             connectionServer.start();
             clientLinkServer.start();
+            if (localStorage.getData().isAllowVoiceChat()) {
+                log.warn("WARNING: You are using a BETA feature. DO NOT run this in any productive environment!!");
+                voiceServer.start();
+            }
         } catch (JavalinBindException e) {
             log.error("Failed to start Caesar web server: {}", e.getMessage());
         } catch (Exception e) {
@@ -195,7 +214,6 @@ public class Caesar {
 
         if (localStorage.getData().isUseDiscord()) {
             discordBot = new DiscordBot();
-            discordBot.start();
 
             registry.registerListener(this, Registry.getInstance().getSystemPlugin());
         }
@@ -540,18 +558,19 @@ public class Caesar {
         localStorage.saveData();
         localStorage.saveConnections();
         log.info("Stopping endpoints...");
+        chatManager.terminate();
         try {
             chatServer.stop();
             caesarServer.stop();
             connectionServer.stop();
+            clientLinkServer.stop();
             storageFactory.getUsedStorage().disconnect();
             if (discordBot != null) discordBot.stop();
+            if (voiceServer != null) voiceServer.stop();
         } catch (InterruptedException e) {
             log.error("Failed to stop endpoints: {}", e.getMessage());
         }
         log.info("Caesar has been stopped.");
-        Runtime.getRuntime().halt(0);
-        System.exit(0);
     }
 
     public List<String> getBooleans() {

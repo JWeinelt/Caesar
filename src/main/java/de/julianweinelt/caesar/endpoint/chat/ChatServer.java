@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import de.julianweinelt.caesar.auth.CaesarLinkServer;
+import de.julianweinelt.caesar.ai.AIManager;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
 import org.java_websocket.framing.CloseFrame;
@@ -18,13 +20,19 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ChatServer extends WebSocketServer {
     private static final Logger log = LoggerFactory.getLogger(ChatServer.class);
 
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
+    private final Pattern mentionPattern = Pattern.compile("@([A-Za-z0-9_]+)");
 
     private final HashMap<UUID, WebSocket> connections = new HashMap<>();
     private final ChatManager chatManager;
@@ -67,6 +75,15 @@ public class ChatServer extends WebSocketServer {
                 sendError("Unknown action", conn);
                 return;
             }
+
+            Registry.getInstance().callEvent(new Event("ChatActionEvent")
+                    .set("action", action.toString())
+                    .set("user", getByConnection(conn))
+                    .set("server", this)
+                    .set("manager", chatManager)
+                    .set("data", rootOBJ)
+            );
+
             switch (action) {
                 case AUTHENTICATE -> {
                     UUID userID = UUID.fromString(rootOBJ.get("myID").getAsString());
@@ -122,6 +139,9 @@ public class ChatServer extends WebSocketServer {
                     sendMessageSystem(senderU.getUsername() + " added " + userToAdd.getUsername() + " to the chat.", chat1.getUniqueID());
                     sendChatList(userToAdd.getUuid());
                 }
+                case DELETE_CHAT -> {
+
+                }
                 case CLOSE_REQUEST -> {
                     UUID user = getByConnection(conn);
                     connections.remove(user);
@@ -138,10 +158,15 @@ public class ChatServer extends WebSocketServer {
     public void onStart() {
         log.info("Chat Server has been started.");
         log.info("Listening on {}:{}.", getAddress().getHostName(), getPort());
+        Registry.getInstance().callEvent(new Event("ChatServerStartupEvent").set("server", this));
     }
 
     public void sendMessageBy(UUID sender, String message, UUID chat) {
         User sendingUser = UserManager.getInstance().getUser(sender);
+
+        List<ChatMention> mentions = getMentions(chat, sender, message);
+        if (!mentions.isEmpty()) sendMessageMention(mentions);
+
         JsonObject o = new JsonObject();
         o.addProperty("type", ChatAction.MESSAGE.name());
         o.add("sender", createSenderOBJ(sender));
@@ -157,6 +182,14 @@ public class ChatServer extends WebSocketServer {
                 log.debug("Sent");
                 conn.send(o.toString());
             }
+        }
+
+        if (!c.isDirectMessage() && LocalStorage.getInstance().getData().isUseAIChat()) { // TODO: Replace with global field for AI options
+            if (ChatMention.isMentioned(chatManager.getJunoID(), mentions)) {
+                sendMessageBy(chatManager.getJunoID(), AIManager.getInstance().answerMessage(message), chat);
+            }
+        } else if (c.isDirectMessage() && c.hasUser(chatManager.getJunoID())) {
+            sendMessageBy(chatManager.getJunoID(), AIManager.getInstance().answerMessage(message), chat);
         }
     }
 
@@ -187,6 +220,18 @@ public class ChatServer extends WebSocketServer {
                 o.addProperty("newName", chat.getCustomName());
                 conn.send(o.toString());
             }
+        }
+    }
+
+    public void sendMessageMention(List<ChatMention> mentions) {
+        for (ChatMention m : mentions) {
+            JsonObject o = new JsonObject();
+            o.addProperty("type", ChatAction.USER_MENTION.name());
+            o.addProperty("chat", m.chat().toString());
+            o.addProperty("timestamp", System.currentTimeMillis());
+            o.addProperty("sender", m.sender().toString());
+            WebSocket s = getConnection(m.mentioned());
+            if (s != null) s.send(o.toString());
         }
     }
 
@@ -258,6 +303,24 @@ public class ChatServer extends WebSocketServer {
         List<ChatReduced> result = new ArrayList<>();
         for (Chat c : chats) result.add(new ChatReduced(c.getUniqueID(), c.getCustomName()));
         return result;
+    }
+
+    public List<ChatMention> getMentions(UUID chatId, UUID senderId, String message) {
+        List<ChatMention> mentions = new ArrayList<>();
+
+        Matcher matcher = mentionPattern.matcher(message);
+        while (matcher.find()) {
+            String username = matcher.group(1);
+            User user = UserManager.getInstance().getUser(username);
+            if (user != null) {
+                UUID mentionedId = user.getUuid();
+                if (mentionedId != null) {
+                    mentions.add(new ChatMention(mentionedId, chatId, senderId));
+                }
+            }
+        }
+
+        return mentions;
     }
 
     public record ChatReduced(UUID uuid, String chatName) {}

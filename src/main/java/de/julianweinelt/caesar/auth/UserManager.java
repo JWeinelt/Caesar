@@ -1,8 +1,9 @@
 package de.julianweinelt.caesar.auth;
 
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.storage.StorageFactory;
-import de.julianweinelt.caesar.storage.providers.MySQLStorageProvider;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +34,18 @@ public class UserManager {
     }
 
     public void createUser(String username, String password) {
-        User user = new User(UUID.randomUUID(), username,
-                password.hashCode(), "0");
-        users.add(user);
-        StorageFactory.getInstance().getUsedStorage().createUser(user);
+        createUser(username, password, "0");
     }
 
     public void createUser(String username, String password, String discord) {
-        User user = new User(UUID.randomUUID(), username,
+        UUID userID = UUID.randomUUID();
+        User user = new User(userID, username,
                 password.hashCode(), discord);
         users.add(user);
         StorageFactory.getInstance().getUsedStorage().createUser(user);
+        Registry.getInstance().callEvent(new Event("UserCreateEvent")
+                .set("username", username)
+                .set("uuid", userID));
     }
 
     public User getUser(String username) {

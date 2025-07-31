@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.endpoint.chat;
 
+import de.julianweinelt.caesar.auth.User;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -26,7 +27,13 @@ public class Chat {
 
     @Getter
     @Setter
+    private boolean voiceChat = false;
+
+    @Getter
+    @Setter
     private boolean publicChat = false;
+    @Getter @Setter
+    private boolean isDirectMessage = false;
 
     public Chat(ChatServer server, UUID uniqueID) {
         this.server = server;
@@ -44,6 +51,12 @@ public class Chat {
     public void removeUser(UUID uuid) {
         users.remove(uuid);
     }
+    public boolean hasUser(User u) {
+        return hasUser(u.getUuid());
+    }
+    public boolean hasUser(UUID uuid) {
+        return users.contains(uuid);
+    }
     public void addModerator(UUID uuid) {
         moderators.add(uuid);
     }
@@ -58,5 +71,9 @@ public class Chat {
 
     public void registerNewMessage(Message message) {
         messages.add(message);
+    }
+
+    public boolean isGroupChat() {
+        return !isDirectMessage;
     }
 }

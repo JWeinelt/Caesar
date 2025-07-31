@@ -1,7 +1,7 @@
 package de.julianweinelt.caesar.discord;
 
 import com.google.gson.JsonObject;
-import de.julianweinelt.caesar.ai.DiscordMessageContextChecker;
+import de.julianweinelt.caesar.ai.AIManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,7 @@ public class BotListener extends ListenerAdapter {
     public void onMessageReceived(@NotNull MessageReceivedEvent e) {
         if (e.getMessage().getMentions().isMentioned(jda.getSelfUser()) && !e.getAuthor().isBot()) {
             e.getChannel().sendTyping().queue();
-            JsonObject data = DiscordMessageContextChecker.getMessageType(e.getMessage().getContentRaw());
+            JsonObject data = AIManager.getInstance().getDiscordMessageType(e.getMessage().getContentRaw());
             Member mentionedUser = null;
 
             switch (data.get("type").getAsString().toLowerCase()) {

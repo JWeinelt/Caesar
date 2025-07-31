@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar.plugin;
 
 import com.google.gson.Gson;
+import de.julianweinelt.caesar.plugin.event.Event;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,16 @@ public class PluginLoader {
 
     public PluginLoader(Registry registry) {
         this.registry = registry;
+        registerEvents();
+    }
+
+    private void registerEvents() {
+        registry.registerEvents(
+                "PluginLoadEvent",
+                "PluginEnableEvent",
+                "PluginDisableEvent",
+                "PluginPreloadEvent"
+        );
     }
 
     public void loadAll() {
@@ -56,6 +67,7 @@ public class PluginLoader {
         if (plugin == null) return;
         plugin.onDisable();
         registry.removePlugin(name);
+        registry.callEvent(new Event("PluginDisableEvent").nonCancellable().set("plugin", name));
         log.info("Unloaded plugin: {}", name);
     }
 
@@ -89,13 +101,30 @@ public class PluginLoader {
                 PluginDescriptor descriptor = new PluginDescriptor(pluginName, pluginFile, pluginFile.toURI().toURL(), config);
                 CPlugin plugin = instantiator.instantiate(descriptor, loader);
 
+                File dataFolder = new File("data/" + plugin.getName());
+                if (dataFolder.mkdir()) log.info("Created data folder for {}", plugin.getName());
+
                 plugin.onLoad();
+                registry.callEvent(new Event("PluginLoadEvent").nonCancellable()
+                        .set("name", pluginName)
+                        .set("plugin", plugin)
+                        .set("dataFolder", dataFolder)
+                        .set("classLoader", loader)
+                        .set("descriptor", descriptor)
+                );
                 plugin.onDefineEvents();
                 plugin.onCreateCommands();
                 plugin.onEnable();
-
-                File dataFolder = new File("data/" + plugin.getName());
-                if (dataFolder.mkdir()) log.info("Created data folder for {}", plugin.getName());
+                registry.callEvent(new Event("PluginEnableEvent").nonCancellable()
+                        .set("name", pluginName)
+                        .set("plugin", plugin)
+                        .set("author", plugin.getAuthors())
+                        .set("version", plugin.getVersion())
+                        .set("dependencies", plugin.getDependencies())
+                        .set("dataFolder", dataFolder)
+                        .set("classLoader", loader)
+                        .set("descriptor", descriptor)
+                );
 
                 registry.addPlugin(plugin);
                 log.info("Successfully loaded plugin: {}", plugin.getName());
@@ -112,6 +141,8 @@ public class PluginLoader {
         Set<String> visiting = new HashSet<>();
 
         for (String plugin : configs.keySet()) {
+            registry.callEvent(new Event("PluginPreloadEvent").nonCancellable()
+                    .set("plugin", plugin).set("pluginConfiguration", configs.get(plugin)));
             visit(plugin, configs, loadOrder, visited, visiting);
         }
 

@@ -36,6 +36,10 @@ public class Configuration {
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_BETA = "Do not enable this in production environments.";
     private boolean enableBetaFeatures = false; // TODO: Add get/set
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
+    private final String _INFO_LEGACY = "This enables legacy support, like for Waterfall or BungeeCord (not recommended in production use!)";
+    private boolean enableLegacyMode = false;
+
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";

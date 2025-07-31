@@ -134,17 +134,17 @@ public class Caesar {
         registry = new Registry();
         log.info("Registering basic events...");
         registry.registerEvents(
+                "BackupCreateEvent",
                 "UserCreateEvent",
                 "UserChangeEvent",
                 "UserDeleteEvent",
+                "ChatCreateEvent",
+                "ChatDeleteEvent",
+                "ChatAddUserEvent",
+                "ChatRemoveUserEvent",
                 "StorageReadyEvent",
                 "ServerStartupEvent",
                 "ServerShutdownEvent",
-                "PluginLoadEvent",
-                "PluginEnableEvent",
-                "PluginDisableEvent",
-                "DiscordReadyEvent",
-                "DiscordShutdownEvent",
                 "ConfigChangeEvent",
                 "DatabaseConnectedEvent",
                 "DatabaseDisconnectedEvent",
@@ -214,7 +214,6 @@ public class Caesar {
 
         if (localStorage.getData().isUseDiscord()) {
             discordBot = new DiscordBot();
-            discordBot.start();
 
             registry.registerListener(this, Registry.getInstance().getSystemPlugin());
         }

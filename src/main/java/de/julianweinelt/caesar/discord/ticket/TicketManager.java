@@ -2,6 +2,7 @@ package de.julianweinelt.caesar.discord.ticket;
 
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.discord.DiscordBot;
+import de.julianweinelt.caesar.exceptions.FeatureNotActiveException;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.Getter;
@@ -25,7 +26,7 @@ public class TicketManager {
     private final List<Ticket> tickets = new ArrayList<>();
 
     public static TicketManager getInstance() throws TicketSystemNotUsedException {
-        if (Caesar.getInstance().getTicketManager() == null) throw new TicketSystemNotUsedException();
+        if (Caesar.getInstance().getTicketManager() == null) throw new FeatureNotActiveException("Discord Ticket Manager");
         else return Caesar.getInstance().getTicketManager();
     }
 

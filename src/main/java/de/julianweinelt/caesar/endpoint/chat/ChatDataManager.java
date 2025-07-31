@@ -1,6 +1,9 @@
 package de.julianweinelt.caesar.endpoint.chat;
 
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.storage.Configuration;
 import de.julianweinelt.caesar.util.LoadableManager;
 import org.slf4j.Logger;
@@ -39,5 +42,9 @@ public class ChatDataManager extends LoadableManager<List<Chat>> {
     public void saveData() {
         setDataToSave(chatManager.getChats());
         saveObject(file);
+        Registry.getInstance().callEvent(new Event("ChatDataSaveEvent")
+                .set("data", getSaveData())
+                .set("json", new Gson().toJson(getSaveData()))
+                .set("manager", chatManager));
     }
 }

@@ -34,6 +34,7 @@ public class ChatManager {
     private final ChatServer server;
 
     public ChatManager(ChatServer server) {
+        registerEvents();
         Registry.getInstance().registerListener(this, Registry.getInstance().getSystemPlugin());
         this.server = server;
         dataManager = new ChatDataManager(this);
@@ -41,6 +42,14 @@ public class ChatManager {
         log.info("Starting chat save task...");
         checkJunoDM();
         scheduler.scheduleAtFixedRate(dataManager::saveData, 20, 60, TimeUnit.SECONDS);
+    }
+
+    private void registerEvents() {
+        Registry.getInstance().registerEvents(
+                "ChatDataSaveEvent",
+                "ChatServerShutdownEvent",
+                "ChatActionEvent"
+        );
     }
 
     @Subscribe("UserCreateEvent")
@@ -97,6 +106,9 @@ public class ChatManager {
         log.info("Saving chats manually before shutdown...");
         dataManager.saveData();
         log.info("Done!");
+        Registry.getInstance().callEvent(new Event("ChatServerShutdownEvent")
+                .set("chatManager", this)
+                .set("server", server));
     }
 
     public Chat createChat(UUID creator) {

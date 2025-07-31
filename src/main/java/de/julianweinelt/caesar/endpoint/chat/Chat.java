@@ -3,10 +3,13 @@ package de.julianweinelt.caesar.endpoint.chat;
 import de.julianweinelt.caesar.auth.User;
 import lombok.Getter;
 import lombok.Setter;
+import org.java_websocket.WebSocket;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class Chat {
     private transient final ChatServer server;
@@ -73,5 +76,20 @@ public class Chat {
 
     public boolean isGroupChat() {
         return !isDirectMessage;
+    }
+
+    @Nullable
+    public Message getMessageByID(UUID uuid) {
+        for (Message message : messages) {
+            if (message.uniqueID().equals(uuid)) return message;
+        }
+        return null;
+    }
+
+    public void sendToUsers(Consumer<WebSocket> action) {
+        for (UUID uuid : users) {
+            WebSocket conn = server.getConnection(uuid);
+            if (conn != null) action.accept(conn);
+        }
     }
 }

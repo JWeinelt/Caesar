@@ -140,7 +140,20 @@ public class ChatServer extends WebSocketServer {
                     sendChatList(userToAdd.getUuid());
                 }
                 case DELETE_CHAT -> {
+                    Chat chat = chatManager.getChat(UUID.fromString(rootOBJ.get("chat").getAsString()));
+                    UUID userID = getByConnection(conn);
+                    boolean success;
+                    if (chat.isModerator(userID))
+                        success = chatManager.deleteChat(chat);
+                    else success = false;
+                    if (!success) sendError("No permission or chat not found", conn);
 
+                }
+                case MESSAGE_REACTION_ADD, MESSAGE_REACTION_REMOVE, MESSAGE_REACTION_REMOVE_ALL -> {
+                    UUID messageID = UUID.fromString(rootOBJ.get("messageID").getAsString());
+                    Chat chat = chatManager.getChat(UUID.fromString(rootOBJ.get("chat").getAsString()));
+                    if (chat == null) return;
+                    sendActionMessageReaction(action, rootOBJ.get("emoji").getAsString(), messageID, chat);
                 }
                 case CLOSE_REQUEST -> {
                     UUID user = getByConnection(conn);
@@ -235,6 +248,36 @@ public class ChatServer extends WebSocketServer {
         }
     }
 
+    public void sendActionMessageReaction(ChatAction type, String emoji, UUID message, Chat chat) {
+        switch (type) {
+            case MESSAGE_REACTION_ADD -> {
+                JsonObject o = new JsonObject();
+                o.addProperty("type", ChatAction.MESSAGE_REACTION_ADD.name());
+                o.addProperty("emoji", emoji);
+                o.addProperty("message", message.toString());
+                o.add("messageData", GSON.toJsonTree(chat.getMessageByID(message)));
+                chat.sendToUsers(cl -> cl.send(o.toString()));
+            }
+            case MESSAGE_REACTION_REMOVE -> {
+                JsonObject o = new JsonObject();
+                o.addProperty("type", ChatAction.MESSAGE_REACTION_REMOVE.name());
+                o.addProperty("emoji", emoji);
+                o.addProperty("message", message.toString());
+                o.add("messageData", GSON.toJsonTree(chat.getMessageByID(message)));
+                chat.sendToUsers(cl -> cl.send(o.toString()));
+            }
+            case MESSAGE_REACTION_REMOVE_ALL -> {
+                JsonObject o = new JsonObject();
+                o.addProperty("type", ChatAction.MESSAGE_REACTION_REMOVE_ALL.name());
+                o.addProperty("message", message.toString());
+                chat.sendToUsers(cl -> cl.send(o.toString()));
+            }
+            default -> {
+                throw new IllegalArgumentException("ChatAction type must be MESSAGE REACTION related.");
+            }
+        }
+    }
+
     public JsonObject createSenderOBJ(UUID sender) {
         JsonObject o = new JsonObject();
         o.addProperty("uuid", sender.toString());
@@ -288,7 +331,7 @@ public class ChatServer extends WebSocketServer {
         List<Chat> chats = chatManager.getChatsUser(getByConnection(conn));
         JsonObject o = new JsonObject();
         o.addProperty("type", ChatAction.HANDSHAKE.name());
-        o.add("chats", GSON.toJsonTree(reduceChatList(chats)));
+        o.add("chats", GSON.toJsonTree(chats));
         conn.send(o.toString());
     }
 
@@ -297,12 +340,6 @@ public class ChatServer extends WebSocketServer {
         o.addProperty("message", message);
         o.addProperty("type", ChatAction.SEND_ERROR.name());
         conn.send(o.toString());
-    }
-
-    public List<ChatReduced> reduceChatList(List<Chat> chats) {
-        List<ChatReduced> result = new ArrayList<>();
-        for (Chat c : chats) result.add(new ChatReduced(c.getUniqueID(), c.getCustomName()));
-        return result;
     }
 
     public List<ChatMention> getMentions(UUID chatId, UUID senderId, String message) {
@@ -322,6 +359,4 @@ public class ChatServer extends WebSocketServer {
 
         return mentions;
     }
-
-    public record ChatReduced(UUID uuid, String chatName) {}
 }

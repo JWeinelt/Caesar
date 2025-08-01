@@ -14,6 +14,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,10 +43,15 @@ public class DatabaseVersionManager {
         log.info("Continuing with applying changes to database...");
         for (String s : toExecute) {
             log.info("Applying changes for version {}...", s);
-            if (StorageFactory.getInstance().getUsedStorage().executeScript(s)) {
-                log.info("Changes applied.");
-            } else {
-                log.warn("Failed to apply changes. Aborting.");
+            try {
+                if (StorageFactory.getInstance().getUsedStorage(null).executeScript(s)) {
+                    log.info("Changes applied.");
+                } else {
+                    log.warn("Failed to apply changes. Aborting.");
+                    break;
+                }
+            } catch (SQLException e) {
+                log.warn("Failed to apply changes. Aborting. Message: {}", e.getMessage(), e);
                 break;
             }
         }

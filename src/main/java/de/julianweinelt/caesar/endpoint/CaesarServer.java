@@ -10,6 +10,8 @@ import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.Configuration;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.storage.StorageFactory;
+import de.julianweinelt.caesar.storage.sandbox.SandBox;
+import de.julianweinelt.caesar.storage.sandbox.SandBoxManager;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.StringUtil;
@@ -279,7 +281,7 @@ public class CaesarServer {
                     user.setUsername(username);
                     user.setDiscordID(discord);
                     user.setActive(enabled);
-                    StorageFactory.getInstance().getUsedStorage().updateUser(user);
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx))).updateUser(user);
                 })
                 .get("/user", ctx -> {
                     ctx.result(GSON.toJson(UserManager.getInstance().getUsers()));
@@ -300,7 +302,7 @@ public class CaesarServer {
                     if (oldPassword.hashCode() == user.getPassword()) {
                         user.setPassword(newPassword.hashCode());
                         if (user.isNewlyCreated()) user.setNewlyCreated(false); // for first password change
-                        StorageFactory.getInstance().getUsedStorage().updateUser(user);
+                        StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx))).updateUser(user);
                         ctx.result(createSuccessResponse("Password changed successfully"));
                     } else {
                         ctx.result(createErrorResponse(ErrorType.PASSWORD_INVALID));
@@ -316,7 +318,7 @@ public class CaesarServer {
                     String username = rootObj.get("username").getAsString();
                     String permission = rootObj.get("permission").getAsString();
                     UserManager.getInstance().getUser(username).addPermission(permission);
-                    StorageFactory.getInstance().getUsedStorage()
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
                             .updateUser(UserManager.getInstance().getUser(username));
                     ctx.result(createSuccessResponse("Permission added successfully"));
                 })
@@ -328,7 +330,7 @@ public class CaesarServer {
                     JsonArray permissions = rootObj.get("permissions").getAsJsonArray();
                     User u = UserManager.getInstance().getUser(username);
                     for (JsonElement e : permissions) u.addPermission(e.getAsString());
-                    StorageFactory.getInstance().getUsedStorage().updateUser(u);
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx))).updateUser(u);
                     ctx.result(createSuccessResponse("Permissions added successfully"));
                 })
 
@@ -353,7 +355,7 @@ public class CaesarServer {
                     String key = rootObj.get("permission").getAsString();
                     String role = rootObj.get("role").getAsString();
                     UserManager.getInstance().getRole(role).addPermission(key);
-                    StorageFactory.getInstance().getUsedStorage().updateRolePermissions(
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx))).updateRolePermissions(
                             UserManager.getInstance().getRole(role));
                     ctx.result(createSuccessResponse());
                 })
@@ -440,25 +442,29 @@ public class CaesarServer {
                         number = rootObj.get("playerNumber").getAsInt();
                     else number = new SecureRandom().nextInt(1000, 9999);
 
-                    StorageFactory.getInstance().getUsedStorage().createPlayer(UUID.fromString(id), number);
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .createPlayer(UUID.fromString(id), number);
                     ctx.result(createSuccessResponse());
                 })
                 .get("/player/id/{id}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.view")) return;
                     int number = Integer.parseInt(ctx.pathParam("id"));
-                    ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
-                            StorageFactory.getInstance().getUsedStorage().getPlayer(number)
+                    ctx.result(StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .getPlayer(
+                            StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                                    .getPlayer(number)
                     ).toString());
                 })
                 .get("/player/uuid/{id}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.view")) return;
-                    ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
-                            UUID.fromString(ctx.pathParam("id"))
+                    ctx.result(StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .getPlayer(UUID.fromString(ctx.pathParam("id"))
                     ).toString());
                 })
                 .delete("/player/{id}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.delete")) return;
-                    StorageFactory.getInstance().getUsedStorage().deletePlayer(UUID.fromString(ctx.pathParam("id")));
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .deletePlayer(UUID.fromString(ctx.pathParam("id")));
                     ctx.result(createSuccessResponse());
                 })
                 .post("/player/note", ctx -> {
@@ -467,7 +473,8 @@ public class CaesarServer {
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
                     UUID userID = getUserID(ctx);
                     String note = rootObj.get("note").getAsString();
-                    StorageFactory.getInstance().getUsedStorage().createPlayerNote(playerID, userID, note);
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .createPlayerNote(playerID, userID, note);
                     ctx.result(createSuccessResponse());
                 })
                 .delete("/player/note", ctx -> {
@@ -476,7 +483,8 @@ public class CaesarServer {
                     UUID noteID = UUID.fromString(rootObj.get("noteID").getAsString());
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
                     log.debug(noteID.toString());
-                    StorageFactory.getInstance().getUsedStorage().deletePlayerNote(playerID, getUserID(ctx), noteID);
+                    StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .deletePlayerNote(playerID, getUserID(ctx), noteID);
                     ctx.result(createSuccessResponse());
                 })
 
@@ -488,8 +496,8 @@ public class CaesarServer {
                     UUID status = UUID.fromString(rootObj.get("processStatus").getAsString());
                     String comment = "Not given";
                     if (rootObj.has("comment")) comment = rootObj.get("comment").getAsString();
-                    UUID processID = StorageFactory.getInstance().getUsedStorage().createProcess(
-                            type, status, getUserID(ctx), Optional.of(comment));
+                    UUID processID = StorageFactory.getInstance().getUsedStorage(UserManager.getInstance().getUser(getUserID(ctx)))
+                            .createProcess(type, status, getUserID(ctx), Optional.of(comment));
 
                     JsonObject o = new JsonObject();
                     o.addProperty("success", true);
@@ -504,6 +512,68 @@ public class CaesarServer {
                     if (lackingPermissions(ctx, "caesar.process.assign-player")) return;
                     ctx.result(createSuccessResponse());
                 })
+
+                // Sandboxes
+                .post("/sandbox", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.sandbox.create")) return;
+                    if (betaFeature(ctx)) return;
+                    if (SandBoxManager.getInstance().workingInSandBox(UserManager.getInstance().getUser(getUserID(ctx)))) {
+                        ctx.status(HttpStatus.FORBIDDEN);
+                        ctx.result(createErrorResponse(ErrorType.NOT_AVAILABLE_IN_SANDBOX));
+                        return;
+                    }
+                    String name = SandBoxManager.getInstance().createSandBox();
+                    JsonObject response = new JsonObject();
+                    response.addProperty("success", true);
+                    response.addProperty("sandboxName", name);
+                    ctx.status(HttpStatus.CREATED);
+                    ctx.result(response.toString());
+                })
+                .patch("/sandbox/action", ctx -> {
+                    String action = ctx.queryParam("action");
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String sandBoxID = rootObj.get("uniqueID").getAsString();
+                    if (action == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.MISSING_PARAMETERS));
+                        return;
+                    }
+                    if (action.equalsIgnoreCase("activate")) {
+                        if (lackingPermissions(ctx, "caesar.admin.sandbox.activate")) return;
+                        SandBoxManager.getInstance().getSandBoxOptional(UUID.fromString(sandBoxID))
+                                .ifPresent(SandBox::activate);
+                    }
+                    if (action.equalsIgnoreCase("deactivate")) {
+                        if (lackingPermissions(ctx, "caesar.admin.sandbox.deactivate")) return;
+                        SandBoxManager.getInstance().getSandBoxOptional(UUID.fromString(sandBoxID))
+                                .ifPresent(SandBox::deactivate);
+                    }
+                    if (action.equalsIgnoreCase("assign-user")) {
+                        if (lackingPermissions(ctx, "caesar.admin.sandbox.assign")) return;
+                        UUID userID = UUID.fromString(rootObj.get("userID").getAsString());
+                        SandBoxManager.getInstance().getSandBoxOptional(UUID.fromString(sandBoxID))
+                                .ifPresent(sandBox -> sandBox.addUser(userID));
+                    }
+                    if (action.equalsIgnoreCase("remove-user")) {
+                        if (lackingPermissions(ctx, "caesar.admin.sandbox.assign")) return;
+                        UUID userID = UUID.fromString(rootObj.get("userID").getAsString());
+                        SandBoxManager.getInstance().getSandBoxOptional(UUID.fromString(sandBoxID))
+                                .ifPresent(sandBox -> sandBox.removeUser(userID));
+                    }
+                    if (action.equalsIgnoreCase("sync")) {
+                        if (lackingPermissions(ctx, "caesar.admin.sandbox.sync")) return;
+                        SandBoxManager.getInstance().getSandBoxOptional(UUID.fromString(sandBoxID))
+                                .ifPresent(SandBox::sync);
+                    }
+                })
+                .delete("/sandbox", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.sandbox.delete")) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String sandBoxID = rootObj.get("uniqueID").getAsString();
+                    SandBoxManager.getInstance().deleteSandBox(UUID.fromString(sandBoxID));
+                    ctx.result(createSuccessResponse());
+                })
+
                 .start(LocalStorage.getInstance().getData().getWebServerPort());
     }
 
@@ -551,6 +621,27 @@ public class CaesarServer {
         return false;
     }
 
+
+    /**
+     * This method returns if a route can be used. This is determined by the following properties:
+     * 1. Caesar has beta features enabled
+     * 2. The route is part of a beta feature
+     *
+     * The method also modifies the answer of the {@link Context} if these conditions are not met.
+     * @param ctx The {@link Context} by Javalin
+     * @return if the route should end at this point.
+     */
+    private boolean betaFeature(Context ctx) {
+        boolean enabled = Configuration.getInstance().isEnableBetaFeatures();
+        if (ctx.url().contains("sandbox")) {
+            if (enabled) return false;
+            ctx.result(createErrorResponse(ErrorType.BETA_FEATURE));
+            ctx.status(HttpStatus.FORBIDDEN);
+            return true;
+        }
+        return false;
+    }
+
     private UUID getUserID(Context ctx) {
         String token = ctx.header("Authorization");
         if (token == null) return null;
@@ -570,6 +661,9 @@ public class CaesarServer {
         USER_DISABLED,
         INVALID_HEADER,
         INVALID_SETUP_CODE,
-        NO_PERMISSION
+        NO_PERMISSION,
+        NOT_AVAILABLE_IN_SANDBOX,
+        MISSING_PARAMETERS,
+        BETA_FEATURE,
     }
 }

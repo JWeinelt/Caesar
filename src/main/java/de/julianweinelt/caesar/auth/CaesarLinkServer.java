@@ -1,6 +1,9 @@
 package de.julianweinelt.caesar.auth;
 
-import com.google.gson.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.integration.ServerConnection;
 import de.julianweinelt.caesar.storage.APIKeySaver;
@@ -34,8 +37,9 @@ public class CaesarLinkServer extends WebSocketServer {
     private final HashMap<WebSocket, UUID> serverIDs = new HashMap<>();
 
 
-    public CaesarLinkServer() {
+    public CaesarLinkServer(boolean encrypted) {
         super(new InetSocketAddress(LocalStorage.getInstance().getData().getConnectionServerPort()));
+        this.encrypted = encrypted;
     }
 
     public static CaesarLinkServer getInstance() {
@@ -135,6 +139,13 @@ public class CaesarLinkServer extends WebSocketServer {
     private void send(WebSocket socket, String data, byte[] key) {
         if (encrypted) socket.send(encrypt(data, key));
         else socket.send(data);
+    }
+
+    private String getNameFromConnection(WebSocket socket) {
+        for (String s : connections.keySet()) {
+            if (connections.get(s).equals(socket)) return s;
+        }
+        return null;
     }
 
     private JsonObject createConfig() {

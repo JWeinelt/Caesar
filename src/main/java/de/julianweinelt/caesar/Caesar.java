@@ -26,6 +26,7 @@ import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.Priority;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.*;
+import de.julianweinelt.caesar.storage.sandbox.SandBoxManager;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
 import io.javalin.util.JavalinBindException;
@@ -67,6 +68,9 @@ public class Caesar {
 
     @Getter
     private AIManager aiManager = null;
+
+    @Getter
+    private SandBoxManager sandBoxManager = null;
 
     @Getter
     private CaesarServer caesarServer = null;
@@ -176,6 +180,7 @@ public class Caesar {
             aiManager = new AIManager();
         }
         userManager = new UserManager();
+        sandBoxManager = new SandBoxManager();
         serviceProvider = new CaesarServiceProvider();
         serviceProvider.start();
         log.info("Connecting to database...");
@@ -414,7 +419,7 @@ public class Caesar {
         localStorage.getData().setDatabasePassword(databasePassword);
         storageFactory = new StorageFactory();
         storageFactory.provide(storageType, localStorage.getData());
-        boolean success = storageFactory.getUsedStorage().connect();
+        boolean success = storageFactory.getUsedStorage(null).connect();
         if (success) {
             localStorage.saveData();
             log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.connected"));
@@ -454,11 +459,11 @@ public class Caesar {
     private void finishSetup() {
         localStorage.saveData();
         log.info("Finishing database setup...");
-        Storage s = storageFactory.getUsedStorage();
+        Storage s = storageFactory.getUsedStorage(null);
         DatabaseVersionManager.getInstance().downloadVersion(systemVersion);
         if (!s.systemDataExist()) s.insertDefaultData();
 
-        storageFactory.getUsedStorage().insertDefaultData();
+        storageFactory.getUsedStorage(null).insertDefaultData();
         userManager.createUser("admin", "admin");
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.user-created"));
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.setup-finished"));
@@ -564,7 +569,8 @@ public class Caesar {
             caesarServer.stop();
             connectionServer.stop();
             clientLinkServer.stop();
-            storageFactory.getUsedStorage().disconnect();
+            storageFactory.getUsedStorage(null).disconnect();
+            sandBoxManager.shutdownSandBox();
             if (discordBot != null) discordBot.stop();
             if (voiceServer != null) voiceServer.stop();
         } catch (InterruptedException e) {

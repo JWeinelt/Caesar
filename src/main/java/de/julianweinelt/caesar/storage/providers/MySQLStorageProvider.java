@@ -66,6 +66,67 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
+    public void connectSandBox(Runnable runnable) {
+        final String DRIVER = "com.mysql.cj.jdbc.Driver";
+        final String PARAMETERS = "?useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC";
+        final String URL = "jdbc:mysql://" + getHost() + ":" + getPort() + "/" + getDatabase() + PARAMETERS;
+        final String USER = getUser();
+        final String PASSWORD = getPassword();
+
+        try {
+            Class.forName(DRIVER);
+
+            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            log.info("Connected to MySQL sandbox database: {}", URL);
+            runnable.run();
+        } catch (Exception e) {
+            log.error("Failed to connect to MySQL sandbox database: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void createDatabase(String name) {
+        checkConnection();if (name == null || !name.matches("^[a-zA-Z0-9_]+$")) {
+            throw new IllegalArgumentException("Invalid database schema name. Only alphanumeric characters and underscores are allowed.");
+        }
+
+        try {
+            PreparedStatement pS = conn.prepareStatement("CREATE DATABASE IF NOT EXISTS ?");
+            pS.setString(1, name);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public boolean hasSandboxPermissions() {
+        try (Statement st = conn.createStatement()) {
+            ResultSet rs = st.executeQuery("SHOW GRANTS FOR CURRENT_USER");
+            boolean hasCreate = false;
+            boolean hasInsert = false;
+
+            while (rs.next()) {
+                String grant = rs.getString(1);
+                if (grant.contains("ALL PRIVILEGES") || grant.contains("CREATE")) {
+                    hasCreate = true;
+                }
+                if (grant.contains("ALL PRIVILEGES") || grant.contains("INSERT")) {
+                    hasInsert = true;
+                }
+            }
+
+            if (!hasCreate || !hasInsert) {
+                log.error("User has not enough permissions to create a sandbox. Please check the granted privileges.");
+                return false;
+            } else return true;
+        } catch (SQLException e) {
+            log.error("Could not get users privileges.", e);
+            return false;
+        }
+    }
+
+    @Override
     public boolean allTablesExist(String[] tables) {
         if (!checkConnection()) return false;
         try {

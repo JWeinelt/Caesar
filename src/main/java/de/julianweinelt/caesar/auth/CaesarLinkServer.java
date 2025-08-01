@@ -175,9 +175,9 @@ public class CaesarLinkServer extends WebSocketServer {
     private boolean isEncrypted(String input) {
         try {
             JsonParser.parseString(input);
-            return true;
-        } catch (JsonSyntaxException e) {
             return false;
+        } catch (JsonSyntaxException e) {
+            return true;
         }
     }
 

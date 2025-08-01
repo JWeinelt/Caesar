@@ -78,9 +78,14 @@ public class CaesarLinkServer extends WebSocketServer {
         String data;
         UUID serverID = serverIDs.getOrDefault(webSocket, null);
         ServerConnection connection = (serverID != null) ? LocalStorage.getInstance().getConnection(serverID) : null;
-        if (encrypted && isEncrypted(json) && connection != null) data = decrypt(json, APIKeySaver.getInstance().loadKey(connection.getName()));
-        else if (!encrypted && isEncrypted(json)) return;
-        else data = json;
+        if (encrypted && isEncrypted(json) && connection != null) {
+            data = decrypt(json, APIKeySaver.getInstance().loadKey(connection.getName()));
+        } else if (!encrypted && isEncrypted(json)) {
+            log.warn("Received encrypted message while server is in non-encrypted mode. Ignoring message.");
+            return;
+        } else {
+            data = json;
+        }
         JsonObject root = JsonParser.parseString(data).getAsJsonObject();
         Action action = Action.valueOf(root.get("action").getAsString());
         log.info("Received action {} from {}", action, webSocket.getRemoteSocketAddress().getAddress().getHostAddress());
@@ -186,9 +191,9 @@ public class CaesarLinkServer extends WebSocketServer {
     private boolean isEncrypted(String input) {
         try {
             JsonParser.parseString(input);
-            return true;
-        } catch (JsonSyntaxException e) {
             return false;
+        } catch (JsonSyntaxException e) {
+            return true;
         }
     }
 

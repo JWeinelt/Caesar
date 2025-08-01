@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar.discord.ticket;
 
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.auth.User;
+import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.exceptions.FeatureNotActiveException;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
@@ -30,6 +32,22 @@ public class TicketManager {
         else return Caesar.getInstance().getTicketManager();
     }
 
+
+
+    private final ThreadLocal<User> nextActionUser = new ThreadLocal<>();
+
+
+    public TicketManager with(User user) {
+        nextActionUser.set(user);
+        return this;
+    }
+
+    private User consumeCurrentUser() {
+        User user = nextActionUser.get();
+        nextActionUser.remove();
+        return user;
+    }
+
     public static void execute(Consumer<TicketManager> managerConsumer) {
         try {
             getInstance();
@@ -55,7 +73,7 @@ public class TicketManager {
         DiscordBot.getInstance().createTicketChannel(creator, type).thenAccept(channel -> {
             Ticket ticket = new Ticket(UUID.randomUUID(), creator, "", channel, getTicketStatus("OPEN"), type);
             tickets.add(ticket);
-            StorageFactory.getInstance().getUsedStorage().createTicket(ticket);
+            StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).createTicket(ticket);
         });
     }
 

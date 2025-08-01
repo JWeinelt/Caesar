@@ -34,7 +34,7 @@ public class Configuration {
     private String jwtIssuer;
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
-    private final String _INFO_BETA = "Do not enable this in production environments.";
+    private final String _INFO_BETA = "This will give you access to features in the public beta. Do not enable this in production environments.";
     private boolean enableBetaFeatures = false;
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_LEGACY = "This enables legacy support, like for Waterfall or BungeeCord (not recommended in production use!)";

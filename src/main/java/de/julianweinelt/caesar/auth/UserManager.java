@@ -15,10 +15,6 @@ import java.util.UUID;
 public class UserManager {
     private static final Logger log = LoggerFactory.getLogger(UserManager.class);
 
-    public static UserManager getInstance() {
-        return Caesar.getInstance().getUserManager();
-    }
-
     @Getter
     private final List<User> users = new ArrayList<>();
 
@@ -27,6 +23,25 @@ public class UserManager {
 
     @Getter
     private final List<CPermission> permissions = new ArrayList<>();
+
+    public static UserManager getInstance() {
+        return Caesar.getInstance().getUserManager();
+    }
+
+    private final ThreadLocal<User> nextActionUser = new ThreadLocal<>();
+
+
+    public UserManager with(User user) {
+        nextActionUser.set(user);
+        return this;
+    }
+
+    private User consumeCurrentUser() {
+        User user = nextActionUser.get();
+        nextActionUser.remove();
+        return user;
+    }
+
 
     public void overrideUsers(List<User> users) {
         this.users.clear();
@@ -42,7 +57,7 @@ public class UserManager {
         User user = new User(userID, username,
                 password.hashCode(), discord);
         users.add(user);
-        StorageFactory.getInstance().getUsedStorage().createUser(user);
+        StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).createUser(user);
         Registry.getInstance().callEvent(new Event("UserCreateEvent")
                 .set("username", username)
                 .set("uuid", userID));
@@ -57,7 +72,7 @@ public class UserManager {
             }
         }
         log.debug("User {} not found in memory. Loading from database", username);
-        User u = StorageFactory.getInstance().getUsedStorage().getUser(username);
+        User u = StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).getUser(username);
         users.add(u);
         return u;
     }
@@ -72,14 +87,14 @@ public class UserManager {
     public void deleteUser(String username) {
         User user = getUser(username);
         if (user != null) {
-            StorageFactory.getInstance().getUsedStorage().deleteUser(username);
+            StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).deleteUser(username);
             users.remove(user);
         }
     }
     public void deleteUser(UUID uuid) {
         User user = getUser(uuid);
         if (user != null) {
-            StorageFactory.getInstance().getUsedStorage().deleteUser(user.getUsername());
+            StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).deleteUser(user.getUsername());
             users.remove(user);
         }
     }
@@ -100,12 +115,12 @@ public class UserManager {
 
     public void getAllRoles() {
         userRoles.clear();
-        userRoles.addAll(StorageFactory.getInstance().getUsedStorage().getAllRoles());
+        userRoles.addAll(StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).getAllRoles());
     }
 
     public void getAllPermissions() {
         permissions.clear();
-        permissions.addAll(StorageFactory.getInstance().getUsedStorage().getAllPermissions());
+        permissions.addAll(StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).getAllPermissions());
     }
 
     public void addPermission(CPermission permission) {
@@ -128,7 +143,7 @@ public class UserManager {
 
     public void syncUserPermissions() {
         for (User u : users) {
-            List<String> permissions = StorageFactory.getInstance().getUsedStorage().getUserPermissions(u.getUuid());
+            List<String> permissions = StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).getUserPermissions(u.getUuid());
             u.getPermissions().clear();
             for (String permission : permissions) u.addPermission(permission);
         }
@@ -136,12 +151,12 @@ public class UserManager {
 
     public void setUserActive(String username, boolean active) {
         getUser(username).setActive(active);
-        StorageFactory.getInstance().getUsedStorage().updateUser(getUser(username));
+        StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).updateUser(getUser(username));
     }
 
     public void setUserActive(UUID uuid, boolean active) {
         getUser(uuid).setActive(active);
-        StorageFactory.getInstance().getUsedStorage().updateUser(getUser(uuid));
+        StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).updateUser(getUser(uuid));
     }
 
     public void createSupportUser(int code) {

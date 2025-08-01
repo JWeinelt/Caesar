@@ -1,10 +1,10 @@
 package de.julianweinelt.caesar.storage;
 
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.storage.providers.*;
-import lombok.Getter;
+import de.julianweinelt.caesar.storage.sandbox.SandBoxManager;
 
-@Getter
 public class StorageFactory {
     private Storage usedStorage;
 
@@ -34,9 +34,20 @@ public class StorageFactory {
 
     }
 
+    public Storage getUsedStorage(User user) {
+        if (SandBoxManager.getInstance().workingInSandBox(user)) {
+            return SandBoxManager.getInstance().getSandBox(user).getUsedStorage();
+        }
+        return usedStorage;
+    }
+
     public Storage provide(StorageType type, Configuration config) {
         this.usedStorage = type.createProvider(config);
         return this.usedStorage;
+    }
+
+    public Storage provideSandBox(StorageType type, Configuration config) {
+        return type.createProvider(config);
     }
 
     public boolean connect() {

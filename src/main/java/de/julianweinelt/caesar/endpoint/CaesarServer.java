@@ -193,6 +193,7 @@ public class CaesarServer {
                     byte[] key = CaesarLinkServer.getInstance().generateKey();
                     APIKeySaver.getInstance().saveKey(connectionName, key);
                     LocalStorage.getInstance().getConnections().add(new ServerConnection(
+                            UUID.randomUUID(),
                             connectionName,
                             connectionAddress,
                             connectionPort, encrypted)

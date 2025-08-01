@@ -13,6 +13,7 @@ import java.lang.reflect.Type;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 public class LocalStorage {
@@ -30,6 +31,15 @@ public class LocalStorage {
 
     public static LocalStorage getInstance() {
         return Caesar.getInstance().getLocalStorage();
+    }
+
+    public ServerConnection getConnection(String name) {
+        for (ServerConnection connection : connections) if (connection.getName().equals(name)) return connection;
+        return null;
+    }
+    public ServerConnection getConnection(UUID uuid) {
+        for (ServerConnection connection : connections) if (connection.getUuid().equals(uuid)) return connection;
+        return null;
     }
 
 

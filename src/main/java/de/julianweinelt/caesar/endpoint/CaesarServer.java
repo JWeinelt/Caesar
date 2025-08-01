@@ -530,6 +530,7 @@ public class CaesarServer {
                     ctx.result(response.toString());
                 })
                 .patch("/sandbox/action", ctx -> {
+                    if (betaFeature(ctx)) return;
                     String action = ctx.queryParam("action");
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String sandBoxID = rootObj.get("uniqueID").getAsString();
@@ -567,6 +568,7 @@ public class CaesarServer {
                     }
                 })
                 .delete("/sandbox", ctx -> {
+                    if (betaFeature(ctx)) return;
                     if (lackingPermissions(ctx, "caesar.admin.sandbox.delete")) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String sandBoxID = rootObj.get("uniqueID").getAsString();

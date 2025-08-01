@@ -162,7 +162,7 @@ public class Caesar {
         if (chatManager == null && localStorage.getData().isUseChat()) chatManager = new ChatManager();
         if (chatServer == null && localStorage.getData().isUseChat()) chatServer = new ChatServer(chatManager);
         if (caesarServer == null) caesarServer = new CaesarServer();
-        if (connectionServer == null) connectionServer = new CaesarLinkServer();
+        if (connectionServer == null) connectionServer = new CaesarLinkServer(LocalStorage.getInstance().getData().isShouldEncryptLinkConnections());
         if (clientLinkServer == null) clientLinkServer = new CaesarClientLinkServer(localStorage.getData().getClientLinkPort());
         if (storageFactory == null) storageFactory = new StorageFactory();
         if (voiceServer == null && localStorage.getData().isAllowVoiceChat()) {

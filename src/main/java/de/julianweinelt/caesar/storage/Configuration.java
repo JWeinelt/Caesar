@@ -34,8 +34,12 @@ public class Configuration {
     private String jwtIssuer;
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
-    private final String _INFO_BETA = "Do not enable this in production environments.";
-    private boolean enableBetaFeatures = false; // TODO: Add get/set
+    private final String _INFO_BETA = "This will give you access to features in the public beta. Do not enable this in production environments.";
+    private boolean enableBetaFeatures = false;
+    @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
+    private final String _INFO_LEGACY = "This enables legacy support, like for Waterfall or BungeeCord (not recommended in production use!)";
+    private boolean enableLegacyMode = false;
+
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_DB = "These options are important for saving data.";
@@ -52,6 +56,8 @@ public class Configuration {
     private int connectionServerPort = 48002;
     private int clientLinkPort = 48003;
     private int voiceServerPort = 48004;
+
+    private boolean shouldEncryptLinkConnections = false;
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO_CN = "These fields define options for the usage of CloudNET.";
@@ -70,9 +76,9 @@ public class Configuration {
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private String _INFO_AI = "These settings are related to AI in chat. It won't be active if useChat is set to false.";
-    private boolean useAIChat = false; // TODO: Add get/set
-    private String chatAIAPISecret = ""; // TODO: Add get/set
-    private AIModel chatAIModel = AIModel.GEMINI_2_5_FLASH; // TODO: Add get/set
+    private boolean useAIChat = false;
+    private String chatAIAPISecret = "";
+    private AIModel chatAIModel = AIModel.GEMINI_2_5_FLASH;
 
     private PasswordConditions passwordConditions = new PasswordConditions();
     private boolean useDiscord = false;
@@ -170,6 +176,12 @@ public class Configuration {
             case "doAutoBackups" -> doAutoBackups = (boolean) value;
             case "autoUpdateClients" -> autoUpdateClients = (boolean) value;
             case "autoUpdateServerOnStartup" -> autoUpdateServerOnStartup = (boolean) value;
+            case "shouldEncryptLinkConnections" -> shouldEncryptLinkConnections = (boolean) value;
+            case "useAIChat" -> useAIChat = (boolean) value;
+            case "chatAIAPISecret" -> chatAIAPISecret = (String) value;
+            case "chatAIModel" -> chatAIModel = AIModel.valueOf((String) value);
+            case "enableLegacyMode" -> enableLegacyMode = (boolean) value;
+            case "enableBetaFeatures" -> enableBetaFeatures = (boolean) value;
             default -> throw new InvalidConfigKeyException(key, readOnly);
         }
     }
@@ -220,6 +232,12 @@ public class Configuration {
             case "doAutoBackups" -> doAutoBackups;
             case "autoUpdateClients" -> autoUpdateClients;
             case "autoUpdateServerOnStartup" -> autoUpdateServerOnStartup;
+            case "useAIChat" -> useAIChat;
+            case "chatAIAPISecret" -> chatAIAPISecret;
+            case "chatAIModel" -> chatAIModel;
+            case "shouldEncryptLinkConnections" -> shouldEncryptLinkConnections;
+            case "enableLegacyMode" -> enableLegacyMode;
+            case "enableBetaFeatures" -> enableBetaFeatures;
             default -> throw new InvalidConfigKeyException(key, readOnly);
         };
     }

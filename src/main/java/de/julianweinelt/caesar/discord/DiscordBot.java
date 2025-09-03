@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar.discord;
 
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.discord.ticket.TicketListener;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelType;
@@ -47,6 +48,8 @@ public class DiscordBot {
     private DiscordConfiguration config = null;
     @Getter
     private BotListener defaultListener;
+    @Getter
+    private TicketListener ticketListener;
 
     private JDA jda;
 
@@ -105,6 +108,10 @@ public class DiscordBot {
 
         mainGuild = jda.getGuildById(config.getGuild());
         defaultListener = new BotListener(config, this, jda);
+        if (config.isUseTicketSystem()) {
+            ticketListener = new TicketListener();
+            jda.addEventListener(ticketListener);
+        }
         jda.addEventListener(defaultListener);
 
         startStatusScheduler();

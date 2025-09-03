@@ -15,7 +15,6 @@ import de.julianweinelt.caesar.endpoint.MinecraftUUIDFetcher;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
 import de.julianweinelt.caesar.storage.DatabaseVersionManager;
 import de.julianweinelt.caesar.storage.Storage;
-import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.storage.StorageHelperInitializer;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import org.slf4j.Logger;
@@ -123,6 +122,19 @@ public class MySQLStorageProvider extends Storage {
         } catch (SQLException e) {
             log.error("Could not get users privileges.", e);
             return false;
+        }
+    }
+
+    @Override
+    public void saveTicketFeedback(UUID ticket, int rating, String feedback) {
+        if (!checkConnection()) return;
+        try (PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_feedback (TicketID, FeedbackText, Rating) VALUES (?, ?, ?)")) {
+            pS.setString(1, ticket.toString());
+            pS.setInt(2, rating);
+            pS.setString(3, feedback);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Error while saving ticket feedback: {}", e.getMessage());
         }
     }
 

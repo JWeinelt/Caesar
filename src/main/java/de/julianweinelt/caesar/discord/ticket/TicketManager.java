@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class TicketManager {
@@ -25,6 +26,7 @@ public class TicketManager {
     @Getter
     private final List<TicketStatus> statuses = new ArrayList<>();
 
+    @Getter
     private final List<Ticket> tickets = new ArrayList<>();
 
     public static TicketManager getInstance() throws TicketSystemNotUsedException {
@@ -69,12 +71,16 @@ public class TicketManager {
 
     }
 
-    public void createTicket(String creator, TicketType type) {
+    public CompletableFuture<Ticket> createTicket(String creator, TicketType type) {
+        CompletableFuture<Ticket> future = new CompletableFuture<>();
+
         DiscordBot.getInstance().createTicketChannel(creator, type).thenAccept(channel -> {
             Ticket ticket = new Ticket(UUID.randomUUID(), creator, "", channel, getTicketStatus("OPEN"), type);
             tickets.add(ticket);
             StorageFactory.getInstance().getUsedStorage(consumeCurrentUser()).createTicket(ticket);
+            future.complete(ticket);
         });
+        return future;
     }
 
     public TicketStatus getTicketStatus(UUID uuid) {
@@ -89,5 +95,15 @@ public class TicketManager {
     public TicketType getTicketType(UUID uuid) {
         for (TicketType ticketType : ticketTypes) if (ticketType.uniqueID().equals(uuid)) return ticketType;
         return null;
+    }
+    public TicketType getTicketType(String name) {
+        for (TicketType ticketType : ticketTypes) if (ticketType.name().equals(name)) return ticketType;
+        return null;
+    }
+
+    public List<Ticket> getUserTickets(String userID) {
+        List<Ticket> userTickets = new ArrayList<>();
+        for (Ticket ticket : tickets) if (ticket.getCreator().equals(userID)) userTickets.add(ticket);
+        return userTickets;
     }
 }

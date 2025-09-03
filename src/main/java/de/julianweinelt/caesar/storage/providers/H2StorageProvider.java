@@ -46,6 +46,16 @@ public class H2StorageProvider extends Storage {
     }
 
     @Override
+    public void connectSandBox(Runnable runnable) {
+
+    }
+
+    @Override
+    public boolean hasSandboxPermissions() {
+        return false;
+    }
+
+    @Override
     public void disconnect() {
         try {
             conn.close();
@@ -91,6 +101,11 @@ public class H2StorageProvider extends Storage {
     @Override
     public boolean systemDataExist() {
         return false;
+    }
+
+    @Override
+    public void createDatabase(String name) {
+
     }
 
     @Override
@@ -223,6 +238,11 @@ public class H2StorageProvider extends Storage {
 
     @Override
     public void createTicket(Ticket ticket) {
+
+    }
+
+    @Override
+    public void saveTicketFeedback(UUID ticket, int rating, String feedback) {
 
     }
 

@@ -28,6 +28,9 @@ public class DiscordConfiguration {
     private int statusChangeInterval = 2;
 
     private boolean useTicketSystem = false;
+    private boolean enableDMSupport = true;
+    private boolean enableTranscript = true;
+    private boolean closeTicketOnUserLeave = false;
     private final List<String> ticketChannels = new ArrayList<>();
     private String ticketCategory;
     private final List<DiscordEmbedWrapper> embeds = new ArrayList<>();

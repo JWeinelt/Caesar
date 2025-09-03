@@ -113,6 +113,7 @@ public abstract class Storage {
     public abstract void handleTicket(Ticket ticket, String handler);
     public abstract void deleteTicket(Ticket ticket);
     public abstract void createTicket(Ticket ticket);
+    public abstract void saveTicketFeedback(UUID ticket, int rating, String feedback);
 
     public abstract UUID createPlayer();
     public abstract void createPlayer(UUID uuid, int number);

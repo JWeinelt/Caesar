@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
@@ -44,6 +45,16 @@ public class MSSQLStorageProvider extends Storage {
         } catch (Exception e) {
             log.error("Failed to connect to MSSQL database: {}", e.getMessage());
         }
+        return false;
+    }
+
+    @Override
+    public void connectSandBox(Runnable runnable) {
+
+    }
+
+    @Override
+    public boolean hasSandboxPermissions() {
         return false;
     }
 
@@ -86,12 +97,30 @@ public class MSSQLStorageProvider extends Storage {
     }
 
     @Override
+    public void createDatabase(String name) {
+
+    }
+
+    @Override
     public void createTables() {}
 
 
     @Override
     public void insertDefaultData() {
 
+    }
+
+    @Override
+    public void saveTicketFeedback(UUID ticket, int rating, String feedback) {
+        if (!checkConnection()) return;
+        try (PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_feedback (TicketID, FeedbackText, Rating) VALUES (?, ?, ?)")) {
+            pS.setString(1, ticket.toString());
+            pS.setInt(2, rating);
+            pS.setString(3, feedback);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Error while saving ticket feedback: {}", e.getMessage());
+        }
     }
 
     @Override

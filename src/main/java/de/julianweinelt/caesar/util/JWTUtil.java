@@ -22,7 +22,9 @@ public class JWTUtil {
     private final JWTVerifier verifier;
 
     public JWTUtil() {
-        verifier = JWT.require(Algorithm.HMAC256(LocalStorage.getInstance().getData().getJwtSecret())).build();
+        String secret = LocalStorage.getInstance().getData().getJwtSecret();
+        if (secret == null) secret = "123456789";
+        verifier = JWT.require(Algorithm.HMAC256(secret)).build();
     }
 
     public static JWTUtil getInstance() {

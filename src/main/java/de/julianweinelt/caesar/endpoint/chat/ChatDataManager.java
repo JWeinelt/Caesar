@@ -40,6 +40,7 @@ public class ChatDataManager extends LoadableManager<List<Chat>> {
 
     @Override
     public void saveData() {
+        if (Configuration.getInstance().getConnectionAPISecret().isBlank()) return;
         setDataToSave(chatManager.getChats());
         saveObject(file);
         Registry.getInstance().callEvent(new Event("ChatDataSaveEvent")

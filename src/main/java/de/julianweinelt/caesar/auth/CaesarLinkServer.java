@@ -76,15 +76,24 @@ public class CaesarLinkServer extends WebSocketServer {
 
     public void handleAction(String json, WebSocket webSocket) {
         String data;
+        log.info(json);
         UUID serverID = serverIDs.getOrDefault(webSocket, null);
         ServerConnection connection = (serverID != null) ? LocalStorage.getInstance().getConnection(serverID) : null;
+        if (connection == null) log.warn("Connection is null");
         if (encrypted && isEncrypted(json) && connection != null) {
+            log.info("Decrypting message...");
+            log.info("Received: {}", json);
             data = decrypt(json, APIKeySaver.getInstance().loadKey(connection.getName()));
+            log.info("Decrypted: {}", data);
         } else if (!encrypted && isEncrypted(json)) {
             log.warn("Received encrypted message while server is in non-encrypted mode. Ignoring message.");
             return;
         } else {
             data = json;
+        }
+        if (isEncrypted(data)) {
+            log.warn("The received data seems to be invalid.");
+            return;
         }
         JsonObject root = JsonParser.parseString(data).getAsJsonObject();
         Action action = Action.valueOf(root.get("action").getAsString());
@@ -134,6 +143,7 @@ public class CaesarLinkServer extends WebSocketServer {
 
             PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            log.info("Generated new key");
             return factory.generateSecret(spec).getEncoded();
         } catch (Exception e) {
             log.error("Error generating key", e);
@@ -217,6 +227,8 @@ public class CaesarLinkServer extends WebSocketServer {
 
             return new String(plaintext, StandardCharsets.UTF_8);
         } catch (Exception e) {
+            log.error(e.getMessage());
+            log.error(e.getStackTrace().toString());
             return encryptedBase64;
         }
     }

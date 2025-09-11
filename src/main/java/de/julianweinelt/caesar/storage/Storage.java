@@ -9,6 +9,7 @@ import de.julianweinelt.caesar.discord.ticket.Ticket;
 import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -51,6 +52,7 @@ public abstract class Storage {
     public abstract boolean checkConnection();
     public abstract boolean allTablesExist(String[] tables);
     public abstract boolean systemDataExist();
+    public abstract void executeAfterConnection();
 
     @Deprecated(forRemoval = true, since = "0.0.2")
     public abstract void createTables();
@@ -113,4 +115,11 @@ public abstract class Storage {
     public abstract List<String> getUserPermissions(UUID uuid);
 
     public abstract JsonArray getMCAccounts(UUID player);
+
+    @Nullable
+    public abstract String getDiscordID(UUID user);
+    @Nullable
+    public abstract UUID getUserIDFromDiscordID(String discordID);
+    public abstract void mapUserDiscord(String discord, UUID user);
+    public abstract void removeMappingDCUser(UUID user);
 }

@@ -16,13 +16,13 @@ public class StorageFactory {
             config.getDatabasePassword()
     ));
 
-    public static final StorageType MSSQL = new StorageType("MSSQL", 1434, config -> new MSSQLStorageProvider(
+    /*public static final StorageType MSSQL = new StorageType("MSSQL", 1434, config -> new MSSQLStorageProvider(
             config.getDatabaseHost(),
             config.getDatabasePort(),
             config.getDatabaseName(),
             config.getDatabaseUser(),
             config.getDatabasePassword()
-    ));
+    ));*/
 
 
 

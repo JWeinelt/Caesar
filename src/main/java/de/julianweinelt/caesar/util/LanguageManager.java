@@ -101,6 +101,7 @@ public class LanguageManager {
 
     public void downloadLanguageIfMissing(String lang) {
         if (!new File(directory, lang + ".json").exists()) downloadLanguage(lang);
+        else log.info("File {} already exists.", lang);
     }
 
     public void downloadLanguage(String lang) {

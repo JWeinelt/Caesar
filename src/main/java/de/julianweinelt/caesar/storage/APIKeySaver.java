@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 @Slf4j
 public class APIKeySaver {
@@ -34,8 +35,8 @@ public class APIKeySaver {
     public byte[] loadKey(String cKey) {
         try {
             byte[] encryptedData = loadEncryptedData(new File(folder, cKey + ".cae").getPath() );
-            byte[] key = encryptionKey.getBytes();
-            byte[] iv = encryptionKey.getBytes();
+            byte[] key = truncate(encryptionKey.getBytes());
+            byte[] iv = truncate(encryptionKey.getBytes());
             String decryptedData = decrypt(encryptedData, key, iv);
             ConnectionKey keyPair = GSON.fromJson(decryptedData, new TypeToken<ConnectionKey>(){}.getType());
             return keyPair.key();
@@ -48,13 +49,14 @@ public class APIKeySaver {
 
     public void saveKey(String cKey, byte[] key) {
         try {
+            log.info("Size: {}", truncate(encryptionKey.getBytes()).length);
             byte[] encryptedData = encrypt(GSON.toJson(new ConnectionKey(cKey, key)),
-                    encryptionKey.getBytes(), encryptionKey.getBytes());
-            try (FileOutputStream fos = new FileOutputStream(new File(folder, cKey + ".json"))) {
+                    truncate(encryptionKey.getBytes()), truncate(encryptionKey.getBytes()));
+            try (FileOutputStream fos = new FileOutputStream(new File(folder, cKey + ".cae"))) {
                 fos.write(encryptedData);
             }
         } catch (Exception e) {
-            log.error("Failed to save encrypted data:");
+            log.error("Failed to save encrypted data for key:");
             log.error(e.getMessage());
         }
     }
@@ -105,6 +107,10 @@ public class APIKeySaver {
         try (FileInputStream fis = new FileInputStream(filePath)) {
             return fis.readAllBytes();
         }
+    }
+
+    private byte[] truncate(byte[] input) {
+        return Arrays.copyOf(input, 16);
     }
 
 

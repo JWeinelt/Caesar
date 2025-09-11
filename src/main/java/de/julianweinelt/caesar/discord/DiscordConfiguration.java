@@ -11,8 +11,12 @@ import java.util.List;
 @Getter
 @Setter
 public class DiscordConfiguration {
-    private OnlineStatus defaultOnlineStatus;
-    private String discordBotToken = "SECRET";
+    public static DiscordConfiguration getInstance() {
+        return DiscordBot.getInstance().getConfig();
+    }
+
+    private OnlineStatus defaultOnlineStatus = OnlineStatus.ONLINE;
+    private String discordBotToken = "secret";
 
     private boolean autoMod = false;
     private final List<String> blockedWords = new ArrayList<>();
@@ -27,11 +31,12 @@ public class DiscordConfiguration {
     private final List<StatusMessage> statusMessages = new ArrayList<>();
     private int statusChangeInterval = 2;
 
-    private boolean useTicketSystem = false;
+    private boolean useTicketSystem = true;
     private final List<String> ticketChannels = new ArrayList<>();
-    private String ticketCategory;
+    private String ticketCategory = "1203373647134195733";
     private final List<DiscordEmbedWrapper> embeds = new ArrayList<>();
+    private String waitingRoom = "1203373647134195736";
 
-    private String guild = "";
-    private String infoChannel = "";
+    private String guild = "1203373645108355072";
+    private String infoChannel = "1221472133352525865";
 }

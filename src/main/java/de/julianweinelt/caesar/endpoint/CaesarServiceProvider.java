@@ -48,6 +48,14 @@ public class CaesarServiceProvider {
                     latestServerVersion = re.get("server").getAsString();
                     latestConnectorVersion = re.get("connector").getAsString();
 
+                    log.info("""
+                            ========== VERSIONS ===========
+                            Client (latest): %s
+                            Server (latest): %s
+                            Server (used): %s
+                            ===============================
+                            """.formatted(latestClientVersion, latestServerVersion, Caesar.systemVersion));
+
                 })
                 .exceptionally(ex -> {
                     log.error("Response (async): {}", ex.getMessage(), ex);

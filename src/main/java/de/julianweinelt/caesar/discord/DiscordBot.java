@@ -122,7 +122,7 @@ public class DiscordBot {
     @Subscribe("StorageReadyEvent")
     public void onStorageReady(Event event) {
         log.info("Preparing discord...");
-        if (!new File("data", "discord.json").exists()) LocalStorage.getInstance().save(new DiscordConfiguration(), "discord.json");
+        if (!new File("data", "discord.json").exists()) LocalStorage.getInstance().save(new DiscordConfiguration(), "discord");
         config = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
         start(false);
     }

@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.integration.ServerConnection;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -92,9 +94,18 @@ public class LocalStorage {
                 jsonStringBuilder.append(line);
             }
             connections = GSON.fromJson(jsonStringBuilder.toString(), new TypeToken<List<ServerConnection>>(){}.getType());
+            log.info("Loaded {} connection{}", connections.size(), (connections.size() == 1) ? "" : "s");
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    public void checkConnectionKeys() {
+        connections.forEach(conn->{
+            APIKeySaver.getInstance().loadKey(conn.getName());
+
+            log.info("Found connection with key: {} ({})",  conn.getUuid(), conn.getName());
+        });
     }
 
     public void saveConnections() {

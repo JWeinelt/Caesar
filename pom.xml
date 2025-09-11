@@ -203,7 +203,7 @@
         <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline</artifactId>
-            <version>3.30.4</version>
+            <version>3.30.6</version>
         </dependency>
         <!-- Maven XML model parsing -->
         <dependency>

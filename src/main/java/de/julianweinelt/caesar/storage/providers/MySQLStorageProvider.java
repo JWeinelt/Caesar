@@ -7,16 +7,17 @@ import de.julianweinelt.caesar.auth.CPermission;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.auth.UserRole;
+import de.julianweinelt.caesar.discord.DiscordBot;
+import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.Ticket;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.endpoint.MinecraftUUIDFetcher;
 import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
-import de.julianweinelt.caesar.storage.DatabaseVersionManager;
-import de.julianweinelt.caesar.storage.Storage;
-import de.julianweinelt.caesar.storage.StorageFactory;
-import de.julianweinelt.caesar.storage.StorageHelperInitializer;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
+import de.julianweinelt.caesar.storage.*;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,13 +58,17 @@ public class MySQLStorageProvider extends Storage {
             UserManager.getInstance().getAllPermissions();
             UserManager.getInstance().getAllRoles();
             UserManager.getInstance().overrideUsers(getAllUsers());
-            TicketManager.execute(manager -> manager.startUp(getAllTicketStatuses(), getAllTicketTypes()));
+
+            executeAfterConnection();
             return true;
         } catch (Exception e) {
             log.error("Failed to connect to MySQL database: {}", e.getMessage());
+            e.printStackTrace();
         }
         return false;
     }
+
+
 
     @Override
     public boolean allTablesExist(String[] tables) {
@@ -97,6 +102,24 @@ public class MySQLStorageProvider extends Storage {
         } catch (SQLException e) {
             log.error("Failed to check system storage data: {}", e.getMessage());
             return false;
+        }
+    }
+
+    @Override
+    public void executeAfterConnection() {
+        if (!LocalStorage.getInstance().getData().isUseDiscord()) return;
+        if (DiscordConfiguration.getInstance().isUseTicketSystem()) {
+            TicketManager.execute(manager ->
+                    manager.startUp(getAllTicketStatuses(), getAllTicketTypes()));
+            DiscordBot.getInstance().getCaesarUserChannels().clear();
+            try (PreparedStatement pS = conn.prepareStatement("SELECT UserID, DiscordID FROM discord_user_mappings")) {
+                ResultSet rs = pS.executeQuery();
+                while (rs.next()) {
+                    DiscordBot.getInstance().getCaesarUserChannels().put(UUID.fromString(rs.getString(1)), rs.getString(2));
+                }
+            } catch (SQLException e) {
+                log.error("Failed to get linked discord accounts: {}", e.getMessage());
+            }
         }
     }
 
@@ -364,7 +387,7 @@ public class MySQLStorageProvider extends Storage {
     @Override
     public void createUser(User user) {
         try {
-            PreparedStatement pS = conn.prepareStatement("INSERT INTO users (UUID, Username, PasswordHashed, " +
+            PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO users (UUID, Username, PasswordHashed, " +
                     "CreationDate) VALUES (?, ?, ?, CURRENT_TIMESTAMP)");
             pS.setString(1, user.getUuid().toString());
             pS.setString(2, user.getUsername());
@@ -559,6 +582,7 @@ public class MySQLStorageProvider extends Storage {
     @Override
     public List<TicketStatus> getAllTicketStatuses() {
         List<TicketStatus> statuses = new ArrayList<>();
+        if (!checkConnection()) return statuses;
         try {
             PreparedStatement pS = conn.prepareStatement("SELECT UUID, StatusName, Color, Description" +
                     " FROM ticket_status_names");
@@ -706,7 +730,13 @@ public class MySQLStorageProvider extends Storage {
     @Override
     public void createPlayer(UUID uuid, int number) {
         if (!checkConnection()) return;
-
+        try (PreparedStatement pS = conn.prepareStatement("INSERT IGNORE INTO players (PlayerID, PlayerNumber) VALUES (?, ?)")) {
+            pS.setString(1, uuid.toString());
+            pS.setInt(2, number);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to create player: {}", e.getMessage());
+        }
     }
 
     @Override
@@ -883,19 +913,24 @@ public class MySQLStorageProvider extends Storage {
         JsonArray array = new JsonArray();
         if (!checkConnection()) return array;
         try {
-            PreparedStatement pS = conn.prepareStatement("SELECT * FROM punishments WHERE PlayerID = ?");
+            PreparedStatement pS = conn.prepareStatement("SELECT PunishmentType, PlayerID, RecordID, CreationDate," +
+                    " CreateUserType, CreatedBy, ActionUntil, Reason, t.Name, t.TimedPossible, p.MarkDeleted FROM punishments AS p LEFT OUTER JOIN punishment_types AS t" +
+                    " ON p.PunishmentType = t.TypeID WHERE PlayerID = ?");
             pS.setString(1, player.toString());
             ResultSet set = pS.executeQuery();
             while (set.next()) {
                 JsonObject o = new JsonObject();
-                o.addProperty("PunishmentType", set.getString(2));
-                o.addProperty("Punished", set.getString(8));
-                o.addProperty("RecordID", set.getString(1));
-                o.addProperty("CreationDate", set.getLong(3));
-                o.addProperty("CreateUserType", set.getString(4));
-                o.addProperty("CreatedBy", set.getString(5));
-                o.addProperty("ActionUntil", set.getLong(6));
-                o.addProperty("Reason", set.getString(7));
+                o.addProperty("PunishmentType", set.getString(1));
+                o.addProperty("PlayerID", set.getString(2));
+                o.addProperty("RecordID", set.getString(3));
+                o.addProperty("CreationDate", set.getLong(4));
+                o.addProperty("CreateUserType", set.getString(5));
+                o.addProperty("CreatedBy", set.getString(6));
+                o.addProperty("ActionUntil", set.getLong(7));
+                o.addProperty("Reason", set.getString(8));
+                o.addProperty("PunishmentName",  set.getString(9));
+                o.addProperty("TimedPossible", set.getBoolean(10));
+                o.addProperty("MarkDeleted", set.getBoolean(11));
                 array.add(o);
             }
         } catch (SQLException e) {
@@ -1038,6 +1073,55 @@ public class MySQLStorageProvider extends Storage {
             log.error("Failed to get mc accounts for player: {}", e.getMessage());
         }
         return array;
+    }
+
+    @Override
+    public String getDiscordID(UUID user) {
+        if (!checkConnection()) return null;
+        try (PreparedStatement pS = conn.prepareStatement("SELECT DiscordID FROM discord_user_mappings WHERE UserID = ?")) {
+            pS.setString(1, user.toString());
+            ResultSet rs = pS.executeQuery();
+            if (rs.next()) return rs.getString(1);
+        } catch (SQLException e) {
+            log.error("Failed to get discord ID for user: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public UUID getUserIDFromDiscordID(String discordID) {
+        if (!checkConnection()) return null;
+        try (PreparedStatement pS = conn.prepareStatement("SELECT UserID FROM discord_user_mappings WHERE DiscordID = ?")) {
+            pS.setString(1, discordID);
+            ResultSet rs = pS.executeQuery();
+            if (rs.next()) return UUID.fromString(rs.getString(1));
+        } catch (SQLException e) {
+            log.error("Failed to get user ID for discord user: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    @Override
+    public void mapUserDiscord(String discord, UUID user) {
+        if (!checkConnection()) return;
+        try (PreparedStatement pS = conn.prepareStatement("INSERT INTO discord_user_mappings (UserID, DiscordID) VALUES (?, ?)")) {
+            pS.setString(1, user.toString());
+            pS.setString(2, discord);
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to map user ID for discord user: {}", e.getMessage());
+        }
+    }
+
+    @Override
+    public void removeMappingDCUser(UUID user) {
+        if (!checkConnection()) return;
+        try (PreparedStatement pS = conn.prepareStatement("DELETE FROM discord_user_mappings WHERE UserID = ?")) {
+            pS.setString(1, user.toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to remove user mappings for player: {}", e.getMessage());
+        }
     }
 
     @Override

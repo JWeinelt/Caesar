@@ -584,7 +584,7 @@ public class Caesar {
 
     @Subscribe(value = "StorageReadyEvent", priority = Priority.HIGH)
     public void onStorageReady(Event event) {
-        DiscordConfiguration dc = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
+        DiscordConfiguration dc = LocalStorage.getInstance().load("discord", DiscordConfiguration.class);
         if (dc == null) return;
         if (dc.isUseTicketSystem()) {
             log.info("Initializing ticket manager...");

@@ -10,7 +10,6 @@ import de.julianweinelt.caesar.discord.wrapping.ChannelWrapper;
 import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
-import de.julianweinelt.caesar.plugin.event.EventListener;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.storage.StorageFactory;
@@ -123,7 +122,7 @@ public class DiscordBot {
     public void onStorageReady(Event event) {
         log.info("Preparing discord...");
         if (!new File("data", "discord.json").exists()) LocalStorage.getInstance().save(new DiscordConfiguration(), "discord");
-        config = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
+        config = LocalStorage.getInstance().load("discord", DiscordConfiguration.class);
         start(false);
     }
 

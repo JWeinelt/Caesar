@@ -124,6 +124,7 @@ public class Registry {
      * @param event the event to dispatch
      */
     public void callEvent(Event event) {
+        log.info("Calling event {}", event.getName());
         List<EventListener> eventListeners = listeners.get(event.getName());
         if (eventListeners != null) {
             for (EventListener listener : eventListeners) {

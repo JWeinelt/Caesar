@@ -534,7 +534,7 @@ public class CaesarServer {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID type = UUID.fromString(rootObj.get("processType").getAsString());
                     UUID status = UUID.fromString(rootObj.get("processStatus").getAsString());
-                    String comment = "Not given";
+                    String comment = "Not provided";
                     if (rootObj.has("comment")) comment = rootObj.get("comment").getAsString();
                     UUID processID = StorageFactory.getInstance().getUsedStorage().createProcess(
                             type, status, getUserID(ctx), Optional.of(comment));

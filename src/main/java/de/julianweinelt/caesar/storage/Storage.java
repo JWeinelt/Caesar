@@ -106,6 +106,7 @@ public abstract class Storage {
 
     public abstract UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment);
     public abstract void assignPlayerToProcess(UUID process, UUID player);
+    public abstract void updateProcessStatus(UUID process, UUID status);
 
     public abstract void createProcessType(String name, boolean usePattern, String pattern);
     public abstract void createProcessStatus(String name, String color, String description);

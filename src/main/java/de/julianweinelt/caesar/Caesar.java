@@ -56,7 +56,7 @@ public class Caesar {
     private static Caesar instance;
     public static String systemVersion = "0.2.0";
 
-    private String systemLanguage = "en";
+    public static String systemLanguage = "en";
 
     @Getter
     private Registry registry = null;
@@ -110,7 +110,7 @@ public class Caesar {
     public static void main(String[] args) {
         instance = new Caesar();
         File configFile = new File("config.json");
-        if (!configFile.exists()) {
+        if (!configFile.exists() || new File(".setup.temp").exists()) {
             instance.startFirstStartup();
         } else {
             instance.start();
@@ -132,11 +132,11 @@ public class Caesar {
         apiKeySaver = new APIKeySaver();
         jwt = new JWTUtil();
         problemLogger = new ProblemLogger();
-        log.info("Welcome!");
+        log.info(languageManager.getTranslation(systemLanguage, "startup.welcome"));
         log.info("Starting Caesar v{}", systemVersion);
         languageManager = new LanguageManager();
         registry = new Registry();
-        log.info("Registering basic events...");
+        log.info(languageManager.getTranslation(systemLanguage, "startup.register.events"));
         registry.registerEvents(
                 "BackupCreateEvent",
                 "UserCreateEvent",
@@ -157,7 +157,7 @@ public class Caesar {
         );
         LocalStorage.getInstance().checkConnectionKeys();
         pluginLoader = new PluginLoader(registry);
-        log.info("Starting backup service...");
+        log.info(languageManager.getTranslation(systemLanguage, "startup.start.backups"));
         backupManager = new BackupManager();
         backupManager.configure(localStorage.getData());
         log.info("Loading Caesar server plugins...");
@@ -196,7 +196,13 @@ public class Caesar {
         log.info("Connecting to database...");
         storageFactory.provide(StorageType.get(localStorage.getData().getDatabaseType()), localStorage.getData());
         boolean success = storageFactory.connect();
-        if (!success) log.error("Failed to connect to database!");
+        if (!success) {
+            log.error("Failed to connect to database!");
+            log.error("Make sure your database is available!");
+            log.error("Caesar cannot run without database. Shutting down...");
+            System.exit(1000);
+            return;
+        }
         else {
             log.info("Performing checks...");
 
@@ -231,10 +237,14 @@ public class Caesar {
         registerSystemCommands();
 
         log.info("Caesar has been started.");
-        startCLI();
 
         MinecraftUUIDFetcher.prepareCacheDirectory();
         MinecraftUUIDFetcher.loadCache();
+
+        log.info("POST-STARTUP: {} events registered", registry.getEventAmount());
+        log.info("POST-STARTUP: {} plugins loaded", registry.getPlugins().size());
+
+        startCLI();
     }
     public void startCLI() {
         try {
@@ -330,6 +340,11 @@ public class Caesar {
     }
 
     public void startFirstStartup() {
+        try {
+            if (new File(".setup.temp").createNewFile()) log.debug("Created setup temp file.");
+        } catch (IOException e) {
+            log.debug(e.getMessage());
+        }
         localStorage = new LocalStorage();
         localStorage.loadData();
         languageManager = new LanguageManager();
@@ -391,7 +406,7 @@ public class Caesar {
 
     private void databaseProcedure(Terminal terminal) {
         List<String> databases = new ArrayList<>();
-        for (StorageType type : StorageType.values()) databases.add(type.getName());
+        for (StorageType type : StorageType.values()) databases.add(type.name());
         String databaseType = prompt(terminal, "setup.database.type", "MYSQL",
                 databases);
         StorageType storageType = StorageType.get(databaseType);
@@ -402,7 +417,7 @@ public class Caesar {
         clearScreen();
 
         String databasePort = "0";
-        String defaultDatabasePort = "" + storageType.getDefaultPort();
+        String defaultDatabasePort = "" + storageType.defaultPort();
         if (!defaultDatabasePort.equals("0")) {
             databasePort = prompt(terminal, "setup.database.port", defaultDatabasePort, List.of());
             clearScreen();
@@ -422,8 +437,8 @@ public class Caesar {
         localStorage.getData().setDatabaseUser(databaseUser);
         localStorage.getData().setDatabasePassword(databasePassword);
         storageFactory = new StorageFactory();
-        storageFactory.provide(storageType, localStorage.getData());
-        boolean success = storageFactory.getUsedStorage().connect();
+        Storage s = storageFactory.provide(storageType, localStorage.getData());
+        boolean success = s.connect();
         if (success) {
             localStorage.saveData();
             log.info(languageManager.getTranslation(systemLanguage, "setup.database.info.connected"));
@@ -464,10 +479,13 @@ public class Caesar {
         localStorage.saveData();
         log.info("Finishing database setup...");
         Storage s = storageFactory.getUsedStorage();
+        if (s == null) {
+            throw new IllegalStateException("Storage is null");
+        }
         DatabaseVersionManager.getInstance().downloadVersion(systemVersion);
         if (!s.systemDataExist()) s.insertDefaultData();
 
-        storageFactory.getUsedStorage().insertDefaultData();
+        s.insertDefaultData();
         userManager.createUser("admin", "admin");
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.user-created"));
         log.info(languageManager.getTranslation(systemLanguage, "setup.info.setup-finished"));
@@ -477,6 +495,9 @@ public class Caesar {
         localStorage.saveData();
         caesarServer = new CaesarServer(true);
         clearScreen();
+
+        if (new File(".setup.temp").delete()) log.debug("Deleted setup temp file.");
+
         start();
     }
 
@@ -564,22 +585,25 @@ public class Caesar {
 
     public void shutdown() {
         log.info("Caesar is shutting down...");
+        backupManager.stopBackupService();
         localStorage.saveData();
         localStorage.saveConnections();
         log.info("Stopping endpoints...");
         chatManager.terminate();
         try {
-            chatServer.stop();
-            caesarServer.stop();
-            connectionServer.stop();
-            clientLinkServer.stop();
-            storageFactory.getUsedStorage().disconnect();
+            if (chatServer != null) chatServer.stop();
+            if (caesarServer != null) caesarServer.stop();
+            if (connectionServer != null) connectionServer.stop();
+            if (clientLinkServer != null) clientLinkServer.stop();
+            if (storageFactory.getUsedStorage() != null) storageFactory.getUsedStorage().disconnect();
             if (discordBot != null) discordBot.stop();
             if (voiceServer != null) voiceServer.stop();
         } catch (InterruptedException e) {
             log.error("Failed to stop endpoints: {}", e.getMessage());
         }
         log.info("Caesar has been stopped.");
+        log.info("Have a nice day!");
+        try {Thread.sleep(10000);} catch (InterruptedException ignored) {}
     }
 
     public List<String> getBooleans() {

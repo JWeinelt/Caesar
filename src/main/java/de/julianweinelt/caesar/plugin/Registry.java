@@ -57,6 +57,14 @@ public class Registry {
         return Caesar.getInstance().getRegistry();
     }
 
+    public int getEventAmount() {
+        int amount = 0;
+        for (CPlugin plugin : plugins) {
+            amount += eventsRegisteredByPlugin.get(plugin).size();
+        }
+        return amount;
+    }
+
     /**
      * Registers a single event name for a given plugin.
      *
@@ -92,9 +100,7 @@ public class Registry {
      * @param eventNames the event names to register
      */
     public void registerEvents(String... eventNames) {
-        for (String eventName : eventNames) {
-            listeners.putIfAbsent(eventName, new ArrayList<>());
-        }
+        registerEvents(getSystemPlugin(), eventNames);
     }
 
     /**
@@ -124,7 +130,7 @@ public class Registry {
      * @param event the event to dispatch
      */
     public void callEvent(Event event) {
-        log.info("Calling event {}", event.getName());
+        log.debug("Called event {}", event.getName());
         List<EventListener> eventListeners = listeners.get(event.getName());
         if (eventListeners != null) {
             for (EventListener listener : eventListeners) {

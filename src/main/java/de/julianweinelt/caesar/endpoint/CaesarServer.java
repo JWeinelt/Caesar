@@ -548,13 +548,18 @@ public class CaesarServer {
                     if (lackingPermissions(ctx, "caesar.process.change-status")) return;
                     if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
-                    //TODO: Add logic
+                    UUID processID = UUID.fromString(rootObj.get("processID").getAsString());
+                    UUID processStatus = UUID.fromString(rootObj.get("processStatus").getAsString());
+                    StorageFactory.getInstance().getUsedStorage().updateProcessStatus(processID, processStatus);
                     ctx.result(createSuccessResponse());
                 })
                 .patch("/process/player", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.assign-player")) return;
                     if (serviceUnavailable(ctx)) return;
-                    //TODO: Add logic
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    UUID processID = UUID.fromString(rootObj.get("processID").getAsString());
+                    UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
+                    StorageFactory.getInstance().getUsedStorage().assignPlayerToProcess(processID, playerID);
                     ctx.result(createSuccessResponse());
                 })
                 .start(LocalStorage.getInstance().getData().getWebServerPort());

@@ -2,9 +2,11 @@ package de.julianweinelt.caesar.endpoint.chat;
 
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.storage.Configuration;
+import de.julianweinelt.caesar.storage.LocalStorage;
 import de.julianweinelt.caesar.util.LoadableManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,13 +36,16 @@ public class ChatDataManager extends LoadableManager<List<Chat>> {
         try {
             chatManager.setChats(loadObject(file.toPath().toString(), t));
         } catch (NoSuchFileException e) {
-            log.error("Failed to load chat data from file '{}': {}", file.toPath().toString(), e.getMessage());
+            log.error("Failed to load chat data from file '{}': {}", file.toPath(), e.getMessage());
         }
     }
 
     @Override
     public void saveData() {
-        if (Configuration.getInstance().getConnectionAPISecret().isBlank()) return;
+        if (Configuration.getInstance().getConnectionAPISecret().isBlank()) {
+            Configuration.getInstance().setConnectionAPISecret(Caesar.getInstance().generateSecret(25));
+            LocalStorage.getInstance().saveData();
+        }
         setDataToSave(chatManager.getChats());
         saveObject(file);
         Registry.getInstance().callEvent(new Event("ChatDataSaveEvent")

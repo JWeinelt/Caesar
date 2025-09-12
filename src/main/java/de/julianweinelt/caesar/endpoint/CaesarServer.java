@@ -81,6 +81,7 @@ public class CaesarServer {
                     }
                 })
                 .post("/csetup/checkcode", ctx -> {
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     if (isSetupMode) {
@@ -98,6 +99,7 @@ public class CaesarServer {
 
                 // Authentication
                 .post("/auth", ctx -> {
+                    if (serviceUnavailable(ctx)) return;
                     String authBasic = ctx.header("Authorization");
                     if (authBasic == null || !authBasic.startsWith("Basic ")) {
                         ctx.status(HttpStatus.UNAUTHORIZED); // 401
@@ -218,6 +220,7 @@ public class CaesarServer {
                 // User management
                 .post("/user", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.create")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String username = rootObj.get("username").getAsString();
                     String password = rootObj.get("password").getAsString();
@@ -242,6 +245,7 @@ public class CaesarServer {
                 })
                 .delete("/user/{user}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.delete")) return;
+                    if (serviceUnavailable(ctx)) return;
                     String username = ctx.pathParam("user");
                     if (StringUtil.isUUID(username)) {
                         UserManager.getInstance().deleteUser(UUID.fromString(username));
@@ -251,6 +255,7 @@ public class CaesarServer {
                 })
                 .get("/user/{user}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.view")) return;
+                    if (serviceUnavailable(ctx)) return;
                     String username = ctx.pathParam("user");
                     if (StringUtil.isUUID(username)) {
                         User u = UserManager.getInstance().getUser(UUID.fromString(username));
@@ -271,6 +276,7 @@ public class CaesarServer {
                 })
                 .patch("/user", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.edit")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String username = rootObj.get("username").getAsString();
@@ -283,11 +289,10 @@ public class CaesarServer {
                     user.setActive(enabled);
                     StorageFactory.getInstance().getUsedStorage().updateUser(user);
                 })
-                .get("/user", ctx -> {
-                    ctx.result(GSON.toJson(UserManager.getInstance().getUsers()));
-                })
+                .get("/user", ctx -> ctx.result(GSON.toJson(UserManager.getInstance().getUsers())))
                 .patch("/user/password", ctx -> {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    if (serviceUnavailable(ctx)) return;
 
                     String base64Password = rootObj.get("newPassword").getAsString();
                     String base64PasswordOld = rootObj.get("oldPassword").getAsString();
@@ -313,6 +318,7 @@ public class CaesarServer {
                 // Permission management
                 .post("/user/permission", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.permission.add")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String username = rootObj.get("username").getAsString();
@@ -324,6 +330,7 @@ public class CaesarServer {
                 })
                 .post("/user/permissions", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.permission.add")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String username = rootObj.get("username").getAsString();
@@ -338,10 +345,12 @@ public class CaesarServer {
 
                 .get("/role", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.role.list")) return;
+                    if (serviceUnavailable(ctx)) return;
                     ctx.result(GSON.toJson(UserManager.getInstance().getUserRoles()));
                 })
                 .post("/role", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.role.create")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String name = rootObj.get("name").getAsString();
                     String color = rootObj.get("color").getAsString();
@@ -351,6 +360,7 @@ public class CaesarServer {
                 })
                 .post("/role/permission", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.user.permission.add")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     String key = rootObj.get("permission").getAsString();
                     String role = rootObj.get("role").getAsString();
@@ -433,6 +443,7 @@ public class CaesarServer {
                 // Player management
                 .post("/player", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.create")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String id = rootObj.get("playerID").getAsString();
@@ -456,6 +467,7 @@ public class CaesarServer {
                 })
                 .post("/player/mc", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.edit")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
@@ -465,6 +477,7 @@ public class CaesarServer {
                 })
                 .get("/player/id/{id}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.view")) return;
+                    if (serviceUnavailable(ctx)) return;
                     int number = Integer.parseInt(ctx.pathParam("id"));
                     ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
                             StorageFactory.getInstance().getUsedStorage().getPlayer(number)
@@ -472,23 +485,27 @@ public class CaesarServer {
                 })
                 .get("/player/uuid/{id}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.view")) return;
+                    if (serviceUnavailable(ctx)) return;
                     ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
                             UUID.fromString(ctx.pathParam("id"))
                     ).toString());
                 })
                 .get("/player/mc/name/{name}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.view")) return;
+                    if (serviceUnavailable(ctx)) return;
                     ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
                             StorageFactory.getInstance().getUsedStorage().getPlayerByAccount(ctx.pathParam("name"))
                     ).toString());
                 })
                 .delete("/player/{id}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.delete")) return;
+                    if (serviceUnavailable(ctx)) return;
                     StorageFactory.getInstance().getUsedStorage().deletePlayer(UUID.fromString(ctx.pathParam("id")));
                     ctx.result(createSuccessResponse());
                 })
                 .post("/player/note", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.notes.create")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
                     UUID userID = getUserID(ctx);
@@ -498,6 +515,7 @@ public class CaesarServer {
                 })
                 .delete("/player/note", ctx -> {
                     if (lackingPermissions(ctx, "caesar.players.notes.delete")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID noteID = UUID.fromString(rootObj.get("noteID").getAsString());
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
@@ -506,13 +524,13 @@ public class CaesarServer {
                     ctx.result(createSuccessResponse());
                 })
 
-                .get("/support/waiting-room", ctx -> {
-                    ctx.result(DiscordBot.getInstance().getWaitingRoom().toString());
-                })
+                .get("/support/waiting-room", ctx ->
+                        ctx.result(DiscordBot.getInstance().getWaitingRoom().toString()))
 
                 // Process management
                 .post("/process", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.create")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID type = UUID.fromString(rootObj.get("processType").getAsString());
                     UUID status = UUID.fromString(rootObj.get("processStatus").getAsString());
@@ -528,10 +546,15 @@ public class CaesarServer {
                 })
                 .patch("/process/status", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.change-status")) return;
+                    if (serviceUnavailable(ctx)) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    //TODO: Add logic
                     ctx.result(createSuccessResponse());
                 })
                 .patch("/process/player", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.assign-player")) return;
+                    if (serviceUnavailable(ctx)) return;
+                    //TODO: Add logic
                     ctx.result(createSuccessResponse());
                 })
                 .start(LocalStorage.getInstance().getData().getWebServerPort());
@@ -577,6 +600,16 @@ public class CaesarServer {
                 ctx.skipRemainingHandlers().result(createErrorResponse(ErrorType.NO_PERMISSION)).status(HttpStatus.FORBIDDEN);
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean serviceUnavailable(Context ctx) {
+        if (StorageFactory.getInstance().getUsedStorage() == null) {
+            ctx.status(HttpStatus.SERVICE_UNAVAILABLE);
+            ctx.header("Cache-Control", "no-store");
+            ctx.header("Retry-After", "3600");
+            return true;
         }
         return false;
     }

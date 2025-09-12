@@ -1,8 +1,11 @@
 package de.julianweinelt.caesar.plugin;
 
+import de.julianweinelt.caesar.endpoint.CaesarServer;
 import jdk.dynalink.linker.LinkerServices;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -57,6 +60,10 @@ public abstract class CPlugin {
      * Called to define commands in {@link Registry}.
      */
     public abstract void onCreateCommands();
+
+    protected Logger getLogger() {
+        return LoggerFactory.getLogger(this.getClass());
+    }
 
     public void onBukkitEnable() {}
     public void onBukkitDisable() {}

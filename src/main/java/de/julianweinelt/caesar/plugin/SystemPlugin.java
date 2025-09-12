@@ -1,6 +1,6 @@
 package de.julianweinelt.caesar.plugin;
 
-public final class SystemPlugin extends CPlugin{
+public final class SystemPlugin extends CPlugin {
 
     @Override
     public void onLoad() {
@@ -9,7 +9,7 @@ public final class SystemPlugin extends CPlugin{
 
     @Override
     public void onEnable() {
-
+        getLogger().info("Caesar System Module has been enabled.");
     }
 
     @Override

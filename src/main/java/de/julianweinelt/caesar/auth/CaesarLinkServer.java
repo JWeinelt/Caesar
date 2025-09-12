@@ -3,7 +3,10 @@ package de.julianweinelt.caesar.auth;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.integration.ServerConnection;
+import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.Configuration;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import org.java_websocket.WebSocket;
@@ -31,11 +34,12 @@ public class CaesarLinkServer extends WebSocketServer {
     private boolean encrypted = false;
 
     private final HashMap<String, WebSocket> connections = new HashMap<>();
-    private final HashMap<String, String> keys = new HashMap<>();
+    private final HashMap<WebSocket, UUID> serverIDs = new HashMap<>();
 
 
-    public CaesarLinkServer() {
+    public CaesarLinkServer(boolean encrypted) {
         super(new InetSocketAddress(LocalStorage.getInstance().getData().getConnectionServerPort()));
+        this.encrypted = encrypted;
     }
 
     public static CaesarLinkServer getInstance() {
@@ -71,12 +75,34 @@ public class CaesarLinkServer extends WebSocketServer {
     }
 
     public void handleAction(String json, WebSocket webSocket) {
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        String data;
+        log.info(json);
+        UUID serverID = serverIDs.getOrDefault(webSocket, null);
+        ServerConnection connection = (serverID != null) ? LocalStorage.getInstance().getConnection(serverID) : null;
+        if (connection == null) log.warn("Connection is null");
+        if (encrypted && isEncrypted(json) && connection != null) {
+            log.info("Decrypting message...");
+            log.info("Received: {}", json);
+            data = decrypt(json, APIKeySaver.getInstance().loadKey(connection.getName()));
+            log.info("Decrypted: {}", data);
+        } else if (!encrypted && isEncrypted(json)) {
+            log.warn("Received encrypted message while server is in non-encrypted mode. Ignoring message.");
+            return;
+        } else {
+            data = json;
+        }
+        if (isEncrypted(data)) {
+            log.warn("The received data seems to be invalid.");
+            return;
+        }
+        JsonObject root = JsonParser.parseString(data).getAsJsonObject();
         Action action = Action.valueOf(root.get("action").getAsString());
         log.info("Received action {} from {}", action, webSocket.getRemoteSocketAddress().getAddress().getHostAddress());
+        byte[] key = (connection != null) ? APIKeySaver.getInstance().loadKey(connection.getName()) : "key".getBytes();
         switch (action) {
             case HANDSHAKE -> {
                 String name = root.get("serverName").getAsString();
+                serverIDs.put(webSocket, UUID.fromString(root.get("serverId").getAsString()));
                 connections.put(name, webSocket);
                 JsonObject o = new JsonObject();
                 o.addProperty("action", Action.HANDSHAKE.name());
@@ -104,7 +130,7 @@ public class CaesarLinkServer extends WebSocketServer {
             case PING -> {
                 JsonObject o = new JsonObject();
                 o.addProperty("action", Action.PONG.name());
-                webSocket.send(o.toString());
+                send(webSocket, o.toString(), key);
             }
         }
     }
@@ -117,9 +143,22 @@ public class CaesarLinkServer extends WebSocketServer {
 
             PBEKeySpec spec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
             SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            log.info("Generated new key");
             return factory.generateSecret(spec).getEncoded();
         } catch (Exception e) {
             log.error("Error generating key", e);
+        }
+        return null;
+    }
+
+    private void send(WebSocket socket, String data, byte[] key) {
+        if (encrypted) socket.send(encrypt(data, key));
+        else socket.send(data);
+    }
+
+    private String getNameFromConnection(WebSocket socket) {
+        for (String s : connections.keySet()) {
+            if (connections.get(s).equals(socket)) return s;
         }
         return null;
     }
@@ -159,45 +198,63 @@ public class CaesarLinkServer extends WebSocketServer {
         return menu;
     }
 
-
-    private String decrypt(String encryptedBase64, byte[] key) throws Exception {
-        byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);
-
-        byte[] iv = new byte[GCM_IV_LENGTH];
-        System.arraycopy(encrypted, 0, iv, 0, iv.length);
-
-        byte[] ciphertext = new byte[encrypted.length - iv.length];
-        System.arraycopy(encrypted, iv.length, ciphertext, 0, ciphertext.length);
-
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
-        GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
-
-        cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
-
-        byte[] plaintext = cipher.doFinal(ciphertext);
-
-        return new String(plaintext, StandardCharsets.UTF_8);
+    private boolean isEncrypted(String input) {
+        try {
+            JsonParser.parseString(input);
+            return false;
+        } catch (JsonSyntaxException e) {
+            return true;
+        }
     }
 
-    private String encrypt(String plaintext, byte[] key) throws Exception {
-        byte[] iv = new byte[GCM_IV_LENGTH];
-        SecureRandom random = new SecureRandom();
-        random.nextBytes(iv);
+    private String decrypt(String encryptedBase64, byte[] key) {
+        try {
+            byte[] encrypted = Base64.getDecoder().decode(encryptedBase64);
 
-        Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
-        GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            System.arraycopy(encrypted, 0, iv, 0, iv.length);
 
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+            byte[] ciphertext = new byte[encrypted.length - iv.length];
+            System.arraycopy(encrypted, iv.length, ciphertext, 0, ciphertext.length);
 
-        byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
 
-        byte[] encrypted = new byte[iv.length + ciphertext.length];
-        System.arraycopy(iv, 0, encrypted, 0, iv.length);
-        System.arraycopy(ciphertext, 0, encrypted, iv.length, ciphertext.length);
+            cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec);
 
-        return Base64.getEncoder().encodeToString(encrypted);
+            byte[] plaintext = cipher.doFinal(ciphertext);
+
+            return new String(plaintext, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            log.error(e.getStackTrace().toString());
+            return encryptedBase64;
+        }
+    }
+
+    private String encrypt(String plaintext, byte[] key) {
+        try {
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(iv);
+
+            Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+            GCMParameterSpec gcmSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+
+            cipher.init(Cipher.ENCRYPT_MODE, keySpec, gcmSpec);
+
+            byte[] ciphertext = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+
+            byte[] encrypted = new byte[iv.length + ciphertext.length];
+            System.arraycopy(iv, 0, encrypted, 0, iv.length);
+            System.arraycopy(ciphertext, 0, encrypted, iv.length, ciphertext.length);
+
+            return Base64.getEncoder().encodeToString(encrypted);
+        } catch (Exception e) {
+            return plaintext;
+        }
     }
 
     public enum Action {

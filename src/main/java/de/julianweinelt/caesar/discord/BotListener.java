@@ -2,19 +2,25 @@ package de.julianweinelt.caesar.discord;
 
 import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.ai.AIManager;
+import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 public class BotListener extends ListenerAdapter {
     private final DiscordConfiguration config;
     private TextChannel infoChannel;
@@ -30,6 +36,16 @@ public class BotListener extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent e) {
+        if (e.getChannel().getType().equals(ChannelType.PRIVATE)) {
+            try {
+                int code = Integer.parseInt(e.getMessage().getContentRaw());
+                DiscordBot.getInstance().validateCode(code, e.getAuthor().getId());
+                e.getMessage().addReaction(Emoji.fromUnicode("✔")).queue();
+            } catch (NumberFormatException ex) {
+                log.debug(ex.getMessage());
+            }
+        }
+
         if (e.getMessage().getMentions().isMentioned(jda.getSelfUser()) && !e.getAuthor().isBot()) {
             e.getChannel().sendTyping().queue();
             JsonObject data = AIManager.getInstance().getDiscordMessageType(e.getMessage().getContentRaw());
@@ -143,5 +159,28 @@ public class BotListener extends ListenerAdapter {
                     .addActionRow(Button.primary("pno-discord-settings", "Open in panel")
                             .withEmoji(Emoji.fromUnicode("📶")))
                     .queue();
+    }
+
+    @Override
+    public void onGuildVoiceUpdate(GuildVoiceUpdateEvent e) {
+        if (e.getChannelJoined() != null && e.getChannelJoined().getId().equals(config.getWaitingRoom())) {
+            CaesarClientLinkServer.getInstance().sendWaitingRoomUpdate();
+        }
+        if (e.getChannelLeft() != null && e.getChannelLeft().getId().equals(config.getWaitingRoom())) {
+            CaesarClientLinkServer.getInstance().sendWaitingRoomUpdate();
+        }
+
+        if (e.getChannelLeft() != null) {
+            String userID = e.getEntity().getId();
+            UUID u = discordBot.getUserByID(userID);
+            CaesarClientLinkServer.getInstance().sendVoiceUpdate(u);
+        }
+
+        if (e.getChannelJoined() != null) {
+            String name = e.getChannelJoined().getName();
+            String userID = e.getEntity().getId();
+            UUID u = discordBot.getUserByID(userID);
+            CaesarClientLinkServer.getInstance().sendVoiceUpdate(u, name);
+        }
     }
 }

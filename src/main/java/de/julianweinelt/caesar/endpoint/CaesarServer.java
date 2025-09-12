@@ -26,10 +26,7 @@ import java.awt.*;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class CaesarServer {
@@ -234,15 +231,20 @@ public class CaesarServer {
                     String connectionAddress = rootObj.get("address").getAsString();
                     int connectionPort = rootObj.get("port").getAsInt();
                     boolean encrypted = rootObj.get("encrypted").getAsBoolean();
+                    UUID uuid = UUID.fromString(rootObj.get("uuid").getAsString());
                     byte[] key = CaesarLinkServer.getInstance().generateKey();
                     APIKeySaver.getInstance().saveKey(connectionName, key);
                     LocalStorage.getInstance().getConnections().add(new ServerConnection(
+                            uuid,
                             connectionName,
                             connectionAddress,
                             connectionPort, encrypted)
                     );
                     LocalStorage.getInstance().saveConnections();
-                    ctx.result(createSuccessResponse());
+                    JsonObject result = new JsonObject();
+                    result.addProperty("success", true);
+                    result.addProperty("key", new String(key));
+                    ctx.result(result.toString());
                 })
                 .get("/connection", ctx -> {
                     if (lackingPermissions(ctx, "caesar.connections.view")) return;
@@ -478,13 +480,31 @@ public class CaesarServer {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                     String id = rootObj.get("playerID").getAsString();
+                    try {
+                        UUID.fromString(id);
+                    } catch (IllegalArgumentException e) {
+                        id = UUID.randomUUID().toString();
+                    }
                     if (id == null) id = UUID.randomUUID().toString();
                     int number;
-                    if (rootObj.has("number"))
+                    if (rootObj.has("playerNumber"))
                         number = rootObj.get("playerNumber").getAsInt();
                     else number = new SecureRandom().nextInt(1000, 9999);
 
                     StorageFactory.getInstance().getUsedStorage().createPlayer(UUID.fromString(id), number);
+                    ctx.status(HttpStatus.CREATED);
+                    ctx.json(Map.of(
+                            "success", true,
+                            "playerID", id
+                    ));
+                })
+                .post("/player/mc", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.edit")) return;
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+
+                    UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
+                    UUID mcID = UUID.fromString(rootObj.get("mcID").getAsString());
+                    StorageFactory.getInstance().getUsedStorage().addMCAccount(playerID, mcID);
                     ctx.result(createSuccessResponse());
                 })
                 .get("/player/id/{id}", ctx -> {
@@ -498,6 +518,12 @@ public class CaesarServer {
                     if (lackingPermissions(ctx, "caesar.players.view")) return;
                     ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
                             UUID.fromString(ctx.pathParam("id"))
+                    ).toString());
+                })
+                .get("/player/mc/name/{name}", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.players.view")) return;
+                    ctx.result(StorageFactory.getInstance().getUsedStorage().getPlayer(
+                            StorageFactory.getInstance().getUsedStorage().getPlayerByAccount(ctx.pathParam("name"))
                     ).toString());
                 })
                 .delete("/player/{id}", ctx -> {
@@ -522,6 +548,10 @@ public class CaesarServer {
                     log.debug(noteID.toString());
                     StorageFactory.getInstance().getUsedStorage().deletePlayerNote(playerID, getUserID(ctx), noteID);
                     ctx.result(createSuccessResponse());
+                })
+
+                .get("/support/waiting-room", ctx -> {
+                    ctx.result(DiscordBot.getInstance().getWaitingRoom().toString());
                 })
 
                 // Process management

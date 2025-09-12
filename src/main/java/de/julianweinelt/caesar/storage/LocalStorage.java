@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.integration.ServerConnection;
+import de.julianweinelt.caesar.plugin.Registry;
+import de.julianweinelt.caesar.plugin.event.Event;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,6 +15,7 @@ import java.lang.reflect.Type;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 public class LocalStorage {
@@ -30,6 +33,15 @@ public class LocalStorage {
 
     public static LocalStorage getInstance() {
         return Caesar.getInstance().getLocalStorage();
+    }
+
+    public ServerConnection getConnection(String name) {
+        for (ServerConnection connection : connections) if (connection.getName().equals(name)) return connection;
+        return null;
+    }
+    public ServerConnection getConnection(UUID uuid) {
+        for (ServerConnection connection : connections) if (connection.getUuid().equals(uuid)) return connection;
+        return null;
     }
 
 
@@ -82,9 +94,18 @@ public class LocalStorage {
                 jsonStringBuilder.append(line);
             }
             connections = GSON.fromJson(jsonStringBuilder.toString(), new TypeToken<List<ServerConnection>>(){}.getType());
+            log.info("Loaded {} connection{}", connections.size(), (connections.size() == 1) ? "" : "s");
         } catch (IOException e) {
             log.error(e.getMessage());
         }
+    }
+
+    public void checkConnectionKeys() {
+        connections.forEach(conn->{
+            APIKeySaver.getInstance().loadKey(conn.getName());
+
+            log.info("Found connection with key: {} ({})",  conn.getUuid(), conn.getName());
+        });
     }
 
     public void saveConnections() {

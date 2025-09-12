@@ -1,15 +1,18 @@
 package de.julianweinelt.caesar.discord;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelWrapper;
+import de.julianweinelt.caesar.endpoint.client.CaesarClientLinkServer;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
-import de.julianweinelt.caesar.plugin.event.EventListener;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.LocalStorage;
+import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
@@ -29,10 +32,8 @@ import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
+import java.io.File;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,8 +44,14 @@ public class DiscordBot {
     private static final Logger log = LoggerFactory.getLogger(DiscordBot.class);
     private ScheduledExecutorService statusScheduler = Executors.newScheduledThreadPool(1);
 
+
     @Getter
-    private DiscordConfiguration config = null;
+    private final HashMap<UUID, String> caesarUserChannels = new HashMap<>();
+    @Getter
+    private final HashMap<UUID, Integer> linkValidator = new HashMap<>();
+
+    @Getter
+    private DiscordConfiguration config = new DiscordConfiguration();
     @Getter
     private BotListener defaultListener;
 
@@ -57,9 +64,45 @@ public class DiscordBot {
         return Caesar.getInstance().getDiscordBot();
     }
 
+    public void validateCode(int code, String dc) {
+        UUID user = getCodeUser(code);
+        if (user == null) return;
+        CaesarClientLinkServer.getInstance().sendCodeSuccess(code);
+        StorageFactory.getInstance().getUsedStorage().mapUserDiscord(dc, user);
+    }
+
+    public UUID getCodeUser(int code) {
+        for (UUID u : linkValidator.keySet()) {
+            if (linkValidator.get(u) == code) return u;
+        }
+        return null;
+    }
+
     public DiscordBot() {
         Registry.getInstance().registerListener(this, Registry.getInstance().getSystemPlugin());
         registerEvents();
+    }
+
+    public UUID getUserByID(String id) {
+        for (UUID u : caesarUserChannels.keySet()) if (caesarUserChannels.get(u).equals(id)) return u;
+        UUID u = StorageFactory.getInstance().getUsedStorage().getUserIDFromDiscordID(id);
+        if (u != null) {
+            caesarUserChannels.put(u, id);
+            return u;
+        }
+        return null;
+    }
+
+    public String getDCUserByUser(UUID user) {
+        String e = caesarUserChannels.getOrDefault(user, null);
+        if (e == null) {
+            String id = StorageFactory.getInstance().getUsedStorage().getDiscordID(user);
+            if (id != null) {
+                caesarUserChannels.put(user, id);
+                return id;
+            }
+        }
+        return e;
     }
 
     private void registerEvents() {
@@ -77,13 +120,29 @@ public class DiscordBot {
 
     @Subscribe("StorageReadyEvent")
     public void onStorageReady(Event event) {
-        config = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
+        log.info("Preparing discord...");
+        if (!new File("data", "discord.json").exists()) LocalStorage.getInstance().save(new DiscordConfiguration(), "discord");
+        config = LocalStorage.getInstance().load("discord", DiscordConfiguration.class);
         start(false);
     }
 
     public DiscordEmbedWrapper getEmbedWrapped(String name) {
         for (DiscordEmbedWrapper w : config.getEmbeds()) if (w.getEmbedID().equals(name)) return w;
         return null;
+    }
+
+    public JsonArray getWaitingRoom() {
+        JsonArray array = new JsonArray();
+        for (Member m : mainGuild.getVoiceChannelById(config.getWaitingRoom()).getMembers()) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("name", m.getUser().getName());
+            obj.addProperty("avatar", m.getUser().getAvatarUrl());
+            obj.addProperty("id", m.getUser().getId());
+            obj.addProperty("effectiveName",  m.getEffectiveName());
+            obj.addProperty("effectiveAvatarUrl", m.getEffectiveAvatarUrl());
+            array.add(obj);
+        }
+        return array;
     }
 
     public void start(boolean wasRestart) {

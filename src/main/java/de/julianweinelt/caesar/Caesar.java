@@ -125,9 +125,9 @@ public class Caesar {
             localStorage.loadData();
             localStorage.loadConnections();
         }
+        apiKeySaver = new APIKeySaver();
         jwt = new JWTUtil();
         problemLogger = new ProblemLogger();
-        apiKeySaver = new APIKeySaver();
         log.info("Welcome!");
         log.info("Starting Caesar v{}", systemVersion);
         languageManager = new LanguageManager();
@@ -151,6 +151,7 @@ public class Caesar {
                 "DatabaseTablesCreateEvent",
                 "VersionDataGetEvent"
         );
+        LocalStorage.getInstance().checkConnectionKeys();
         pluginLoader = new PluginLoader(registry);
         log.info("Starting backup service...");
         backupManager = new BackupManager();
@@ -158,11 +159,20 @@ public class Caesar {
         log.info("Loading Caesar server plugins...");
         pluginLoader.loadAll();
         log.info("Plugin loading complete.");
+
+        if (localStorage.getData().isUseDiscord()) {
+            discordBot = new DiscordBot();
+            ticketManager = new TicketManager();
+
+            registry.registerListener(this, Registry.getInstance().getSystemPlugin());
+        }
+        Registry.getInstance().callEvent(new Event("StorageReadyEvent"));
+
         log.info("Starting endpoints...");
         if (chatManager == null && localStorage.getData().isUseChat()) chatManager = new ChatManager();
         if (chatServer == null && localStorage.getData().isUseChat()) chatServer = new ChatServer(chatManager);
         if (caesarServer == null) caesarServer = new CaesarServer();
-        if (connectionServer == null) connectionServer = new CaesarLinkServer();
+        if (connectionServer == null) connectionServer = new CaesarLinkServer(LocalStorage.getInstance().getData().isShouldEncryptLinkConnections());
         if (clientLinkServer == null) clientLinkServer = new CaesarClientLinkServer(localStorage.getData().getClientLinkPort());
         if (storageFactory == null) storageFactory = new StorageFactory();
         if (voiceServer == null && localStorage.getData().isAllowVoiceChat()) {
@@ -178,6 +188,7 @@ public class Caesar {
         userManager = new UserManager();
         serviceProvider = new CaesarServiceProvider();
         serviceProvider.start();
+
         log.info("Connecting to database...");
         storageFactory.provide(StorageType.get(localStorage.getData().getDatabaseType()), localStorage.getData());
         boolean success = storageFactory.connect();
@@ -211,14 +222,6 @@ public class Caesar {
         }
         log.info("Registered all available users ({}).", userManager.getUsers().size());
         log.info("Starting endpoints complete.");
-
-        if (localStorage.getData().isUseDiscord()) {
-            discordBot = new DiscordBot();
-
-            registry.registerListener(this, Registry.getInstance().getSystemPlugin());
-        }
-
-        registry.callEvent(new Event("StorageReadyEvent"));
 
         log.info("Registering system commands...");
         registerSystemCommands();
@@ -330,6 +333,8 @@ public class Caesar {
         List<String> availableLanguages = languageManager.getAvailableLanguagesFromServer();
         availableLanguages.forEach(languageManager::downloadLanguageIfMissing);
         languageManager.loadAllLanguageData();
+
+        ticketManager = new TicketManager();
 
 
         try {
@@ -579,7 +584,7 @@ public class Caesar {
 
     @Subscribe(value = "StorageReadyEvent", priority = Priority.HIGH)
     public void onStorageReady(Event event) {
-        DiscordConfiguration dc = LocalStorage.getInstance().load("discord.json", DiscordConfiguration.class);
+        DiscordConfiguration dc = LocalStorage.getInstance().load("discord", DiscordConfiguration.class);
         if (dc == null) return;
         if (dc.isUseTicketSystem()) {
             log.info("Initializing ticket manager...");

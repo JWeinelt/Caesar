@@ -125,6 +125,10 @@ public class Caesar {
             localStorage.loadData();
             localStorage.loadConnections();
         }
+        languageManager = new LanguageManager();
+        List<String> availableLanguages = languageManager.getAvailableLanguagesFromServer();
+        availableLanguages.forEach(languageManager::downloadLanguageIfMissing);
+        languageManager.loadAllLanguageData();
         apiKeySaver = new APIKeySaver();
         jwt = new JWTUtil();
         problemLogger = new ProblemLogger();

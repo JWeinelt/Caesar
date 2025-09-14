@@ -1,19 +1,12 @@
 package de.julianweinelt.caesar.storage;
 
-import lombok.Getter;
-
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-@Getter
-public class StorageType {
+public record StorageType(String name, int defaultPort, Function<Configuration, Storage> providerFactory) {
     private static final Map<String, StorageType> REGISTERED_TYPES = new LinkedHashMap<>();
-
-    private final String name;
-    private final int defaultPort;
-    private final Function<Configuration, Storage> providerFactory;
 
     public StorageType(String name, int defaultPort, Function<Configuration, Storage> providerFactory) {
         this.name = name;

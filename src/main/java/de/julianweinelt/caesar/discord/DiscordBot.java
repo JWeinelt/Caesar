@@ -200,7 +200,8 @@ public class DiscordBot {
     public void stop() {
         try {
             if (!statusScheduler.isShutdown()) {
-                if (statusScheduler.awaitTermination(10, TimeUnit.SECONDS)) log.info("Status scheduler has been shut down.");
+                log.info("Shutting down status scheduler...");
+                if (statusScheduler.awaitTermination(3, TimeUnit.SECONDS)) log.info("Status scheduler has been shut down.");
                 else {
                     log.error("Status scheduler failed to stop. Terminating...");
                     statusScheduler.shutdownNow();
@@ -208,10 +209,8 @@ public class DiscordBot {
             }
 
             if (jda != null) {
-                log.info("Shutting down status scheduler...");
-                statusScheduler.shutdown();
                 log.info("Shutting down JDA...");
-                boolean success = jda.awaitShutdown(10, TimeUnit.SECONDS);
+                boolean success = jda.awaitShutdown(3, TimeUnit.SECONDS);
                 if (success) {
                     log.info("JDA has been shut down.");
                     Registry.getInstance().callEvent(new Event("DiscordStopEvent")

@@ -828,6 +828,18 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
+    public void updateProcessStatus(UUID process, UUID status) {
+        if (!checkConnection()) return;
+        try (PreparedStatement pS = conn.prepareStatement("UPDATE processes SET Status = ? WHERE ProcessID = ?")) {
+            pS.setString(1, status.toString());
+            pS.setString(2, process.toString());
+            pS.execute();
+        } catch (SQLException e) {
+            log.error("Failed to update process status for process {}: {}", process.toString(), e.getMessage());
+        }
+    }
+
+    @Override
     public void deletePlayer(UUID player) {
 
     }

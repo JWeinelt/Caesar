@@ -30,7 +30,7 @@ public class MinecraftUUIDFetcher {
     private static final ConcurrentHashMap<UUID, JsonObject> cachedNames = new ConcurrentHashMap<>();
 
     public static void prepareCacheDirectory() {
-        if (new File("cache").mkdirs()) log.info("Created cache directory");
+        if (cacheFile.getParentFile().mkdirs()) log.info("Created cache directory");
         if (!cacheFile.exists()) saveCache();
     }
 

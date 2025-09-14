@@ -3,6 +3,7 @@ package de.julianweinelt.caesar.storage;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.storage.providers.*;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 @Getter
 public class StorageFactory {
@@ -16,23 +17,13 @@ public class StorageFactory {
             config.getDatabasePassword()
     ));
 
-    /*public static final StorageType MSSQL = new StorageType("MSSQL", 1434, config -> new MSSQLStorageProvider(
-            config.getDatabaseHost(),
-            config.getDatabasePort(),
-            config.getDatabaseName(),
-            config.getDatabaseUser(),
-            config.getDatabasePassword()
-    ));*/
-
 
 
     public static StorageFactory getInstance() {
         return Caesar.getInstance().getStorageFactory();
     }
 
-    public StorageFactory() {
-
-    }
+    public StorageFactory() {}
 
     public Storage provide(StorageType type, Configuration config) {
         this.usedStorage = type.createProvider(config);

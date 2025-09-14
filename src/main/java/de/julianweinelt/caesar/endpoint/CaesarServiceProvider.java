@@ -28,6 +28,8 @@ public class CaesarServiceProvider {
     private String latestServerVersion = "";
     @Getter
     private String latestConnectorVersion = "";
+    @Getter
+    private String latestWorkerVersion = "";
 
     public static CaesarServiceProvider getInstance() {
         return Caesar.getInstance().getServiceProvider();
@@ -43,18 +45,20 @@ public class CaesarServiceProvider {
         client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenAccept(body -> {
-                    JsonObject re =  new JsonParser().parse(body).getAsJsonObject();
+                    JsonObject re =  JsonParser.parseString(body).getAsJsonObject();
                     latestClientVersion = re.get("client").getAsString();
                     latestServerVersion = re.get("server").getAsString();
                     latestConnectorVersion = re.get("connector").getAsString();
+                    latestWorkerVersion = re.get("worker").getAsString();
 
                     log.info("""
                             ========== VERSIONS ===========
-                            Client (latest): %s
-                            Server (latest): %s
-                            Server (used): %s
+                            Client (latest): {}
+                            Server (latest): {}
+                            Server (used): {}
+                            Worker (latest): {}
                             ===============================
-                            """.formatted(latestClientVersion, latestServerVersion, Caesar.systemVersion));
+                            """, latestClientVersion, latestServerVersion, Caesar.systemVersion, latestWorkerVersion);
 
                 })
                 .exceptionally(ex -> {

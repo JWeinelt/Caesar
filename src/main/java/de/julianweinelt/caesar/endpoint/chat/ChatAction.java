@@ -24,6 +24,7 @@ public enum ChatAction {
         DELETE_CHAT, // When a client wants to delete a chat
         @ServerOnly
         USER_MENTION, // When a client mentioned a user in a chat
+        REQUEST_USER_DATA,
         ADD_USER, // When a client adds a user to a chat
         KICK_USER, // When a client kicks a user from a chat
         MUTE_USER, // When a client mutes a user in a chat

@@ -72,6 +72,7 @@ public class CaesarLinkServer extends WebSocketServer {
     @Override
     public void onStart() {
         log.info("Started CaesarLinkServer on port {}", LocalStorage.getInstance().getData().getConnectionServerPort());
+        log.info("Listening on {}:{}.", getAddress().getHostName(), getPort());
     }
 
     public void handleAction(String json, WebSocket webSocket) {

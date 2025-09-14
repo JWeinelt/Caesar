@@ -534,6 +534,25 @@ public class CaesarServer {
                     if (lackingPermissions(ctx, "caesar.process.assign-player")) return;
                     ctx.result(createSuccessResponse());
                 })
+
+                // Dashboard Statistics
+                .get("/dashboard/support", ctx -> {
+
+                })
+                .get("/dashboard/server", ctx -> {
+
+                })
+                .get("/dashboard/discord", ctx -> {
+                    JsonObject o = new JsonObject();
+                    o.addProperty("success", true);
+                    o.addProperty("route", "discord");
+                    o.addProperty("provider", "caesar");
+                    o.addProperty("members", DiscordBot.getInstance().getMainGuild().getMemberCount());
+                    o.addProperty("online", DiscordBot.getInstance().getOnlineMembers());
+                    o.addProperty("bots", DiscordBot.getInstance().getBotMembers());
+                    ctx.result(o.toString());
+
+                })
                 .start(LocalStorage.getInstance().getData().getWebServerPort());
     }
 

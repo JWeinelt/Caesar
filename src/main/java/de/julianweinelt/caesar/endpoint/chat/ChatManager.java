@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.endpoint.chat;
 
+import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.User;
 import de.julianweinelt.caesar.auth.UserManager;
 import de.julianweinelt.caesar.plugin.Registry;
@@ -40,6 +41,10 @@ public class ChatManager {
         dataManager.loadData();
     }
 
+    public static ChatManager getInstance() {
+        return Caesar.getInstance().getChatManager();
+    }
+
     private void registerEvents() {
         Registry.getInstance().registerEvents(
                 "ChatDataSaveEvent",
@@ -63,6 +68,7 @@ public class ChatManager {
         log.info("Starting chat save task...");
         checkJunoDM();
         scheduler.scheduleAtFixedRate(dataManager::saveData, 20, 60, TimeUnit.SECONDS);
+        log.info("Done! Saving chats every 60 seconds.");
     }
 
     private void checkJunoDM() {
@@ -74,14 +80,22 @@ public class ChatManager {
         }
         for (User u : UserManager.getInstance().getUsers()) {
             boolean found = false;
+            boolean hasMessage = false;
+            Chat aiChat = null;
             for (Chat chat : chats) {
                 if (chat.isDirectMessage() && chat.hasUser(u) && chat.hasUser(junoID)) {
                     found = true;
+                    hasMessage = !chat.getMessages().isEmpty();
+                    aiChat = chat;
                     break;
                 }
             }
             if (!found) {
-                createDMChat(u.getUuid(), junoID);
+                aiChat = createDMChat(u.getUuid(), junoID);
+            }
+            if (!hasMessage) {
+                aiChat.registerNewMessage(new Message("Hello! I'm Juno AI, your smart assistant.", "Juno AI",
+                        System.currentTimeMillis()));
             }
         }
     }

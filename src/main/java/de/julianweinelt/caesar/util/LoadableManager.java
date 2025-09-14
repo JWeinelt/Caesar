@@ -17,7 +17,7 @@ public abstract class LoadableManager<T> {
     private final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private final Logger log;
     private final boolean encrypt;
-    private final String encryptionKey;
+    private final byte[] encryptionKey;
     private T toSave;
 
     /**
@@ -28,7 +28,7 @@ public abstract class LoadableManager<T> {
      * @param encryptionKey The encryption key used for encrypting and decrypting data.
      *                      Must be a valid AES key.
      */
-    protected LoadableManager(Logger log, boolean encrypt, String encryptionKey) {
+    protected LoadableManager(Logger log, boolean encrypt, byte[] encryptionKey) {
         this.log = log;
         this.encrypt = encrypt;
         this.encryptionKey = encryptionKey;
@@ -62,9 +62,7 @@ public abstract class LoadableManager<T> {
         if (encrypt) {
             try {
                 byte[] encryptedData = loadEncryptedData(path);
-                byte[] key = encryptionKey.getBytes();
-                byte[] iv = encryptionKey.getBytes();
-                String decryptedData = decrypt(encryptedData, key, iv);
+                String decryptedData = decrypt(encryptedData, encryptionKey, encryptionKey);
                 return GSON.fromJson(decryptedData, type);
             } catch (Exception e) {
                 log.error("Could not parse file. Maybe it's not encrypted?");
@@ -102,7 +100,7 @@ public abstract class LoadableManager<T> {
         }
         if (encrypt) {
             try {
-                byte[] encryptedData = encrypt(GSON.toJson(toSave), encryptionKey.getBytes(), encryptionKey.getBytes());
+                byte[] encryptedData = encrypt(GSON.toJson(toSave), encryptionKey, encryptionKey);
                 try (FileOutputStream fos = new FileOutputStream(new File(directory, fileName + ".json"))) {
                     fos.write(encryptedData);
                 }
@@ -130,7 +128,7 @@ public abstract class LoadableManager<T> {
     public void saveObject(File file) {
         if (encrypt) {
             try {
-                byte[] encryptedData = encrypt(GSON.toJson(toSave), encryptionKey.getBytes(), encryptionKey.getBytes());
+                byte[] encryptedData = encrypt(GSON.toJson(toSave), encryptionKey, encryptionKey);
                 try (FileOutputStream fos = new FileOutputStream(file)) {
                     fos.write(encryptedData);
                 }

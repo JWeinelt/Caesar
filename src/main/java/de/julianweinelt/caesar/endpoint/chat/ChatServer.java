@@ -39,7 +39,7 @@ public class ChatServer extends WebSocketServer {
 
 
     public ChatServer(ChatManager chatManager) {
-        super(new InetSocketAddress(LocalStorage.getInstance().getData().getChatServerPort()));
+        super(new InetSocketAddress("0.0.0.0", LocalStorage.getInstance().getData().getChatServerPort()));
         this.chatManager = chatManager;
     }
 
@@ -159,6 +159,20 @@ public class ChatServer extends WebSocketServer {
                     UUID user = getByConnection(conn);
                     connections.remove(user);
                     conn.close(CloseFrame.NORMAL, "Goodbye");
+                }
+                case REQUEST_USER_DATA -> {
+                    UUID user = UUID.fromString(rootOBJ.get("userid").getAsString());
+                    User userObj = UserManager.getInstance().getUser(user);
+                    if (user.equals(ChatManager.getInstance().getJunoID())) {
+                        userObj = new User(user);
+                        userObj.setUsername("Juno");
+                    }
+                    if (userObj == null) return;
+                    JsonObject o = new JsonObject();
+                    o.addProperty("type", "REQUEST_USER_DATA");
+                    o.addProperty("userid", user.toString());
+                    o.add("userData", GSON.toJsonTree(userObj));
+                    conn.send(o.toString());
                 }
             }
         }

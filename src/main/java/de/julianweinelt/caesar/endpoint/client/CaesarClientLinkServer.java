@@ -28,7 +28,7 @@ public class CaesarClientLinkServer extends WebSocketServer {
     private final HashMap<UUID, WebSocket> clients = new HashMap<>();
 
     public CaesarClientLinkServer(int port) {
-        super(new InetSocketAddress(port));
+        super(new InetSocketAddress("0.0.0.0", port));
     }
     public static CaesarClientLinkServer getInstance() {
         return Caesar.getInstance().getClientLinkServer();
@@ -58,9 +58,10 @@ public class CaesarClientLinkServer extends WebSocketServer {
             switch (action) {
                 case AUTHENTICATE -> {
                     UUID user = UUID.fromString(rootOBJ.get("myID").getAsString());
-                    String linkVersion = rootOBJ.get("myVersion").getAsString();
+                    String clientVersion = rootOBJ.get("myVersion").getAsString();
+                    String workerVersion = rootOBJ.get("workerVersion").getAsString();
                     clients.put(user, conn);
-                    sendHandShake(conn, new ComparableVersion(linkVersion));
+                    sendHandShake(conn, new ComparableVersion(clientVersion), new ComparableVersion(workerVersion));
                 }
                 case DC_LINK_REQUEST -> {
                     UUID user = getSocketUser(conn);
@@ -80,18 +81,30 @@ public class CaesarClientLinkServer extends WebSocketServer {
 
     @Override
     public void onStart() {
-
+        log.info("Listening on {}:{}.", getAddress().getHostName(), getPort());
     }
 
-    public void sendHandShake(WebSocket conn, ComparableVersion clientVersion) {
+    public void sendHandShake(WebSocket conn, ComparableVersion clientVersion, ComparableVersion workerVersion) {
+        JsonObject response = new JsonObject();
+        response.addProperty("type", ClientAction.HANDSHAKE.name());
+
         JsonObject o = new JsonObject();
         ComparableVersion newestVersion = new ComparableVersion(CaesarServiceProvider.getInstance().getLatestClientVersion());
         boolean update = clientVersion.compareTo(newestVersion) < 0;
-        if (update) log.info("Update for client is available.");
+        if (update) log.debug("Update for client is available.");
         o.addProperty("updateAvailable", update);
-        o.addProperty("type", ClientAction.HANDSHAKE.name());
         o.addProperty("newVersion", CaesarServiceProvider.getInstance().getLatestClientVersion());
-        conn.send(o.toString());
+
+        JsonObject w = new JsonObject();
+        ComparableVersion workerNewest = new ComparableVersion(CaesarServiceProvider.getInstance().getLatestWorkerVersion());
+        boolean workerUpdate = workerVersion.compareTo(workerNewest) < 0;
+        if (workerUpdate) log.debug("Update for client's worker is available.");
+        w.addProperty("updateAvailable", workerUpdate);
+        w.addProperty("newVersion", CaesarServiceProvider.getInstance().getLatestWorkerVersion());
+
+        response.add("client", o);
+        response.add("worker", w);
+        conn.send(response.toString());
     }
 
     public void sendWaitingRoomUpdate() {

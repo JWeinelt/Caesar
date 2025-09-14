@@ -543,6 +543,13 @@ public class Caesar {
         return result.toString();
     }
 
+    public byte[] generateIV() {
+        byte[] iv = new byte[16];
+        SecureRandom random = new SecureRandom();
+        random.nextBytes(iv);
+        return iv;
+    }
+
     public List<String> getAvailableHostNames() {
         List<String> availableHostNames = new java.util.ArrayList<>();
         try {

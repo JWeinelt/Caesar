@@ -17,6 +17,7 @@ import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
@@ -81,6 +82,24 @@ public class DiscordBot {
     public DiscordBot() {
         Registry.getInstance().registerListener(this, Registry.getInstance().getSystemPlugin());
         registerEvents();
+    }
+
+    public int getOnlineMembers() {
+        int count = 0;
+        for (Member m : mainGuild.getMembers()) {
+            if (!m.getOnlineStatus().equals(OnlineStatus.OFFLINE)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int getBotMembers() {
+        int count = 0;
+        for (Member m : mainGuild.getMembers()) {
+            if (m.getUser().isBot()) count++;
+        }
+        return count;
     }
 
     public UUID getUserByID(String id) {

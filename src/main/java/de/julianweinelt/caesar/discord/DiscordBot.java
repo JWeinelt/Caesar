@@ -301,7 +301,7 @@ public class DiscordBot {
             DiscordEmbedWrapper embed = getEmbedWrapped("ticket-system." + type.name().toLowerCase());
             ticketChannel.sendMessageEmbeds(embed.toEmbed().build())
                     .addActionRow(Button.primary("send-to-panel-ticket", "Send to panel")
-                            .withEmoji(Emoji.fromUnicode("📶")))
+                            .withEmoji(Emoji.fromUnicode("🛜")))
                     .queue();
             channelID.complete(ticketChannel.getId());
         });

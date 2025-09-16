@@ -406,6 +406,15 @@ public class CaesarServer {
                     DiscordBot.getInstance().restart();
                     ctx.result(createSuccessResponse());
                 })
+                .post("/discord/tickets/types", ctx -> {
+
+                })
+                .patch("/discord/tickets/message", ctx -> {
+
+                })
+                .delete("/discord/tickets/message", ctx -> {
+
+                })
 
                 // Settings
                 .put("/config", ctx -> {

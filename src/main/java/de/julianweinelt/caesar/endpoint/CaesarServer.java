@@ -5,6 +5,8 @@ import com.google.gson.*;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.*;
 import de.julianweinelt.caesar.discord.DiscordBot;
+import de.julianweinelt.caesar.discord.ticket.TicketStatus;
+import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.integration.ServerConnection;
 import de.julianweinelt.caesar.storage.APIKeySaver;
 import de.julianweinelt.caesar.storage.Configuration;
@@ -13,10 +15,12 @@ import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.StringUtil;
+import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.util.JavalinBindException;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -407,13 +411,89 @@ public class CaesarServer {
                     ctx.result(createSuccessResponse());
                 })
                 .post("/discord/tickets/types", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    if (!root.has("name") || !root.has("prefix") || !root.has("showInSel")
+                            || !root.has("selText") || !root.has("selEmoji")) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.MISSING_ARGUMENTS));
+                        return;
+                    }
+                    TicketType type = new TicketType(
+                            UUID.randomUUID(),
+                            root.get("name").getAsString(),
+                            root.get("prefix").getAsString(),
+                            root.get("showInSel").getAsBoolean(),
+                            root.get("selText").getAsString(),
+                            root.get("selEmoji").getAsString()
+                    );
+                    ctx.status(HttpStatus.CREATED);
+                    StorageFactory.getInstance().getUsedStorage().addTicketType(type);
+                })
+                .delete("/discord/tickets/types/{name}", ctx -> {
+                    String name = ctx.pathParam("name");
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    TicketType type = TicketType.valueOf(name);
+                    if (type == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.DISCORD_TICKET_TYPE_NOT_FOUND));
+                        return;
+                    }
+                    ctx.status(HttpStatus.OK);
+                    StorageFactory.getInstance().getUsedStorage().deleteTicketType(type);
+                })
+                .post("/discord/tickets/status", ctx -> {
+
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    if (!root.has("name") || !root.has("description") || !root.has("color")) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.MISSING_ARGUMENTS));
+                        return;
+                    }
+                    TicketStatus status = new TicketStatus(
+                            UUID.randomUUID(),
+                            root.get("name").getAsString(),
+                            root.get("description").getAsString(),
+                            DatabaseColorParser.parseColor(root.get("color").getAsString())
+                    );
+                    StorageFactory.getInstance().getUsedStorage().addTicketStatus(status);
+                    ctx.status(HttpStatus.CREATED);
+                    ctx.result(createSuccessResponse());
+                })
+                .delete("/discord/tickets/status", ctx -> {
+                    String name = ctx.pathParam("name");
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    TicketStatus status = TicketStatus.valueOf(name);
+                    if (status == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.DISCORD_TICKET_STATUS_NOT_FOUND));
+                        return;
+                    }
+                    ctx.status(HttpStatus.OK);
+                    StorageFactory.getInstance().getUsedStorage().deleteTicketStatus(status);
+                })
+                //TODO: Add PUT endpoints to edit ticket types and statuses
+                .post("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    DiscordEmbedWrapper embed = GSON.fromJson(root.get("wrapper").getAsJsonObject(), DiscordEmbedWrapper.class);
+                    String channelToSend = root.get("channelID").getAsString();
+                    TextChannel c = DiscordBot.getInstance().getMainGuild().getTextChannelById(channelToSend);
+                    if (c == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.DISCORD_CHANNEL_NOT_FOUND));
+                        return;
+                    }
+                    c.sendMessageEmbeds(embed.toEmbed().build()).queue();
+                })
+                .put("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                 })
-                .patch("/discord/tickets/message", ctx -> {
-
-                })
-                .delete("/discord/tickets/message", ctx -> {
-
+                .delete("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                 })
 
                 // Settings
@@ -666,6 +746,10 @@ public class CaesarServer {
         USER_DISABLED,
         INVALID_HEADER,
         INVALID_SETUP_CODE,
-        NO_PERMISSION
+        NO_PERMISSION,
+        MISSING_ARGUMENTS,
+        DISCORD_TICKET_TYPE_NOT_FOUND,
+        DISCORD_TICKET_STATUS_NOT_FOUND,
+        DISCORD_CHANNEL_NOT_FOUND
     }
 }

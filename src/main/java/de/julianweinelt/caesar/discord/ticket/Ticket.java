@@ -1,7 +1,9 @@
 package de.julianweinelt.caesar.discord.ticket;
 
+import de.julianweinelt.caesar.discord.DiscordBot;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.Getter;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 
 import java.util.UUID;
 
@@ -40,5 +42,9 @@ public class Ticket {
     public void updateHandlingUser(String newHandler) {
         this.handler = newHandler;
         StorageFactory.getInstance().getUsedStorage().handleTicket(this, newHandler);
+    }
+
+    public TextChannel getTextChannel() {
+        return DiscordBot.getInstance().getMainGuild().getTextChannelById(channelID);
     }
 }

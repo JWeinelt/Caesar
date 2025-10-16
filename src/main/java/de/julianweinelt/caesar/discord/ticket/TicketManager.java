@@ -7,12 +7,17 @@ import de.julianweinelt.caesar.exceptions.TicketSystemNotUsedException;
 import de.julianweinelt.caesar.storage.StorageFactory;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
+import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class TicketManager {
@@ -45,18 +50,34 @@ public class TicketManager {
         this.ticketTypes.clear();
         this.statuses.addAll(statuses);
         this.ticketTypes.addAll(ticketTypes);
+        DiscordBot.getInstance().registerListener(new TicketListener());
     }
 
     public void sendTicketCreateMessage(TextChannel channel) {
-
+        MessageCreateAction c = channel.sendMessage("""
+                Use the selection below to create a ticket!
+                """);
+        StringSelectMenu.Builder menu = StringSelectMenu.create("create_ticket");
+        for (TicketType t : ticketTypes) {
+            if (t.showInSel()) menu.addOption(t.selText(), t.name(), Emoji.fromUnicode(t.selEmoji()));
+        }
+        c.setActionRow(menu.build());
+        c.queue();
     }
 
-    public void createTicket(String creator, TicketType type) {
+    public CompletableFuture<Ticket> createTicket(String creator, TicketType type) {
+        CompletableFuture<Ticket> future = new CompletableFuture<>();
         DiscordBot.getInstance().createTicketChannel(creator, type).thenAccept(channel -> {
             Ticket ticket = new Ticket(UUID.randomUUID(), creator, "", channel, getTicketStatus("OPEN"), type);
             tickets.add(ticket);
             StorageFactory.getInstance().getUsedStorage().createTicket(ticket);
+            future.complete(ticket);
+        }).exceptionally(ex -> {
+            log.error("Could not create ticket channel!", ex);
+            future.completeExceptionally(ex);
+            return null;
         });
+        return future;
     }
 
     public TicketStatus getTicketStatus(UUID uuid) {
@@ -71,5 +92,9 @@ public class TicketManager {
     public TicketType getTicketType(UUID uuid) {
         for (TicketType ticketType : ticketTypes) if (ticketType.uniqueID().equals(uuid)) return ticketType;
         return null;
+    }
+
+    public void updateTicketStatus(Ticket ticket, TicketStatus status) {
+        ticket.updateStatus(status);
     }
 }

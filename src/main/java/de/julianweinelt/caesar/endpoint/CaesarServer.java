@@ -15,10 +15,12 @@ import de.julianweinelt.caesar.storage.StorageFactory;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.StringUtil;
+import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.util.JavalinBindException;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -471,11 +473,27 @@ public class CaesarServer {
                     ctx.status(HttpStatus.OK);
                     StorageFactory.getInstance().getUsedStorage().deleteTicketStatus(status);
                 })
-                .patch("/discord/tickets/message", ctx -> {
+                //TODO: Add PUT endpoints to edit ticket types and statuses
+                .post("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    DiscordEmbedWrapper embed = GSON.fromJson(root.get("wrapper").getAsJsonObject(), DiscordEmbedWrapper.class);
+                    String channelToSend = root.get("channelID").getAsString();
+                    TextChannel c = DiscordBot.getInstance().getMainGuild().getTextChannelById(channelToSend);
+                    if (c == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.DISCORD_CHANNEL_NOT_FOUND));
+                        return;
+                    }
+                    c.sendMessageEmbeds(embed.toEmbed().build()).queue();
+                })
+                .put("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
 
                 })
-                .delete("/discord/tickets/message", ctx -> {
-
+                .delete("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                 })
 
                 // Settings
@@ -731,6 +749,7 @@ public class CaesarServer {
         NO_PERMISSION,
         MISSING_ARGUMENTS,
         DISCORD_TICKET_TYPE_NOT_FOUND,
-        DISCORD_TICKET_STATUS_NOT_FOUND
+        DISCORD_TICKET_STATUS_NOT_FOUND,
+        DISCORD_CHANNEL_NOT_FOUND
     }
 }

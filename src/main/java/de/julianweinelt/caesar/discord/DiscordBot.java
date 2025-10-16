@@ -308,22 +308,6 @@ public class DiscordBot {
         return channelID;
     }
 
-    public boolean sendTicketMenuMessage(String id) {
-        TicketManager tM = TicketManager.getInstance();
-        if (tM == null) return  false;
-        TextChannel tc = mainGuild.getTextChannelById(id);
-        if (tc == null) return false;
-        MessageCreateAction action = tc.sendMessageEmbeds(getEmbedWrapped("ticket-creation").toEmbed().build());
-        StringSelectMenu.Builder sm = StringSelectMenu.create("ticket-creation");
-        for (TicketType t : tM.getTicketTypes()) {
-            if (!t.showInSel()) continue;
-            sm.addOption(t.selText(), "type-" + t.name().toLowerCase(), Emoji.fromUnicode(t.selEmoji()));
-        }
-        action.addActionRow(sm.build());
-        action.queue();
-        return true;
-    }
-
     private void startStatusScheduler() {
         AtomicInteger currentMessage = new AtomicInteger();
         statusScheduler.scheduleAtFixedRate(() -> {

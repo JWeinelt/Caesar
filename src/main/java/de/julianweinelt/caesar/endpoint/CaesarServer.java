@@ -5,6 +5,7 @@ import com.google.gson.*;
 import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.auth.*;
 import de.julianweinelt.caesar.discord.DiscordBot;
+import de.julianweinelt.caesar.discord.DiscordConfiguration;
 import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.integration.ServerConnection;
@@ -410,6 +411,9 @@ public class CaesarServer {
                     DiscordBot.getInstance().restart();
                     ctx.result(createSuccessResponse());
                 })
+                .get("/discord/channels", ctx -> {
+                    ctx.result(GSON.toJson(DiscordBot.getInstance().getChannels()));
+                })
                 .post("/discord/tickets/types", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
@@ -494,6 +498,10 @@ public class CaesarServer {
                 })
                 .delete("/discord/embed", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                })
+                .get("/discord/embed", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    ctx.result(GSON.toJson(DiscordConfiguration.getInstance().getEmbeds()));
                 })
 
                 // Settings

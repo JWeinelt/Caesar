@@ -37,6 +37,15 @@ public abstract class Storage {
 
     public Connection conn;
 
+    /**
+     * Constructor for the Storage class.
+     * @param host The hostname of the database server.
+     * @param port The port number of the database server.
+     * @param database The name of the database.
+     * @param user The username to connect to the database.
+     * @param password The password to connect to the database.
+     * @apiNote NEVER hardcode credentials in the code! Use configuration files or environment variables instead.
+     */
     protected Storage(String host, int port, String database, String user, String password) {
         this.host = host;
         this.port = port;
@@ -45,6 +54,12 @@ public abstract class Storage {
         this.password = password;
     }
 
+    /**
+     * Executes the given SQL script on the database connection.
+     * Dangerous statements like DROP, TRUNCATE, DELETE without WHERE clause, and UPDATE without WHERE clause are blocked.
+     * @param script The SQL script to execute.
+     * @return True if the script was executed successfully, false otherwise.
+     */
     public boolean executeScript(String script) {
         if (conn == null) return false;
 
@@ -360,7 +375,7 @@ public abstract class Storage {
      * Gets the player data as a {@link JsonObject} by the given player's UUID.
      * @param player The player's {@link UUID} used in Caesar.
      * @return A {@link JsonObject} representing the player's data.
-     * @apiNote
+     * @implNote
      * The returned JsonObject should look similar to this:
      * <pre>{@code
      * {
@@ -386,7 +401,6 @@ public abstract class Storage {
      * Gets the player's UUID by their Minecraft account name.
      * @param mcName The Minecraft account's name as a {@link String}.
      * @return The player's {@link UUID} used in Caesar.
-     * @apiNote Sometimes
      */
     public abstract UUID getPlayerByAccount(String mcName);
 
@@ -394,7 +408,7 @@ public abstract class Storage {
      * Gets all processes associated with the given player UUID.
      * @param player The player's {@link UUID} used in Caesar.
      * @return A {@link JsonArray} containing all processes related to the player.
-     * @apiNote The returned JsonArray should contain JsonObjects similar to this:
+     * @implNote The returned JsonArray should contain JsonObjects similar to this:
      * <pre>{@code
      * {
      *     "processID": "process-uuid",
@@ -411,7 +425,7 @@ public abstract class Storage {
      * Gets all punishments associated with the given player UUID.
      * @param player The player's {@link UUID} used in Caesar.
      * @return A {@link JsonArray} containing all punishments related to the player.
-     * @apiNote The returned JsonArray should contain JsonObjects similar to this:
+     * @implNote The returned JsonArray should contain JsonObjects similar to this:
      * <pre>{@code
      * {
      *     "RecordID": "punishment-uuid",
@@ -432,7 +446,7 @@ public abstract class Storage {
      * Gets all notes associated with the given player UUID.
      * @param player The player's {@link UUID} used in Caesar.
      * @return A {@link JsonArray} containing all notes related to the player.
-     * @apiNote The returned JsonArray should contain JsonObjects similar to this:
+     * @implNote The returned JsonArray should contain JsonObjects similar to this:
      * <pre>{@code
      * {
      *     "RecordID": "note-uuid",
@@ -490,7 +504,7 @@ public abstract class Storage {
      * Updates the status of the given process in the database.
      * @param process The {@link UUID} of the process.
      * @param status The new {@link UUID} of the process status to set.
-     * @apiNote This method must only update the reference in database. Any further actions (like notifications) are handled elsewhere.
+     * @implNote This method must only update the reference in database. Any further actions (like notifications) are handled elsewhere.
      */
     public abstract void updateProcessStatus(UUID process, UUID status);
 
@@ -499,7 +513,7 @@ public abstract class Storage {
      * @param name The name of the process type as a {@link String}.
      * @param usePattern Whether to use a pattern for the name of the process type.
      * @param pattern The pattern to use for the name of the process type as a {@link String}. Can be null if {@code usePattern} is false.
-     *                @apiNote Patterns can include placeholders like {player}, {date}, etc. to dynamically generate process names.
+     *                Patterns can include placeholders like {player}, {date}, etc. to dynamically generate process names.
      */
     public abstract void createProcessType(String name, boolean usePattern, String pattern);
 
@@ -515,7 +529,7 @@ public abstract class Storage {
     /**
      * Gets all process types from the database.
      * @return A {@link JsonArray} containing all process types.
-     * @apiNote The returned JsonArray should contain JsonObjects similar to this:
+     * @implNote The returned JsonArray should contain JsonObjects similar to this:
      * <pre>{@code
      * {
      *     "id": "process-type-uuid",
@@ -531,7 +545,7 @@ public abstract class Storage {
     /**
      * Gets all process statuses from the database.
      * @return A {@link JsonArray} containing all process statuses.
-     * @apiNote The returned JsonArray should contain JsonObjects similar to this:
+     * @implNote The returned JsonArray should contain JsonObjects similar to this:
      * <pre>{@code
      * {
      *     "id": "process-status-uuid",
@@ -554,7 +568,7 @@ public abstract class Storage {
      * Gets all Minecraft accounts linked to the given player UUID.
      * @param player The player's {@link UUID} used in Caesar.
      * @return A {@link JsonArray} containing all Minecraft account UUIDs linked to the player.
-     * @apiNote The returned JsonArray should contain {@link JsonObject} fields like this:
+     * @implNote The returned JsonArray should contain {@link JsonObject} fields like this:
      * <pre>{@code
      * {
      *     "name": "minecraft-username",

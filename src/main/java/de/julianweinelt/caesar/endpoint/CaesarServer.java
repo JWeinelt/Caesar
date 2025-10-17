@@ -446,6 +446,7 @@ public class CaesarServer {
                 .get("/discord/channels", ctx -> ctx.result(GSON.toJson(DiscordBot.getInstance().getChannels())))
                 .post("/discord/tickets/types", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     if (!root.has("name") || !root.has("prefix") || !root.has("showInSel")
                             || !root.has("selText") || !root.has("selEmoji")) {
@@ -469,6 +470,7 @@ public class CaesarServer {
                 .delete("/discord/tickets/types/{name}", ctx -> {
                     String name = ctx.pathParam("name");
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    if (serviceUnavailable(ctx)) return;
                     TicketType type = TicketType.valueOf(name);
                     if (type == null) {
                         ctx.status(HttpStatus.BAD_REQUEST);
@@ -480,6 +482,7 @@ public class CaesarServer {
                 })
                 .post("/discord/tickets/status", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    if (serviceUnavailable(ctx)) return;
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     if (!root.has("name") || !root.has("description") || !root.has("color")) {
                         ctx.status(HttpStatus.BAD_REQUEST);
@@ -501,6 +504,7 @@ public class CaesarServer {
                 .delete("/discord/tickets/status", ctx -> {
                     String name = ctx.pathParam("name");
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    if (serviceUnavailable(ctx)) return;
                     TicketStatus status = TicketStatus.valueOf(name);
                     if (status == null) {
                         ctx.status(HttpStatus.BAD_REQUEST);
@@ -687,7 +691,7 @@ public class CaesarServer {
                     if (serviceUnavailable(ctx)) return;
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
-                    UUID userID = getUserID(ctx);
+                    UUID userID = getUserByContext(ctx).orElse(null);
                     String note = rootObj.get("note").getAsString();
                     StorageFactory.getInstance().getUsedStorage().createPlayerNote(playerID, userID, note);
                     ctx.result(createSuccessResponse());

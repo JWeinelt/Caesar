@@ -88,4 +88,9 @@ public class DiscordEmbedWrapper {
     public static DiscordEmbedWrapper fromJson(String json) {
         return GSON.fromJson(json, DiscordEmbedWrapper.class);
     }
+
+    @Override
+    public String toString() {
+        return GSON.toJson(this);
+    }
 }

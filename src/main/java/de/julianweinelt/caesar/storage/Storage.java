@@ -10,17 +10,25 @@ import de.julianweinelt.caesar.discord.ticket.TicketStatus;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.util.DatabaseColorParser;
 import lombok.Getter;
+import net.sf.jsqlparser.parser.CCJSqlParserUtil;
+import net.sf.jsqlparser.statement.Statement;
+import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.drop.Drop;
+import net.sf.jsqlparser.statement.truncate.Truncate;
+import net.sf.jsqlparser.statement.update.Update;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.security.SecureRandom;
 import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.UUID;
 
 @Getter
 public abstract class Storage {
+    private static final Logger log = LoggerFactory.getLogger(Storage.class);
     private final String host;
     private final int port;
     private final String database;
@@ -39,12 +47,32 @@ public abstract class Storage {
 
     public boolean executeScript(String script) {
         if (conn == null) return false;
+
         try {
-            conn.createStatement().execute(script);
-        } catch (SQLException e) {
+            List<Statement> statements = CCJSqlParserUtil.parseStatements(script).getStatements();
+
+            for (Statement stmtObj : statements) {
+                if (isDangerous(stmtObj)) {
+                    log.warn("Blocked potentially destructive SQL statement: {}", stmtObj);
+                    return false;
+                }
+
+                try (java.sql.Statement stmt = conn.createStatement()) {
+                    log.debug("Executing SQL: {}", stmtObj);
+                    stmt.execute(stmtObj.toString());
+                }
+            }
+
+            return true;
+        } catch (Exception e) {
+            log.error("Error while executing SQL script: {}", e.getMessage(), e);
             return false;
         }
-        return true;
+    }
+    private boolean isDangerous(Statement stmt) {
+        if (stmt instanceof Drop || stmt instanceof Truncate) return true;
+        if (stmt instanceof Delete del && del.getWhere() == null) return true;
+        return stmt instanceof Update upd && upd.getWhere() == null;
     }
 
 

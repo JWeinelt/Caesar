@@ -1,5 +1,6 @@
 package de.julianweinelt.caesar.endpoint.chat.voice;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,10 @@ public class VoiceServer {
         socket.setSoTimeout(SOCKET_TIMEOUT_MS);
     }
 
+    /**
+     * Starts the voice server loop.
+     */
+    @ApiStatus.Internal
     public void start() {
         log.info("Starting VoiceServer on port {}", socket.getLocalPort());
         byte[] buffer = new byte[4096];
@@ -56,6 +61,9 @@ public class VoiceServer {
         log.info("VoiceServer stopped.");
     }
 
+    /**
+     * Stops the voice server.
+     */
     public void stop() {
         log.info("Received shutdown request.");
         running = false;
@@ -63,6 +71,12 @@ public class VoiceServer {
     }
 
 
+    /**
+     * Handles control messages from clients.
+     * @param client The client's socket address
+     * @param msg The control message
+     * @throws IOException If an I/O error occurs
+     */
     private void handleControl(SocketAddress client, String msg) throws IOException {
         // join:<roomUUID>:<userUUID>
         String[] parts = msg.split(":");

@@ -11,6 +11,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,10 @@ public class TicketManager {
         else return Caesar.getInstance().getTicketManager();
     }
 
+    /**
+     * Executes the given consumer if the TicketManager is available.
+     * @param managerConsumer The consumer to execute with the TicketManager.
+     */
     public static void execute(Consumer<TicketManager> managerConsumer) {
         try {
             getInstance();
@@ -45,6 +50,12 @@ public class TicketManager {
         managerConsumer.accept(getInstance());
     }
 
+    /**
+     * Initializes the TicketManager with the given statuses and ticket types.
+     * @param statuses A list of {@link TicketStatus}'s.
+     * @param ticketTypes A list of {@link TicketType}s.
+     */
+    @ApiStatus.Internal
     public void startUp(List<TicketStatus> statuses, List<TicketType> ticketTypes) {
         this.statuses.clear();
         this.ticketTypes.clear();
@@ -53,6 +64,10 @@ public class TicketManager {
         DiscordBot.getInstance().registerListener(new TicketListener());
     }
 
+    /**
+     * Sends a ticket creation message to the given channel.
+     * @param channel The channel to send the message to.
+     */
     public void sendTicketCreateMessage(TextChannel channel) {
         MessageCreateAction c = channel.sendMessage("""
                 Use the selection below to create a ticket!
@@ -65,6 +80,12 @@ public class TicketManager {
         c.queue();
     }
 
+    /**
+     * Creates a ticket for the given creator and type.
+     * @param creator The creator of the ticket as a Discord ID.
+     * @param type The type of the ticket.
+     * @return A {@link CompletableFuture<Ticket>} that completes with the created Ticket.
+     */
     public CompletableFuture<Ticket> createTicket(String creator, TicketType type) {
         CompletableFuture<Ticket> future = new CompletableFuture<>();
         DiscordBot.getInstance().createTicketChannel(creator, type).thenAccept(channel -> {
@@ -80,20 +101,41 @@ public class TicketManager {
         return future;
     }
 
-    public TicketStatus getTicketStatus(UUID uuid) {
+    /**
+     * Gets a ticket status by its UUID.
+     * @param uuid The UUID of the ticket status.
+     * @return The {@link TicketStatus} or null if not found.
+     */
+    public TicketStatus getTicketStatus(UUID uuid) { //TODO: Improve with Optional
         for (TicketStatus ticketStatus : statuses) if (ticketStatus.uniqueID().equals(uuid)) return ticketStatus;
         return null;
     }
 
-    public TicketStatus getTicketStatus(String name) {
+    /**
+     * Gets a ticket status by its name.
+     * @param name The name of the ticket status.
+     * @return The {@link TicketStatus} or null if not found.
+     */
+    public TicketStatus getTicketStatus(String name) { //TODO: Improve with Optional
         for (TicketStatus ticketStatus : statuses) if (ticketStatus.statusName().equals(name)) return ticketStatus;
         return null;
     }
-    public TicketType getTicketType(UUID uuid) {
+
+    /**
+     * Gets a ticket type by its UUID.
+     * @param uuid The UUID of the ticket type.
+     * @return The {@link TicketType} or null if not found.
+     */
+    public TicketType getTicketType(UUID uuid) { //TODO: Improve with Optional
         for (TicketType ticketType : ticketTypes) if (ticketType.uniqueID().equals(uuid)) return ticketType;
         return null;
     }
 
+    /**
+     * Updates the status of the given ticket.
+     * @param ticket The ticket to update.
+     * @param status The new status.
+     */
     public void updateTicketStatus(Ticket ticket, TicketStatus status) {
         ticket.updateStatus(status);
     }

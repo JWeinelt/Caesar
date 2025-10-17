@@ -1,5 +1,9 @@
 package de.julianweinelt.caesar.endpoint.plugins;
 
+
+/**
+ * A list of supported Minecraft server software. Some of them might be discontinued or experimental.
+ */
 public enum MinecraftServerSoftware {
     SPIGOT,
     @MCSLegacy

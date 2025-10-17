@@ -2,6 +2,15 @@ package de.julianweinelt.caesar.endpoint.minecraft;
 
 import lombok.Getter;
 
+/**
+ * Represents an endpoint for Minecraft plugin APIs.<br>
+ * Contains information about the endpoint's name, base URL, API URL part,<br>
+ * whether an API key is needed, the API key itself, and if it accepts downloads.<br>
+ * <br>
+ * Default endpoints are:<br> {@link MEndpointModrinth} for modrinth.com,<br>
+ * {@link MEndpointCurseForge} for curseforge.com and<br>
+ * {@link MEndpointSpigot} for spigotmc.org.
+ */
 @Getter
 public class MCPluginEndpoint {
     private final String name;

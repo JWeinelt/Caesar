@@ -22,6 +22,10 @@ import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.UUID;
 
+/**
+ * Websocket server for linking the Caesar client with the server.
+ * Handles authentication and Discord linking requests.
+ */
 @Slf4j
 public class CaesarClientLinkServer extends WebSocketServer {
 

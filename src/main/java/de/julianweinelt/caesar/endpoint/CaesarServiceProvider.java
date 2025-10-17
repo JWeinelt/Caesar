@@ -6,6 +6,7 @@ import de.julianweinelt.caesar.Caesar;
 import de.julianweinelt.caesar.storage.Configuration;
 import lombok.Getter;
 import lombok.Setter;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +36,11 @@ public class CaesarServiceProvider {
         return Caesar.getInstance().getServiceProvider();
     }
 
+    /**
+     * Starts the CaesarServiceProvider, connecting to the main endpoint and checking for the latest versions of the client, server, connector, and worker.<br>
+     * This method is intended for internal use only.
+     */
+    @ApiStatus.Internal
     public void start() {
         log.info("Starting CaesarServiceProvider...");
         log.info("Connecting to main endpoint...");

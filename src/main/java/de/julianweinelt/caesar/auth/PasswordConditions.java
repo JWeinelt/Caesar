@@ -26,6 +26,11 @@ public class PasswordConditions {
 
     public PasswordConditions() {}
 
+    /**
+     * Checks if the given password meets the conditions
+     * @param password The password to check as a {@link String}
+     * @return True if the password meets the conditions, false otherwise
+     */
     public boolean checkPassword(String password) {
         String LOWERCASE = "abcdefghijklmnopqrstuvwxyz";
         String LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";

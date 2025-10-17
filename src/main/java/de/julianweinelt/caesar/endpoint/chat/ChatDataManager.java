@@ -31,6 +31,9 @@ public class ChatDataManager extends LoadableManager<List<Chat>> {
         this.chatManager = manager;
     }
 
+    /**
+     * Loads chat data from the storage file. If the file does not exist, it creates a new one by calling {@link #saveData()}.
+     */
     @Override
     public void loadData() {
         if (!file.exists()) {
@@ -46,6 +49,9 @@ public class ChatDataManager extends LoadableManager<List<Chat>> {
         }
     }
 
+    /**
+     * Saves chat data to the storage file. If the encryption key is invalid, it generates a new one and updates the configuration accordingly.
+     */
     @Override
     public void saveData() {
         String secret = Configuration.getInstance().getConnectionAPISecret();

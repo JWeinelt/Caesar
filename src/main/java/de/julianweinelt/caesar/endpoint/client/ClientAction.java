@@ -1,5 +1,8 @@
 package de.julianweinelt.caesar.endpoint.client;
 
+/**
+ * Defines the various actions that can be performed by the client in the Caesar endpoint.
+ */
 public enum ClientAction {
     AUTHENTICATE,
     HANDSHAKE,

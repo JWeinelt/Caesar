@@ -29,11 +29,20 @@ public class MinecraftUUIDFetcher {
 
     private static final ConcurrentHashMap<UUID, JsonObject> cachedNames = new ConcurrentHashMap<>();
 
+    /**
+     * Prepares the cache directory and file. If the directory does not exist, it will be created.<br>
+     * If the cache file does not exist, it will be created with an empty cache.<br>
+     * Usually, the path of the cache is at {@code ./cache/usernames.cache}.
+     */
     public static void prepareCacheDirectory() {
         if (cacheFile.getParentFile().mkdirs()) log.info("Created cache directory");
         if (!cacheFile.exists()) saveCache();
     }
 
+    /**
+     * Loads the cache from the cache file. If the file does not exist, the method returns immediately, making the cached
+     * names potentially empty.
+     */
     public static void loadCache() {
         if (!cacheFile.exists()) return;
 
@@ -56,6 +65,9 @@ public class MinecraftUUIDFetcher {
     }
 
 
+    /**
+     * Saves the current cache to the cache file. Entries that have expired will be removed before saving.
+     */
     public static void saveCache() {
         synchronized (cachedNames) {
             cachedNames.entrySet().removeIf(entry -> System.currentTimeMillis() > entry.getValue().get("valid").getAsLong());
@@ -67,12 +79,23 @@ public class MinecraftUUIDFetcher {
         }
     }
 
+    /**
+     * Removes expired entries from the cache based on their TTL (time-to-live).
+     */
     private static void checkTTL() {
         synchronized (cachedNames) {
             cachedNames.entrySet().removeIf(entry -> System.currentTimeMillis() > entry.getValue().get("valid").getAsLong());
         }
     }
 
+    /**
+     * Fetches the Minecraft username associated with the given UUID.<br>
+     * If the username is cached and valid, it will be returned from the cache.<br>
+     * Otherwise, it will query the Mojang API to retrieve the username.<br>
+     * If the Mojang API rate limit is exceeded, it will fall back to PlayerDB API.<br>
+     * @param uuid The {@link UUID} of the Minecraft player.
+     * @return An {@link Optional<String>} containing the username if found, or empty if not found or an error occurred.
+     */
     public static Optional<String> getByID(UUID uuid) {
         if (cachedNames.containsKey(uuid)) return Optional.of(cachedNames.get(uuid).get("username").getAsString());
 
@@ -105,11 +128,22 @@ public class MinecraftUUIDFetcher {
         return Optional.empty();
     }
 
+    /**
+     * Asynchronous version of {@link #getByID(UUID)}.
+     * @param uuid The {@link UUID} of the Minecraft player.
+     * @return A {@link CompletableFuture} that will complete with an {@link Optional<String>} containing the username
+     * if found, or empty if not found or an error occurred.
+     */
     public static CompletableFuture<Optional<String>> getByIDASync(UUID uuid) {
         return CompletableFuture.supplyAsync(() -> getByID(uuid));
     }
 
-    private static Optional<String> getByIDPlayerDB(UUID uuid) {
+    /**
+     * Fetches the Minecraft username associated with the given UUID using PlayerDB API as a fallback.<br>
+     * @param uuid The {@link UUID} of the Minecraft player.
+     * @return An {@link Optional<String>} containing the username if found, or empty if not found or an error occurred.
+     */
+    private static Optional<String> getByIDPlayerDB(UUID uuid) { //TODO: Add asynchronous version
         // PlayerDB does not have rate limits and is being used as a fallback if the rate limit of Mojang was exceeded.
         try {
             HttpRequest request = HttpRequest.newBuilder()

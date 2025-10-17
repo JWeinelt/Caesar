@@ -54,7 +54,7 @@ public class Caesar {
 
     @Getter
     private static Caesar instance;
-    public static String systemVersion = "0.2.0";
+    public static String systemVersion = "0.2.1";
 
     public static String systemLanguage = "en";
 

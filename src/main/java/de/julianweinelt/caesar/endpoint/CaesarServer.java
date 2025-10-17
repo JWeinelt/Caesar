@@ -24,6 +24,7 @@ import io.javalin.http.UploadedFile;
 import io.javalin.util.JavalinBindException;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +59,12 @@ public class CaesarServer {
         isSetupMode = setupMode;
     }
 
+    /**
+     * Starts the CaesarServer, initializing all endpoints and handlers.<br>
+     * This method is intended for internal use only.
+     * @throws JavalinBindException if the server fails to bind to the specified port.
+     */
+    @ApiStatus.Internal
     public void start() throws JavalinBindException {
         app = Javalin.create(javalinConfig -> javalinConfig.showJavalinBanner = false)
                 .before(ctx -> ctx.contentType("application/json"))

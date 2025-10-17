@@ -5,6 +5,9 @@ import lombok.Setter;
 
 import java.util.UUID;
 
+/**
+ * Wrapper class for a Minecraft plugin containing its internal ID, rating and compatibility for particular versions.
+ */
 @Getter
 @Setter
 public class MinecraftPlugin {

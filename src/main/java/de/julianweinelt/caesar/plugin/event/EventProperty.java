@@ -26,16 +26,15 @@ public class EventProperty {
     /**
      * Retrieves the stored value as a specified type using Java's type casting.
      *
-     * @param {@link <T>}  The expected return type.
      * @param type The class of the expected return type.
      * @return The stored value cast to the specified type.
      * @throws ClassCastException if the stored value is not of the requested type.
-     *
+     * <p></p>
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty(42);
      *     int intValue = property.getAs(Integer.class); // Returns 42
-     * </pre>
+     * }</pre>
      */
     public <T> T getAs(Class<T> type) {
         return type.cast(value); // Sicherer Cast mit Java Reflection
@@ -47,12 +46,12 @@ public class EventProperty {
      *
      * @return The stored value as a String.
      * @throws ClassCastException if the value cannot be cast to a String.
-     *
+     * <p></p>
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty("Hello");
      *     String text = property.asString(); // Returns "Hello"
-     * </pre>
+     * }</pre>
      */
     public String asString() {
         return getAs(String.class);
@@ -65,10 +64,10 @@ public class EventProperty {
      * @throws ClassCastException if the value cannot be cast to an Integer.
      *
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty(100);
      *     int number = property.asInt(); // Returns 100
-     * </pre>
+     * }</pre>
      */
     public int asInt() {
         return getAs(Integer.class);
@@ -81,10 +80,10 @@ public class EventProperty {
      * @throws ClassCastException if the value cannot be cast to a Boolean.
      *
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty(true);
      *     boolean flag = property.asBoolean(); // Returns true
-     * </pre>
+     * }</pre>
      */
     public boolean asBoolean() {
         return getAs(Boolean.class);
@@ -97,10 +96,10 @@ public class EventProperty {
      * @throws ClassCastException if the value cannot be cast to a Float.
      *
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty(3.14f);
      *     float pi = property.asFloat(); // Returns 3.14f
-     * </pre>
+     * }</pre>
      */
     public float asFloat() {
         return getAs(Float.class);
@@ -113,10 +112,10 @@ public class EventProperty {
      * @throws ClassCastException if the value cannot be cast to a Double.
      *
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty(2.718);
      *     double e = property.asDouble(); // Returns 2.718
-     * </pre>
+     * }</pre>
      */
     public double asDouble() {
         return getAs(Double.class);
@@ -127,10 +126,10 @@ public class EventProperty {
      * @return The stored value as an Object.
      *
      * Example:
-     * <pre>
+     * <pre>{@code
      *     EventProperty property = new EventProperty("Dynamic Value");
      *     Object rawValue = property.getRaw(); // Returns "Dynamic Value"
-     * </pre>
+     * }</pre>
      */
     public Object getRaw() {
         return value;

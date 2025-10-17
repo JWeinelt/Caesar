@@ -1,6 +1,7 @@
 package de.julianweinelt.caesar.plugin;
 
 import com.google.gson.Gson;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +19,12 @@ public class PluginScanner {
 
     private final File pluginFolder = new File("plugins");
 
+    /**
+     * Scans the plugin folder for valid plugin JARs and reads their configurations.
+     * @return A list of PluginDescriptor objects representing the found plugins.
+     * @apiNote This method is intended for internal use only.
+     */
+    @ApiStatus.Internal
     public List<PluginDescriptor> scan() {
         List<PluginDescriptor> descriptors = new ArrayList<>();
         if (!pluginFolder.exists()) if (pluginFolder.mkdirs()) log.info("PluginFolder created");

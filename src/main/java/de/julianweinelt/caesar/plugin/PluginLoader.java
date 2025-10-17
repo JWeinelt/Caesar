@@ -2,6 +2,7 @@ package de.julianweinelt.caesar.plugin;
 
 import com.google.gson.Gson;
 import de.julianweinelt.caesar.plugin.event.Event;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +31,9 @@ public class PluginLoader {
         registerEvents();
     }
 
+    /**
+     * Registers plugin-related events in the registry.
+     */
     private void registerEvents() {
         registry.registerEvents(
                 "PluginLoadEvent",
@@ -39,6 +43,9 @@ public class PluginLoader {
         );
     }
 
+    /**
+     * Loads all plugins found by the scanner, resolving dependencies and load order.
+     */
     public void loadAll() {
         List<PluginDescriptor> descriptors = scanner.scan();
         Map<String, PluginConfiguration> pluginConfigs = new HashMap<>();
@@ -62,6 +69,12 @@ public class PluginLoader {
         }
     }
 
+    /**
+     * Unloads a plugin by name.
+     * @param name The name of the plugin to unload.
+     * @apiNote Using this method is experimental and may lead to issues with dependencies.
+     */
+    @ApiStatus.Experimental
     public void unload(String name) {
         CPlugin plugin = registry.getPlugin(name);
         if (plugin == null) return;
@@ -71,6 +84,12 @@ public class PluginLoader {
         log.info("Unloaded plugin: {}", name);
     }
 
+    /**
+     * Loads a plugin by its name.
+     * @param name The name of the plugin to load.
+     * @apiNote Using this method is experimental and may lead to issues with dependencies.
+     */
+    @ApiStatus.Experimental
     public void loadPlugin(String name) {
         if (pluginFileNames.containsKey(name)) name = pluginFileNames.get(name);
         File pluginFile = new File("plugins", name.endsWith(".jar") ? name : name + ".jar");
@@ -135,6 +154,11 @@ public class PluginLoader {
         }
     }
 
+    /**
+     * Resolves the load order of plugins based on their dependencies using topological sorting.
+     * @param configs A map of plugin names to their configurations.
+     * @return A list of plugin names in the order they should be loaded.
+     */
     private List<String> resolveLoadOrder(Map<String, PluginConfiguration> configs) {
         List<String> loadOrder = new ArrayList<>();
         Set<String> visited = new HashSet<>();
@@ -149,6 +173,14 @@ public class PluginLoader {
         return loadOrder;
     }
 
+    /**
+     * Helper method for topological sorting of plugins.
+     * @param plugin The current plugin being visited.
+     * @param configs A map of plugin names to their configurations.
+     * @param loadOrder The list to store the load order.
+     * @param visited The set of already visited plugins.
+     * @param visiting The set of currently visiting plugins (for cycle detection).
+     */
     private void visit(String plugin,
                        Map<String, PluginConfiguration> configs,
                        List<String> loadOrder,

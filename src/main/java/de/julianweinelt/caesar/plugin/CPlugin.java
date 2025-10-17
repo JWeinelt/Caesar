@@ -65,7 +65,19 @@ public abstract class CPlugin {
         return LoggerFactory.getLogger(this.getClass());
     }
 
+    /**
+     * Called when the plugin is being enabled, only if the plugin is running as an extension for CaesarConnector.
+     */
     public void onBukkitEnable() {}
+
+    /**
+     * Called when the plugin is being disabled, only if the plugin is running as an extension for CaesarConnector.
+     */
     public void onBukkitDisable() {}
+
+    /**
+     * Called when the Bukkit server has finished loading, only if the plugin is running as an extension for CaesarConnector.
+     * <br><b>IMPORTANT:</b> Do not call any API methods in this method, as they may not be available yet!
+     */
     public void onBukkitLoad() {}
 }

@@ -11,6 +11,12 @@ public class PluginClassLoaderFactory {
         this.isolated = isolated;
     }
 
+    /**
+     * Creates a URLClassLoader for the given plugin URL.
+     * @param pluginUrl {@link URL} of the plugin JAR
+     * @param parent Parent {@link ClassLoader}
+     * @return {@link URLClassLoader} instance
+     */
     public URLClassLoader createLoader(URL pluginUrl, ClassLoader parent) {
         return isolated
                 ? new URLClassLoader(new URL[]{pluginUrl}, null)

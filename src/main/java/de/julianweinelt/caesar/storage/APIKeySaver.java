@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
-import de.julianweinelt.caesar.util.JWTUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.crypto.Cipher;

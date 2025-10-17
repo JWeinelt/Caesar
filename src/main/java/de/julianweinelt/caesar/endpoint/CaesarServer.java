@@ -412,9 +412,7 @@ public class CaesarServer {
                     DiscordBot.getInstance().restart();
                     ctx.result(createSuccessResponse());
                 })
-                .get("/discord/channels", ctx -> {
-                    ctx.result(GSON.toJson(DiscordBot.getInstance().getChannels()));
-                })
+                .get("/discord/channels", ctx -> ctx.result(GSON.toJson(DiscordBot.getInstance().getChannels())))
                 .post("/discord/tickets/types", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
@@ -535,12 +533,11 @@ public class CaesarServer {
                     String id = root.get("internalID").getAsString();
                     DiscordEmbedWrapper embed = GSON.fromJson(root.get("wrapper").getAsJsonObject(), DiscordEmbedWrapper.class);
                     AtomicInteger updated = new AtomicInteger();
-                    DiscordConfiguration.getInstance().getMessagesByEmbedID(id).forEach(data -> {
-                        data.toMessage().ifPresent(msg -> {
-                            msg.editMessageEmbeds(embed.toEmbed().build()).queue();
-                            updated.getAndIncrement();
-                        });
-                    });
+                    DiscordConfiguration.getInstance().getMessagesByEmbedID(id).forEach(data ->
+                            data.toMessage().ifPresent(msg -> {
+                                msg.editMessageEmbeds(embed.toEmbed().build()).queue();
+                        updated.getAndIncrement();
+                    }));
 
                     ctx.status(HttpStatus.CREATED);
                     JsonObject o = new JsonObject();

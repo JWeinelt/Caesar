@@ -17,7 +17,14 @@ import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
-
+/**
+ * Manages the downloading and execution of database version scripts.
+ * These scripts are used to update table formats and other database-related changes when a new version of Caesar is
+ * being installed.
+ *
+ * @author Julian Weinelt
+ * @version 1.0
+ */
 public class DatabaseVersionManager {
     private static final Logger log = LoggerFactory.getLogger(DatabaseVersionManager.class);
 
@@ -27,6 +34,10 @@ public class DatabaseVersionManager {
         return Caesar.getInstance().getDbVersionManager();
     }
 
+    /**
+     * Starts the download and execution of database scripts up to the specified version.
+     * @param version The target version to update the database to.
+     */
     public void startDownload(String version) {
         Semver v = new Semver(version);
         List<String> all = getAllVersions();
@@ -51,6 +62,11 @@ public class DatabaseVersionManager {
         }
     }
 
+    /**
+     * Loads the SQL script for the specified version from the local file system.
+     * @param version The version of the SQL script to load.
+     * @return The SQL script as a String.
+     */
     private String loadSQLScript(String version) {
         try (BufferedReader br = new BufferedReader(new FileReader(new File(new File("update"), version + ".sql")))) {
             String line;
@@ -63,6 +79,10 @@ public class DatabaseVersionManager {
         return "";
     }
 
+    /**
+     * Downloads the SQL script for the specified version from the remote server.
+     * @param version The version of the SQL script to download.
+     */
     public void downloadVersion(String version) {
         File folder = new File("update");
         try {
@@ -88,8 +108,11 @@ public class DatabaseVersionManager {
         }
     }
 
+    /**
+     * Retrieves a list of all available database versions from the remote server.
+     * @return A list of version strings.
+     */
     public List<String> getAllVersions() {
-
         try {
             HttpClient client = HttpClient.newHttpClient();
 

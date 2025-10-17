@@ -724,7 +724,7 @@ public class CaesarServer {
                     String comment = "Not provided";
                     if (rootObj.has("comment")) comment = rootObj.get("comment").getAsString();
                     UUID processID = StorageFactory.getInstance().getUsedStorage().createProcess(
-                            type, status, userID, Optional.of(comment));
+                            type, status, userID, comment);
 
                     JsonObject o = new JsonObject();
                     o.addProperty("success", true);

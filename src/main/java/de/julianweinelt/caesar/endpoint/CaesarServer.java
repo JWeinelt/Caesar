@@ -702,8 +702,10 @@ public class CaesarServer {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID noteID = UUID.fromString(rootObj.get("noteID").getAsString());
                     UUID playerID = UUID.fromString(rootObj.get("playerID").getAsString());
+                    UUID userID = getUserByContext(ctx).orElse(null);
+                    if (userID == null) return; //TODO: Add handler for such cases
                     log.debug(noteID.toString());
-                    StorageFactory.getInstance().getUsedStorage().deletePlayerNote(playerID, getUserID(ctx), noteID);
+                    StorageFactory.getInstance().getUsedStorage().deletePlayerNote(playerID, userID, noteID);
                     ctx.result(createSuccessResponse());
                 })
 
@@ -717,10 +719,12 @@ public class CaesarServer {
                     JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     UUID type = UUID.fromString(rootObj.get("processType").getAsString());
                     UUID status = UUID.fromString(rootObj.get("processStatus").getAsString());
+                    UUID userID = getUserByContext(ctx).orElse(null);
+                    if (userID == null) return; //TODO: Add handler for such cases
                     String comment = "Not provided";
                     if (rootObj.has("comment")) comment = rootObj.get("comment").getAsString();
                     UUID processID = StorageFactory.getInstance().getUsedStorage().createProcess(
-                            type, status, getUserID(ctx), Optional.of(comment));
+                            type, status, userID, Optional.of(comment));
 
                     JsonObject o = new JsonObject();
                     o.addProperty("success", true);

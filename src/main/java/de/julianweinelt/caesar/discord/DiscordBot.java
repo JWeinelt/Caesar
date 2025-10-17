@@ -150,7 +150,9 @@ public class DiscordBot {
 
     public JsonArray getWaitingRoom() {
         JsonArray array = new JsonArray();
-        for (Member m : mainGuild.getVoiceChannelById(config.getWaitingRoom()).getMembers()) {
+        VoiceChannel vc = mainGuild.getVoiceChannelById(config.getWaitingRoom());
+        if (vc == null) return array;
+        for (Member m : vc.getMembers()) {
             JsonObject obj = new JsonObject();
             obj.addProperty("name", m.getUser().getName());
             obj.addProperty("avatar", m.getUser().getAvatarUrl());

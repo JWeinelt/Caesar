@@ -6,6 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.storage.Configuration;
 import de.julianweinelt.caesar.storage.LocalStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,7 @@ public class JWTUtil {
     public String supportToken(UUID user) {
         Calendar calendar = Calendar.getInstance();
         Date now = calendar.getTime();
-        calendar.add(Calendar.MINUTE, 30); //TODO: Make configurable
+        calendar.add(Calendar.MINUTE, Configuration.getInstance().getSupportTokenExpirationTime());
         Date expiration = calendar.getTime();
         return JWT.create()
                 .withSubject("support")

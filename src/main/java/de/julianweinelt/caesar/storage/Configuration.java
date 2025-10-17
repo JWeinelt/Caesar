@@ -69,6 +69,7 @@ public class Configuration {
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private final String _INFO2 = "This value is defined in minutes.";
     private int tokenExpirationTime = 360*4; // Default: 24 hours
+    private int supportTokenExpirationTime = 30; // Default: 30 minutes
 
     @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
     private String _INFO_SECRET = "Changing this value will invalidate ALL connections in your system.";

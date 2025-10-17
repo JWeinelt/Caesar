@@ -604,7 +604,8 @@ public class MySQLStorageProvider extends Storage {
         try {
             PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_types " +
                     "(TypeID, TypeName, Prefix, ShowInSelection, SelectionEmoji, SelectionText) " +
-                    "VALUES (?, ?, ?, ?, ?, ?)");
+                    "VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE TypeName = ?, " +
+                    "Prefix = ?, ShowInSelection = ?, SelectionEmoji = ?, SelectionText = ?");
 
             pS.setString(1, ticketType.uniqueID().toString());
             pS.setString(2, ticketType.name());
@@ -612,6 +613,11 @@ public class MySQLStorageProvider extends Storage {
             pS.setBoolean(4, ticketType.showInSel());
             pS.setString(5, ticketType.selEmoji());
             pS.setString(6, ticketType.selText());
+            pS.setString(7, ticketType.name());
+            pS.setString(8, ticketType.prefix());
+            pS.setBoolean(9, ticketType.showInSel());
+            pS.setString(10, ticketType.selEmoji());
+            pS.setString(11, ticketType.selText());
             pS.execute();
         } catch (SQLException e) {
             log.error("Failed to add ticket type: {}", e.getMessage());
@@ -633,11 +639,15 @@ public class MySQLStorageProvider extends Storage {
     public void addTicketStatus(TicketStatus ticketStatus) {
         try {
             PreparedStatement pS = conn.prepareStatement("INSERT INTO ticket_status_names" +
-                    " (UUID, StatusName, Color, Description) VALUES (?, ?, ?, ?)");
+                    " (UUID, StatusName, Color, Description) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE StatusName = ?, " +
+                    "Color = ?, Description = ?");
             pS.setString(1, ticketStatus.uniqueID().toString());
             pS.setString(2, ticketStatus.statusName());
             pS.setString(3, DatabaseColorParser.parseColor(ticketStatus.statusColor()));
             pS.setString(4, ticketStatus.statusDescription());
+            pS.setString(5, ticketStatus.statusName());
+            pS.setString(6, DatabaseColorParser.parseColor(ticketStatus.statusColor()));
+            pS.setString(7, ticketStatus.statusDescription());
             pS.execute();
         } catch (SQLException e) {
             log.error("Failed to add ticket status: {}", e.getMessage());

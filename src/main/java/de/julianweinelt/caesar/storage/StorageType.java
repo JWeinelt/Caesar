@@ -33,7 +33,7 @@ public record StorageType(String name, int defaultPort, Function<Configuration, 
      * @return The corresponding StorageType, or null if not found.
      */
     public static StorageType get(String name) {
-        return REGISTERED_TYPES.get(name.toUpperCase());
+        return REGISTERED_TYPES.getOrDefault(name.toUpperCase(), null);
     }
 
     /**

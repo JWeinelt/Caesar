@@ -50,6 +50,10 @@ public class LocalStorage {
     }
 
 
+    /**
+     * Loads the local storage from the config file.<br><br>
+     * DO NOT CALL THIS METHOD MANUALLY!
+     */
     public void loadData() {
         log.info("Loading local storage...");
         if (!configFile.exists()) saveData();
@@ -76,10 +80,18 @@ public class LocalStorage {
     }
 
 
+    /**
+     * Saves the local storage to the config file.<br>
+     * Calls {@link #saveData(boolean)} internally, where {@code silent} is set to {@code false}.
+     */
     public void saveData() {
         saveData(false);
     }
 
+    /**
+     * Saves the local storage to the config file.
+     * @param silent Define whether to log the save action or not.
+     */
     public void saveData(boolean silent) {
         try (FileWriter writer = new FileWriter(configFile)) {
             writer.write(GSON.toJson(data));
@@ -90,7 +102,13 @@ public class LocalStorage {
     }
 
 
-
+    /**
+     * Gets the profile image of a user.
+     * It internally updates all response properties and bodies to make the {@link Context} return the image data.
+     * @param ctx The {@link Context} of the HTTP request.
+     * @param user The {@link UUID} of the user.
+     * @throws Exception If an I/O error occurs reading the file or determining its MIME type.
+     */
     public void getProfileImage(Context ctx, UUID user) throws Exception {
         Path path = new File(profilePath, user.toString()).toPath();
         if (!Files.exists(path)) {
@@ -140,6 +158,15 @@ public class LocalStorage {
         log.info("Connection data saved.");
     }
 
+    /**
+     * Loads a JSON file from the data folder and deserializes it into an object of the specified type.
+     * @param fileName The name of the file located in the {@code data} folder (without .json extension)
+     * @param type The {@link Type} of the object to deserialize into. Can be anything which is serializable.<br>
+     *             See <a href="https://docs.caesarnet.cloud/docs/Developer%20Documentation/Creating%20Plugins/Creating-configuration-files">Developer Docs</a>
+     *             for more information about that.
+     * @return The deserialized object, or {@code null} if an error occurred.
+     * @param <T> The type of the object to deserialize into.
+     */
     public <T> T load(String fileName, Type type) {
         try (BufferedReader br = new BufferedReader(new FileReader(new File("data", fileName + ".json")))) {
             StringBuilder jsonStringBuilder = new StringBuilder();
@@ -154,6 +181,11 @@ public class LocalStorage {
         }
     }
 
+    /**
+     * Saves an object as a JSON file in the data folder.
+     * @param object The object to serialize and save.
+     * @param fileName The name of the file to save the object to (without .json extension).
+     */
     public void save(Object object, String fileName) {
 
         try (FileWriter writer = new FileWriter(new File("data", fileName + ".json"))) {

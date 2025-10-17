@@ -804,7 +804,7 @@ public class MySQLStorageProvider extends Storage {
     }
 
     @Override
-    public UUID createProcess(UUID type, UUID initialStatus, UUID creator, Optional<String> comment) {
+    public UUID createProcess(UUID type, UUID initialStatus, UUID creator, String comment) {
         if (!checkConnection()) return null;
         UUID process = UUID.randomUUID();
         try {
@@ -815,7 +815,7 @@ public class MySQLStorageProvider extends Storage {
             pS.setString(2, creator.toString());
             pS.setString(3, initialStatus.toString());
             pS.setString(4, type.toString());
-            pS.setString(5, comment.orElse(""));
+            pS.setString(5, comment);
             pS.execute();
         } catch (SQLException e) {
             log.error("Failed to create process for type {}: {}", type.toString(), e.getMessage());

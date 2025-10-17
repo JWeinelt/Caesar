@@ -30,6 +30,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class CaesarServer {
@@ -415,7 +416,7 @@ public class CaesarServer {
                     ctx.result(GSON.toJson(DiscordBot.getInstance().getChannels()));
                 })
                 .post("/discord/tickets/types", ctx -> {
-                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     if (!root.has("name") || !root.has("prefix") || !root.has("showInSel")
                             || !root.has("selText") || !root.has("selEmoji")) {
@@ -423,8 +424,10 @@ public class CaesarServer {
                         ctx.result(createErrorResponse(ErrorType.MISSING_ARGUMENTS));
                         return;
                     }
+                    TicketType exist = TicketType.valueOf(root.get("name").getAsString());
+                    UUID id = exist != null ? exist.uniqueID() : UUID.randomUUID();
                     TicketType type = new TicketType(
-                            UUID.randomUUID(),
+                            id,
                             root.get("name").getAsString(),
                             root.get("prefix").getAsString(),
                             root.get("showInSel").getAsBoolean(),
@@ -436,7 +439,7 @@ public class CaesarServer {
                 })
                 .delete("/discord/tickets/types/{name}", ctx -> {
                     String name = ctx.pathParam("name");
-                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     TicketType type = TicketType.valueOf(name);
                     if (type == null) {
                         ctx.status(HttpStatus.BAD_REQUEST);
@@ -447,16 +450,17 @@ public class CaesarServer {
                     StorageFactory.getInstance().getUsedStorage().deleteTicketType(type);
                 })
                 .post("/discord/tickets/status", ctx -> {
-
-                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
                     if (!root.has("name") || !root.has("description") || !root.has("color")) {
                         ctx.status(HttpStatus.BAD_REQUEST);
                         ctx.result(createErrorResponse(ErrorType.MISSING_ARGUMENTS));
                         return;
                     }
+                    TicketStatus exists = TicketStatus.valueOf(root.get("name").getAsString());
+                    UUID id = exists != null ? exists.uniqueID() : UUID.randomUUID();
                     TicketStatus status = new TicketStatus(
-                            UUID.randomUUID(),
+                            id,
                             root.get("name").getAsString(),
                             root.get("description").getAsString(),
                             DatabaseColorParser.parseColor(root.get("color").getAsString())
@@ -467,7 +471,7 @@ public class CaesarServer {
                 })
                 .delete("/discord/tickets/status", ctx -> {
                     String name = ctx.pathParam("name");
-                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return; //TODO: Check if permission exists
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     TicketStatus status = TicketStatus.valueOf(name);
                     if (status == null) {
                         ctx.status(HttpStatus.BAD_REQUEST);
@@ -477,7 +481,6 @@ public class CaesarServer {
                     ctx.status(HttpStatus.OK);
                     StorageFactory.getInstance().getUsedStorage().deleteTicketStatus(status);
                 })
-                //TODO: Add PUT endpoints to edit ticket types and statuses
                 .post("/discord/embed", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
@@ -491,17 +494,59 @@ public class CaesarServer {
                     }
                     c.sendMessageEmbeds(embed.toEmbed().build()).queue();
                 })
-                .put("/discord/embed", ctx -> {
+                .delete("/discord/embed/{name}", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
-                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
-
-                })
-                .delete("/discord/embed", ctx -> {
-                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    String name = ctx.pathParam("name");
+                    DiscordConfiguration.getInstance().getMessagesByEmbedID(name).forEach(data -> {
+                        data.toMessage().ifPresent(msg -> msg.delete().queue());
+                        DiscordConfiguration.getInstance().deleteEmbedByID(name);
+                        ctx.result(createSuccessResponse());
+                    });
                 })
                 .get("/discord/embed", ctx -> {
                     if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
                     ctx.result(GSON.toJson(DiscordConfiguration.getInstance().getEmbeds()));
+                })
+                .get("/discord/embed/{name}", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    String name = ctx.pathParam("name");
+                    DiscordEmbedWrapper embed = DiscordConfiguration.getInstance().getEmbedByID(name);
+                    if (embed == null) {
+                        ctx.status(HttpStatus.BAD_REQUEST);
+                        ctx.result(createErrorResponse(ErrorType.DISCORD_EMBED_NOT_FOUND));
+                        return;
+                    }
+                    JsonObject o = new JsonObject();
+                    o.addProperty("success", true);
+                    o.add("wrapper", JsonParser.parseString(embed.toString()).getAsJsonObject());
+                    JsonArray messages = new JsonArray();
+                    DiscordConfiguration.getInstance().getMessagesByEmbedID(name).forEach(data -> {
+                        JsonObject a = new JsonObject();
+                        a.addProperty("channelID", data.channelID());
+                        a.addProperty("messageID", data.messageID());
+                        messages.add(a);
+                    });
+                    o.add("messages", messages);
+                    ctx.result(o.toString());
+                })
+                .post("/discord/embed/edit", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String id = root.get("internalID").getAsString();
+                    DiscordEmbedWrapper embed = GSON.fromJson(root.get("wrapper").getAsJsonObject(), DiscordEmbedWrapper.class);
+                    AtomicInteger updated = new AtomicInteger();
+                    DiscordConfiguration.getInstance().getMessagesByEmbedID(id).forEach(data -> {
+                        data.toMessage().ifPresent(msg -> {
+                            msg.editMessageEmbeds(embed.toEmbed().build()).queue();
+                            updated.getAndIncrement();
+                        });
+                    });
+
+                    ctx.status(HttpStatus.CREATED);
+                    JsonObject o = new JsonObject();
+                    o.addProperty("success", true);
+                    o.addProperty("updated", updated.get());
+                    ctx.result(o.toString());
                 })
 
                 // Settings
@@ -758,6 +803,8 @@ public class CaesarServer {
         MISSING_ARGUMENTS,
         DISCORD_TICKET_TYPE_NOT_FOUND,
         DISCORD_TICKET_STATUS_NOT_FOUND,
-        DISCORD_CHANNEL_NOT_FOUND
+        DISCORD_CHANNEL_NOT_FOUND,
+        DISCORD_EMBED_NEVER_SENT,
+        DISCORD_EMBED_NOT_FOUND
     }
 }

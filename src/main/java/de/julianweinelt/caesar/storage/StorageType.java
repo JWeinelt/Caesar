@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.storage;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,6 +34,8 @@ public record StorageType(String name, int defaultPort, Function<Configuration, 
      * @param name The name of the storage type to retrieve.
      * @return The corresponding StorageType, or null if not found.
      */
+    //TODO: Change to Optional<StorageType>
+    @Nullable
     public static StorageType get(String name) {
         return REGISTERED_TYPES.getOrDefault(name.toUpperCase(), null);
     }

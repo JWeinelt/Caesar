@@ -3,7 +3,6 @@ package de.julianweinelt.caesar.discord;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import de.julianweinelt.caesar.Caesar;
-import de.julianweinelt.caesar.discord.ticket.TicketManager;
 import de.julianweinelt.caesar.discord.ticket.TicketType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelType;
 import de.julianweinelt.caesar.discord.wrapping.ChannelWrapper;
@@ -27,9 +26,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -294,7 +291,9 @@ public class DiscordBot {
         if (cMember == null) return CompletableFuture.failedFuture(new IllegalStateException("Member not found."));
         CompletableFuture<String> channelID = new CompletableFuture<>();
         String channelName = type.prefix() + "-" + creator;
-        mainGuild.getCategoryById(config.getTicketCategory()).createTextChannel(channelName)
+        Category cat = mainGuild.getCategoryById(config.getTicketCategory());
+        if (cat == null) return CompletableFuture.failedFuture(new IllegalStateException("Category not found."));
+        cat.createTextChannel(channelName)
                 .addPermissionOverride(mainGuild.getPublicRole(), null, EnumSet.of(Permission.VIEW_CHANNEL))
                 .addPermissionOverride(cMember, EnumSet.of(Permission.VIEW_CHANNEL,
                         Permission.MESSAGE_SEND), null)

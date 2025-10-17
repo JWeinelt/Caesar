@@ -20,6 +20,7 @@ import de.julianweinelt.caesar.util.wrapping.DiscordEmbedWrapper;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
+import io.javalin.http.UploadedFile;
 import io.javalin.util.JavalinBindException;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
@@ -27,7 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.*;
@@ -346,6 +351,31 @@ public class CaesarServer {
                     for (JsonElement e : permissions) u.addPermission(e.getAsString());
                     StorageFactory.getInstance().getUsedStorage().updateUser(u);
                     ctx.result(createSuccessResponse("Permissions added successfully"));
+                })
+
+                .get("/user/profimg", ctx -> {
+                    JsonObject rootObj = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    UUID id = UUID.fromString(rootObj.get("userid").getAsString());
+                    LocalStorage.getInstance().getProfileImage(ctx, id);
+                })
+                .post("/user/profimg/{uuid}", ctx -> {
+                    String uuid = ctx.pathParam("uuid");
+                    if (getUserByContext(ctx).isEmpty() || serviceUnavailable(ctx)) return;
+                    if (!getUserByContext(ctx).get().equals(UUID.fromString(uuid))
+                            && lackingPermissions(ctx, "caesar.admin.user.edit")) return;
+                    File profilePath = new File("data/profiles/");
+                    UploadedFile file = ctx.uploadedFile("file");
+                    if (file == null) {
+                        ctx.status(400).result(createErrorResponse(ErrorType.INVALID_DATA));
+                        return;
+                    }
+
+                    Path path = new File(profilePath, uuid).toPath();
+                    Files.createDirectories(path.getParent());
+                    try (InputStream is = file.content()) {
+                        Files.copy(is, path);
+                    }
+                    ctx.result(createSuccessResponse());
                 })
 
                 .get("/permission", ctx -> ctx.result(GSON.toJson(UserManager.getInstance().getPermissions())))
@@ -737,21 +767,21 @@ public class CaesarServer {
         app.stop();
     }
 
-    public String createErrorResponse(ErrorType type ) {
+    public static String createErrorResponse(ErrorType type ) {
         JsonObject o = new JsonObject();
         o.addProperty("success", false);
         o.addProperty("reason", type.name());
         return o.toString();
     }
 
-    public String createSuccessResponse(String message) {
+    public static String createSuccessResponse(String message) {
         JsonObject o = new JsonObject();
         o.addProperty("success", true);
         o.addProperty("message", message);
         return o.toString();
     }
 
-    public String createSuccessResponse() {
+    public static String createSuccessResponse() {
         JsonObject o = new JsonObject();
         o.addProperty("success", true);
         return o.toString();
@@ -787,6 +817,8 @@ public class CaesarServer {
         return false;
     }
 
+
+    @Deprecated
     private UUID getUserID(Context ctx) {
         String token = ctx.header("Authorization");
         if (token == null) return null;
@@ -794,6 +826,16 @@ public class CaesarServer {
         DecodedJWT decoded = JWTUtil.getInstance().decode(token);
         User user = UserManager.getInstance().getUser(decoded.getSubject());
         return user.getUuid();
+    }
+
+
+    private Optional<UUID> getUserByContext(Context ctx) {
+        String token = ctx.header("Authorization");
+        if (token == null) return Optional.empty();
+        token = token.replace("Bearer ", "");
+        DecodedJWT decoded = JWTUtil.getInstance().decode(token);
+        User user = UserManager.getInstance().getUser(decoded.getSubject());
+        return Optional.of(user.getUuid());
     }
 
     public enum ErrorType {
@@ -806,12 +848,15 @@ public class CaesarServer {
         USER_DISABLED,
         INVALID_HEADER,
         INVALID_SETUP_CODE,
+        FILE_NOT_FOUND,
+        INVALID_DATA,
         NO_PERMISSION,
         MISSING_ARGUMENTS,
         DISCORD_TICKET_TYPE_NOT_FOUND,
         DISCORD_TICKET_STATUS_NOT_FOUND,
         DISCORD_CHANNEL_NOT_FOUND,
         DISCORD_EMBED_NEVER_SENT,
-        DISCORD_EMBED_NOT_FOUND
+        DISCORD_EMBED_NOT_FOUND,
+        UNKNOWN
     }
 }

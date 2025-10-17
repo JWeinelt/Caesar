@@ -4,14 +4,18 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.julianweinelt.caesar.Caesar;
+import de.julianweinelt.caesar.endpoint.CaesarServer;
 import de.julianweinelt.caesar.integration.ServerConnection;
 import de.julianweinelt.caesar.plugin.Registry;
 import de.julianweinelt.caesar.plugin.event.Event;
+import io.javalin.http.Context;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
 import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +28,7 @@ public class LocalStorage {
 
     private final File configFile = new File("config.json");
     private final File connectionFile = new File("data/connections.json");
+    private final File profilePath = new File("data/profiles/");
 
     @Getter
     private Configuration data = new Configuration();
@@ -82,6 +87,24 @@ public class LocalStorage {
             log.error("Failed to save object: " + e.getMessage());
         }
         if (!silent) log.info("Local storage saved.");
+    }
+
+
+
+    public void getProfileImage(Context ctx, UUID user) throws Exception {
+        Path path = new File(profilePath, user.toString()).toPath();
+        if (!Files.exists(path)) {
+            ctx.status(404).result(CaesarServer.createErrorResponse(CaesarServer.ErrorType.FILE_NOT_FOUND));
+            return;
+        }
+
+        String mimeType = Files.probeContentType(path);
+        if (mimeType == null) mimeType = "application/octet-stream";
+
+        try (InputStream is = Files.newInputStream(path)) {
+            ctx.contentType(mimeType);
+            ctx.result(is);
+        }
     }
 
     public void loadConnections() {

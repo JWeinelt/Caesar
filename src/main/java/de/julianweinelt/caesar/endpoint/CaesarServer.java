@@ -21,6 +21,7 @@ import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import io.javalin.util.JavalinBindException;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -544,6 +545,15 @@ public class CaesarServer {
                     o.addProperty("success", true);
                     o.addProperty("updated", updated.get());
                     ctx.result(o.toString());
+                })
+                .post("/discord/status", ctx -> {
+                    if (lackingPermissions(ctx, "caesar.admin.discord.manage")) return;
+                    JsonObject root = JsonParser.parseString(ctx.body()).getAsJsonObject();
+                    String message = root.get("message").getAsString();
+                    String type = root.get("type").getAsString();
+                    DiscordBot.getInstance().getJda().getPresence().setPresence(Activity.of(Activity.ActivityType.valueOf(type.toUpperCase()), message), false);
+                    ctx.result(createSuccessResponse());
+                    ctx.status(201);
                 })
 
                 // Settings

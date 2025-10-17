@@ -56,6 +56,7 @@ public class DiscordBot {
     @Getter
     private BotListener defaultListener;
 
+    @Getter
     private JDA jda;
 
     @Getter

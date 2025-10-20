@@ -47,7 +47,7 @@ public class AIManager {
                 new Part("You will get a message by a user and say if they need help, " +
                         "want to ban someone or kick from the server or timeout someone. Please answer in this format: " +
                         "{\"type\":\"<the type you think>\"}. When timing out someone, add a property called 'time'" +
-                        " with the amount in seconds. Of no time is given, just say '-1' there. Append a field 'reason' " +
+                        " with the amount in seconds. If no time is given, just say '-1' there. Append a field 'reason' " +
                         "if there is a reason given. Add 'ticket' if a ticket type was specified" +
                         ". If none of these types a applicable, just answer normally. " +
                         "Valid types are: timeout, kick, ban, help, open_ticket, close_ticket, joke"),

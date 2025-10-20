@@ -719,6 +719,9 @@ public class CaesarServer {
                 .get("/support/waiting-room", ctx ->
                         ctx.result(DiscordBot.getInstance().getWaitingRoom().toString()))
 
+                // Support Users management
+
+
                 // Process management
                 .post("/process", ctx -> {
                     if (lackingPermissions(ctx, "caesar.process.create")) return;

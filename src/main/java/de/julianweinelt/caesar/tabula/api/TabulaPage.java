@@ -1,6 +1,8 @@
 package de.julianweinelt.caesar.tabula.api;
 
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,9 +10,12 @@ import java.util.List;
 import java.util.UUID;
 
 @Getter
+@Setter
 public class TabulaPage {
     private String name;
     private final UUID uniqueID;
+    private boolean requirePermission;
+    private String displayPermission;
 
     private final HashMap<String, List<TabulaComponent>> parts = new HashMap<>();
 
@@ -20,8 +25,21 @@ public class TabulaPage {
         this.uniqueID = UUID.randomUUID();
     }
 
-    public TabulaPartBuilder addPart(String name, TabulaPage page) {
-        return new TabulaPartBuilder(name, page);
+    public TabulaPage(String name, UUID uniqueID, String displayPermission) {
+        this.name = name;
+        this.uniqueID = uniqueID;
+        this.requirePermission = true;
+        this.displayPermission = displayPermission;
+    }
+
+    public TabulaPartBuilder addPart(String name) {
+        return new TabulaPartBuilder(name, this);
+    }
+
+
+    @Override
+    public String toString() {
+        return new GsonBuilder().setPrettyPrinting().create().toJson(this);
     }
 
 

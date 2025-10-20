@@ -1,5 +1,7 @@
 package de.julianweinelt.caesar.tabula.api;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,5 +30,10 @@ public abstract class TabulaComponent {
         this.minY = minY;
         this.minX = minX;
         this.type = type;
+    }
+
+    @Override
+    public String toString() {
+        return new GsonBuilder().setPrettyPrinting().create().toJson(this);
     }
 }

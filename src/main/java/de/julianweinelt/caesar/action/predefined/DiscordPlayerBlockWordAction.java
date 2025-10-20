@@ -4,6 +4,10 @@ import de.julianweinelt.caesar.action.Action;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.JDA;
 
+/**
+ * @deprecated in favor of WorkFlowAPI
+ */
+@Deprecated(since = "0.2.1")
 public class DiscordPlayerBlockWordAction implements Action {
     @Override
     public void run(Object... params) {

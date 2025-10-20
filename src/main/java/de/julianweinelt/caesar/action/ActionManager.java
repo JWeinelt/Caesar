@@ -6,6 +6,10 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated in favor of WorkFlowAPI
+ */
+@Deprecated(since = "0.2.1")
 public class ActionManager {
     private static final Logger log = LoggerFactory.getLogger(ActionManager.class);
 

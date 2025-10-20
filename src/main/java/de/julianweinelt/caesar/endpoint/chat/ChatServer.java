@@ -190,6 +190,10 @@ public class ChatServer extends WebSocketServer {
 
     public void sendMessageBy(UUID sender, String message, UUID chat) {
         User sendingUser = UserManager.getInstance().getUser(sender);
+        if (sendingUser == null) {
+            log.warn("Sent message could not be processed: Sending user does not exist");
+            return;
+        }
 
         List<ChatMention> mentions = getMentions(chat, sender, message);
         if (!mentions.isEmpty()) sendMessageMention(mentions);
@@ -201,6 +205,10 @@ public class ChatServer extends WebSocketServer {
         o.addProperty("chat", chat.toString());
         o.addProperty("timestamp", System.currentTimeMillis());
         Chat c = chatManager.getChat(chat);
+        if (c == null) {
+            log.warn("Sent message could not be processed: Chat does not exist");
+            return;
+        }
         c.registerNewMessage(new Message(message, sendingUser.getUsername(), System.currentTimeMillis()));
         for (UUID uuid : c.getUsers()) {
             log.debug("Sending message to chat {} for user {} by {}", c.getUniqueID(), uuid, sender);
@@ -213,6 +221,10 @@ public class ChatServer extends WebSocketServer {
 
         if (!c.isDirectMessage() && LocalStorage.getInstance().getData().isUseAIChat()) { // TODO: Replace with global field for AI options
             if (ChatMention.isMentioned(chatManager.getJunoID(), mentions)) {
+                if (!c.hasUser(chatManager.getJunoID())) {
+                    c.addUser(chatManager.getJunoID());
+                    sendMessageSystem("JunoAI joined the chat.", c.getUniqueID());
+                }
                 sendMessageBy(chatManager.getJunoID(), AIManager.getInstance().answerMessage(message), chat);
             }
         } else if (c.isDirectMessage() && c.hasUser(chatManager.getJunoID())) {

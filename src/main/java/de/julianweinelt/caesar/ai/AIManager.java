@@ -106,6 +106,10 @@ public class AIManager {
     }
 
     public String answerMessage(String inputMessage) {
+        if (API_KEY.isBlank()){
+            log.warn("API Key is not defined. Please set it to use AI features.");
+            return "Could not process message. Please try again later.";
+        }
         List<JsonObject> chatHistory = new ArrayList<>();
 
         JsonObject systemPrompt = new JsonObject();

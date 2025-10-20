@@ -26,6 +26,7 @@ import de.julianweinelt.caesar.plugin.event.Event;
 import de.julianweinelt.caesar.plugin.event.Priority;
 import de.julianweinelt.caesar.plugin.event.Subscribe;
 import de.julianweinelt.caesar.storage.*;
+import de.julianweinelt.caesar.tabula.TabulaRegistry;
 import de.julianweinelt.caesar.util.JWTUtil;
 import de.julianweinelt.caesar.util.LanguageManager;
 import io.javalin.util.JavalinBindException;
@@ -60,6 +61,8 @@ public class Caesar {
 
     @Getter
     private Registry registry = null;
+    @Getter
+    private TabulaRegistry tabulaRegistry = null;
     @Getter
     private PluginLoader pluginLoader = null;
     @Getter
@@ -136,6 +139,7 @@ public class Caesar {
         log.info("Starting Caesar v{}", systemVersion);
         languageManager = new LanguageManager();
         registry = new Registry();
+        tabulaRegistry = new TabulaRegistry();
         log.info(languageManager.getTranslation(systemLanguage, "startup.register.events"));
         registry.registerEvents(
                 "BackupCreateEvent",
@@ -410,6 +414,10 @@ public class Caesar {
         String databaseType = prompt(terminal, "setup.database.type", "MYSQL",
                 databases);
         StorageType storageType = StorageType.get(databaseType);
+        if (storageType == null) {
+            databaseProcedure(terminal);
+            return;
+        }
         clearScreen();
 
         String databaseHost = prompt(terminal, "setup.database.host",

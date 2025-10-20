@@ -6,6 +6,9 @@ public enum ComponentType {
     COLOR,
     LABEL,
     BUTTON,
+    CHECKBOX,
+    OPTION_BUTTON,
+    MENU,
     PANEL,
     SCROLL_CONTAINER,
 }

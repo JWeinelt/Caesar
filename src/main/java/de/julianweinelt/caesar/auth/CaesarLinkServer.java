@@ -118,15 +118,33 @@ public class CaesarLinkServer extends WebSocketServer {
                 UUID banned = UUID.fromString(root.get("banned").getAsString());
                 String reason = root.get("reason").getAsString();
                 UUID bannedBy = UUID.fromString(root.get("punisher").getAsString());
+                String bannedByName = root.get("bannedByName").getAsString();
                 Date activeUntil = Date.from(Instant.now());
                 List<String> effectiveServers = new ArrayList<>();
+                List<UUID> effectiveServerIds = new ArrayList<>();
                 if (root.has("effectiveServers")) {
                     effectiveServers.addAll(Arrays.stream(root.get("effectiveOn").getAsString().split(",")).toList());
+                    for (String s : effectiveServers) {
+                        ServerConnection c = LocalStorage.getInstance().getConnection(s);
+                        if (c != null) effectiveServerIds.add(c.getUuid());
+                    }
                 }
                 if (effectiveServers.isEmpty()) effectiveServers.add("*");
                 if (root.get("temp").getAsBoolean()) {
                     activeUntil = Date.from(Instant.parse(root.get("activeUntil").getAsString()));
                 }
+
+                JsonObject a = new JsonObject();
+                a.addProperty("action", Action.PLAYER_BANNED.name());
+                a.addProperty("banned", banned.toString());
+                a.addProperty("reason", reason);
+                a.addProperty("bannedBy", bannedBy.toString());
+                a.addProperty("bannedByName", bannedByName);
+                a.addProperty("temp", root.get("temp").getAsBoolean());
+                a.addProperty("activeUntil", activeUntil.toInstant().toString());
+                a.addProperty("effectiveServers", String.join(",", effectiveServers));
+                a.add("effectiveServerIds", JsonParser.parseString(effectiveServerIds.toString()));
+                sendAll(a.toString(), key);
             }
             case PING -> {
                 JsonObject o = new JsonObject();
@@ -155,6 +173,11 @@ public class CaesarLinkServer extends WebSocketServer {
     private void send(WebSocket socket, String data, byte[] key) {
         if (encrypted) socket.send(encrypt(data, key));
         else socket.send(data);
+    }
+    private void sendAll(String data, byte[] key) {
+        for (WebSocket socket : connections.values()) {
+            send(socket, data, key);
+        }
     }
 
     private String getNameFromConnection(WebSocket socket) {
